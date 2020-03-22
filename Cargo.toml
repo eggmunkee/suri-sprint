@@ -1,0 +1,21 @@
+[package]
+name = "suri_psrint"
+version = "0.0.1"
+authors = ["eggmunkee <eggmunkee@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ggez = "~0.5.1"
+specs = { version = "0.16.1" }
+rand = "0.7.3"
+winit = "~0.19.5"
+ron = "0.5.1"
+#cgmath = "0.17.0"
+#shrev = "1.1.1"
+#rhusics = { version="0.2.0", features=[] }
+wrapped2d = "0.4.0"
+
+[profile.dev]
+opt-level = 2
