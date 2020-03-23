@@ -58,6 +58,7 @@ pub struct CharacterDisplayComponent {
     pub rot: f32,
     pub in_jump: bool,
     pub jump_duration: f32,
+    pub since_stand: f32,
 }
 impl Component for CharacterDisplayComponent {
     type Storage = DenseVecStorage<Self>;
@@ -80,6 +81,7 @@ impl CharacterDisplayComponent {
             rot: 0.0,
             in_jump: false,
             jump_duration: 0.0,
+            since_stand: 0.0,
         }
     }
 
@@ -95,15 +97,26 @@ impl CharacterDisplayComponent {
 
         //let delta = 0.15;
 
+        // if !self.in_jump && coll.vel.y == 0.0 {
+        //     self.since_stand = 0.0
+        // }
+        // else if self.since_stand < 5.0 {
+        //     self.since_stand += time_delta;            
+        // }
+        // if self.since_stand > 0.0 && self.since_stand < 5.0 {
+        //     println!("Since stand: {}", &self.since_stand);
+        // }
+
         // decide if going_up is allowed with jump rules
         if self.in_jump {
             if self.jump_duration < 2.5 {
                 self.jump_duration += time_delta;                
                 println!("In jump! {}", &self.jump_duration);
             }
-            else if coll.vel.y == 0.0 {
+            else if coll.vel.y > 0.0 {
                 self.in_jump = false;
-                self.jump_duration = -0.2;
+                self.jump_duration = 0.0;
+                self.since_stand = 0.0;
                 println!("Stop jump! {}", &self.jump_duration);
             }
             else {
@@ -127,7 +140,7 @@ impl CharacterDisplayComponent {
             }
         }
         else {
-            println!("Not in jump, not even trying!  {}", &self.jump_duration);
+            //println!("Not in jump, not even trying!  {}", &self.jump_duration);
             self.in_jump = false;
             if self.jump_duration < 0.0 {
                 self.jump_duration += time_delta;
@@ -158,28 +171,28 @@ impl CharacterDisplayComponent {
     }
 
     pub fn apply_collision(&mut self, body: &mut physics::PhysicsBody) {
-        let move_amt = 1000.0;
-        let up_mult = 7.0;
+        let move_amt = 1300.0;
+        let up_mult = 5.0;
         if self.going_right {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             
             body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
-            println!("applied right force");
+            //println!("applied right force");
         }
         if self.going_left {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
-            println!("applied left force");
+            //println!("applied left force");
         }
         if self.going_up {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
-            println!("applied up force");
+            //println!("applied up force");
         }
         if self.going_down {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt}, true);
-            println!("applied down force");
+            //println!("applied down force");
         }
     }
 

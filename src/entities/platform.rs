@@ -8,6 +8,7 @@ use crate::game_state::{GameState};
 use crate::resources::{GameStateResource};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::collision::{Collision};
+use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
 use crate::systems::*;
 use crate::physics::{PhysicsWorld};
@@ -28,6 +29,8 @@ impl PlatformBuilder {
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
+        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
         .with(collision)
         .build();
 

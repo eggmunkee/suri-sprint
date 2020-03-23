@@ -301,7 +301,8 @@ impl<'a> event::EventHandler for GameState<'a> {
         else if keycode == KeyCode::J {
             // Get world action if any
             //println!("Processing AddCircle action");
-            crate::entities::ghost::GhostBuilder::build(&mut self.world, ctx, 100.0, 400.0, 0.0, 0.0);
+            crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
+                30.0, 0.15, 25.0, 25.0);
 
         }
 

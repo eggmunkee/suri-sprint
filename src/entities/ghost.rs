@@ -25,7 +25,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: true })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(BallDisplayComponent::new(ctx, &"/ghost-1-r.png".to_string(), false))
+        .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
         //.with(Collision::new_circle(20.0))
         .build()
     }
@@ -62,7 +62,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: true })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(BallDisplayComponent::new(ctx, &"/ghost-1-r.png".to_string(), false))
+        .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
         .with(collision)       //Collision::new_circle(20.0))
         .build()
     }

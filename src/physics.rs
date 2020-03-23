@@ -24,7 +24,7 @@ pub const WORLD_SCALE : f32 = 10.0;
 
 pub fn create_physics_world() -> PhysicsWorld {
 
-    let gravity = PhysicsVec { x: 0.0, y: 30.0};
+    let gravity = PhysicsVec { x: 0.0, y: 50.0};
     let world = PhysicsWorld::new(&gravity);
 
     world
@@ -112,28 +112,24 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
 
 pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
 
-    //let physics_world = &mut self.phys_world;
-
     {
 
         let mut phys_writer = world.write_storage::<Collision>();
         let mut char_writer = world.write_storage::<CharacterDisplayComponent>();
-        //let mut pos_writer = world.write_storage::<Position>();
         let entities = world.entities();
 
         // Make sure collision body has update itself from game loop
         for (mut collision, mut character, ent) in (&mut phys_writer, &mut char_writer, &entities).join() {
-            //println!("Updating body");
-            //// update
+            
+            // update collision body from character
             collision.update_body(physics_world, character);
 
         }
 
     }
 
-    //physics::advance_physics(physics_world, delta_s);
 
-    println!("Running physics engine... delta={}", delta_seconds);
+    //println!("Running physics engine... delta={}", delta_seconds);
     // update the physics world
     physics_world.step(delta_seconds, 2, 2);
 
