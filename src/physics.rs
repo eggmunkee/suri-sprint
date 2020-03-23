@@ -55,7 +55,7 @@ pub fn get_size(phys_size: f32) -> f32 {
 
 pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32) 
         -> b2::BodyHandle {
-    let mut def = b2::BodyDef {
+    let def = b2::BodyDef {
         body_type: PhysicsBodyType::Dynamic,
         position: self::create_pos(pos),
         .. b2::BodyDef::new()
@@ -67,6 +67,8 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
     let mut body = world.body_mut(b_handle);
     
     let shape = b2::PolygonShape::new_box(create_size(body_width), create_size(body_height));
+    // HOW TO DO CIRCLE SHAPE FIXTURE
+    //let shape = b2::CircleShape::new_with(PhysicsVec { x: 0.0, y: 0.0 }, create_size(body_width));
     
     //let fixture_handle = body.create_fast_fixture(&shape, 2.);
     let mut fixture_def = b2::FixtureDef {

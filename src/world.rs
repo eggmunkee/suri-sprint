@@ -20,10 +20,10 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     const VELX_RANGE: f32 = 95.0;
     const VELY_RANGE: f32 = 75.0;
 
-    PlatformBuilder::build(world, ctx, physics_world, 500.0, 0.0, 1000.0, 2.0);
-    PlatformBuilder::build(world, ctx, physics_world, 0.0, 400.0, 2.0, 900.0);
-    PlatformBuilder::build(world, ctx, physics_world, 500.0, 800.0, 1000.0, 2.0);
-    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 400.0, 2.0, 900.0);
+    PlatformBuilder::build(world, ctx, physics_world, 500.0, 0.0, 1000.0, 5.0);
+    PlatformBuilder::build(world, ctx, physics_world, 0.0, 400.0, 5.0, 900.0);
+    PlatformBuilder::build(world, ctx, physics_world, 500.0, 800.0, 1000.0, 5.0);
+    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 400.0, 5.0, 900.0);
 
     SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
 
@@ -33,7 +33,7 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
         let vx: f32 = (rng.gen::<f32>() * VELX_RANGE) - (VELX_RANGE / 2.0);
         let vy: f32 = (rng.gen::<f32>() * VELY_RANGE) - (VELY_RANGE / 2.0);
         // build ball entity and add to world
-        if i % 11 < 2 {
+        if i % 11 < 4 {
             // if i % 11 == 0 {
             //     BallBuilder::build(world, ctx, x, y, vx, vy);
             // }
