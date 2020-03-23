@@ -3,6 +3,7 @@ use specs::prelude::*;
 
 use crate::resources::{InputResource,WorldAction};
 use crate::components::*;
+use crate::components::collision::{Collision};
 use crate::components::player::*;
 
 // handle input state to control Players
@@ -14,18 +15,18 @@ impl InputSystem {
         InputSystem
     }
 
-    fn handle_player_list(mut v: Vec<(&mut Velocity, &PlayerComponent, Option<&mut CharacterDisplayComponent>, Entity)>, input: &InputResource) {
+    fn handle_player_list(mut v: Vec<(&mut Velocity, &mut Collision, &PlayerComponent, Option<&mut CharacterDisplayComponent>, Entity)>, input: &InputResource) {
 
         // handle each input applicable entity
         for inn_v in v.iter_mut() { 
-            let (vel, _player, _display, _e) = inn_v;      
+            let (vel, coll, _player, _display, _e) = inn_v;      
             Self::handle_player_input(inn_v, input);
         }
     }
 
     // handle input updates from an entity
-    fn handle_player_input(v: &mut (&mut Velocity, &PlayerComponent, Option<&mut CharacterDisplayComponent>, Entity), input: &InputResource) {
-        let (vel, _player, _display, _e) = v;
+    fn handle_player_input(v: &mut (&mut Velocity, &mut Collision, &PlayerComponent, Option<&mut CharacterDisplayComponent>, Entity), input: &InputResource) {
+        let (vel, coll, _player, _display, _e) = v;
 
         let mut up_pressed = false;
         let mut left_pressed = false;
@@ -53,7 +54,7 @@ impl InputSystem {
             display.going_right = right_pressed;
             display.going_down = down_pressed;
 
-            display.update(vel, 0.15);
+            display.update(coll, 0.15);
 
             up_pressed = display.going_up;
             left_pressed = display.going_left;
@@ -67,15 +68,16 @@ impl InputSystem {
 }
 impl<'a> System<'a> for InputSystem {
     type SystemData = (WriteStorage<'a, Velocity>,
+                        WriteStorage<'a, Collision>,
                         ReadStorage<'a, PlayerComponent>,
                         WriteStorage<'a, CharacterDisplayComponent>,
                         Read<'a, InputResource>,
                         Entities<'a>);
 
-    fn run(&mut self, (mut vel, player, mut char_display, mut input, ent): Self::SystemData) {
+    fn run(&mut self, (mut vel, mut coll, player, mut char_display, mut input, ent): Self::SystemData) {
 
         // tests collecting storage into vector
-        let mut list = (&mut vel, &player, (&mut char_display).maybe(), &ent).join().collect::<Vec<_>>();
+        let mut list = (&mut vel, &mut coll, &player, (&mut char_display).maybe(), &ent).join().collect::<Vec<_>>();
 
         if list.len() > 1 {
             println!("More than one player!");

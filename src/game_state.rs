@@ -12,6 +12,7 @@ use ggez::graphics::{Rect,Color,Image,set_window_title};
 
 use specs::{Builder, Component, DispatcherBuilder, Dispatcher,// ReadStorage, WriteStorage, 
     System, VecStorage, World, WorldExt, RunNow};
+use specs::Join;
 use rand::prelude::*;
 
 use wrapped2d::b2;
@@ -19,11 +20,14 @@ use wrapped2d::user_data::NoUserData;
 // =====================================
 
 use crate::resources::{InputResource,WorldAction,GameStateResource};
-//use crate::components::{Position,Velocity,DisplayComp};
-//use systems::{};
+use crate::components::{Position};
+use crate::components::collision::{Collision};
+use crate::components::player::{CharacterDisplayComponent};
+use crate::systems::{InterActorSys};
 use crate::world::{create_world,create_dispatcher};
 //use crate::resources::{ImageResources};
 use crate::physics;
+use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
 use crate::render;
 use crate::input::{InputMap,MouseInput};
 
@@ -43,20 +47,23 @@ pub struct GameState<'a> {
     pub dispatcher: Dispatcher<'a,'a>,
     pub world: World,
     pub font: graphics::Font,
-    pub phys_world: b2::World<NoUserData>,
+    pub phys_world: PhysicsWorld,
     //pub image_lookup: HashMap<String,usize>,
     //pub images: Vec<Image>
     pub paused_text: graphics::Text,
 }
 
 impl<'a> GameState<'a> {
-    pub fn new(ctx: &mut Context, window_mode: WindowMode) -> GameResult<GameState<'static>> {
+    pub fn new(ctx: &mut Context, window_mode: WindowMode) -> GameResult<GameState<'a>> {
+
+        // Create physics world to place in game state resource
+        let mut physics_world = physics::create_physics_world();
 
         // Create game state related to window size/mode
         let (win_w, win_h) = ggez::graphics::drawable_size(ctx);
         let game_state_resource = GameStateResource {
             window_w: win_w, window_h: win_h, window_mode: window_mode,
-            stop_double: false,
+            delta_seconds: 0.15
         };
 
         // get window
@@ -66,7 +73,7 @@ impl<'a> GameState<'a> {
         let font = graphics::Font::new(ctx, "/FreeMonoBold.ttf")?;
         let text = graphics::Text::new(("PAUSED", font, 52.0));
 
-        let physics_world = physics::create_physics_world();
+        let ecs_world = create_world(ctx, game_state_resource, &mut physics_world);
 
         // Create main state instance with dispatcher and world
         let mut s = GameState { 
@@ -74,7 +81,7 @@ impl<'a> GameState<'a> {
             window_w: win_w,
             window_h: win_h,
             dispatcher: create_dispatcher(), 
-            world: create_world(ctx, game_state_resource),
+            world: ecs_world,
             font: font,
             phys_world: physics_world,
             // image_lookup: HashMap::<String,usize>::new(),
@@ -85,8 +92,8 @@ impl<'a> GameState<'a> {
 
         // Perform initial dispatch and update world
         println!("Dispatcher & World init");
-        s.dispatcher.dispatch(&s.world);
-        s.world.maintain();
+        //s.dispatcher.dispatch(&s.world);
+        //s.world.maintain();
 
         // Tests adding images to the image resources Resource
         // if let Some(img_res) = s.world.get_mut::<ImageResources>() {
@@ -159,8 +166,10 @@ impl<'a> GameState<'a> {
     }
 }
 
-impl event::EventHandler for GameState<'static> {
+impl<'a> event::EventHandler for GameState<'a> {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+
+        let delta_s = ggez::timer::duration_to_f64(ggez::timer::delta(ctx)) as f32;
   
         // Only update world state when game is running (not paused)
         match &self.current_state {
@@ -168,11 +177,22 @@ impl event::EventHandler for GameState<'static> {
 
                 // Get world and dispatcher to increment the entity system
                 let world = &mut self.world;
-                let dispatcher = &mut self.dispatcher;
+
+                // get game resource to set delta
+                let mut game_res = world.fetch_mut::<GameStateResource>();
+                game_res.delta_seconds = delta_s;
+                drop(game_res);
+                
+                let dispatcher = &mut self.dispatcher;  //create_dispatcher();
                 // Call update on the world event dispatcher
                 dispatcher.dispatch(&world);
                 // Update the world state after dispatch changes
                 world.maintain();
+
+
+                //let physics_world = &mut self.phys_world;
+
+                physics::advance_physics(world, &mut self.phys_world, delta_s);
 
             },
             _ => {

@@ -157,18 +157,18 @@ impl super::RenderTrait for BallDisplayComponent {
         //     draw_ok = false;
         // }
 
-        if let Ok(rect) = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::stroke(1.0),
-            graphics::Rect::from([0.0,0.0,50.0,50.0]),
-            graphics::BLACK,
-        ) {
-            let mut col_vals: (u8,) = rng.gen();
-            //println!("Entity {}, Circle pos: {:?}", ent.id(), pos);
-            if let Err(_) = graphics::draw(ctx, &rect, (na::Point2::new(pos.x-25.0, pos.y-25.0), )) {
+        // if let Ok(rect) = graphics::Mesh::new_rectangle(
+        //     ctx,
+        //     graphics::DrawMode::stroke(1.0),
+        //     graphics::Rect::from([0.0,0.0,50.0,50.0]),
+        //     graphics::BLACK,
+        // ) {
+        //     let mut col_vals: (u8,) = rng.gen();
+        //     //println!("Entity {}, Circle pos: {:?}", ent.id(), pos);
+        //     if let Err(_) = graphics::draw(ctx, &rect, (na::Point2::new(pos.x-25.0, pos.y-25.0), )) {
                 
-            };  
-        }
+        //     };  
+        // }
     }
 }
 

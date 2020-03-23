@@ -7,6 +7,10 @@ use ggez::graphics::{Image,Font};
 use ggez::{Context,GameResult,GameError};
 use ggez::conf::{WindowMode};
 use specs::{World};
+// -------------------------
+
+use crate::physics::{PhysicsWorld};
+
 
 
 
@@ -15,7 +19,7 @@ pub struct GameStateResource {
     pub window_w: f32,
     pub window_h: f32,
     pub window_mode: WindowMode,
-    pub stop_double: bool,
+    pub delta_seconds: f32,
 }
 
 

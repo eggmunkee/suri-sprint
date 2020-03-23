@@ -7,7 +7,10 @@ use specs::{ Component, DenseVecStorage, World, WorldExt };
 use rand::prelude::*;
 
 //use crate::game_state::{GameState};
+use crate::components::collision::{Collision};
 use crate::components::{Velocity};
+use crate::physics;
+use crate::physics::{PhysicsBody};
 
 #[derive(Debug)]
 pub struct PlayerComponent {
@@ -80,7 +83,7 @@ impl CharacterDisplayComponent {
         }
     }
 
-    pub fn update(&mut self, vel: &mut Velocity, time_delta: f32) {
+    pub fn update(&mut self, coll: &mut Collision, time_delta: f32) {
         self.interp_breath(0.08);
 
         if self.going_left {
@@ -90,22 +93,22 @@ impl CharacterDisplayComponent {
             self.facing_right = true;
         }
 
-        let delta = 0.15;
+        //let delta = 0.15;
 
         // decide if going_up is allowed with jump rules
         if self.in_jump {
-            if vel.y == 0.0 {
+            if self.jump_duration < 2.5 {
+                self.jump_duration += time_delta;                
+                println!("In jump! {}", &self.jump_duration);
+            }
+            else if coll.vel.y == 0.0 {
                 self.in_jump = false;
                 self.jump_duration = -0.2;
                 println!("Stop jump! {}", &self.jump_duration);
             }
-            else if self.jump_duration < 1.75 {
-                self.jump_duration += delta;                
-                println!("In jump! {}", &self.jump_duration);
-            }
             else {
                 //println!("Freefall jump... {}", &self.jump_duration);
-                self.jump_duration += delta;
+                self.jump_duration += time_delta;
                 self.going_up = false;
             }
         }
@@ -119,19 +122,20 @@ impl CharacterDisplayComponent {
                 println!("Can't start jump! {}", &self.jump_duration);
                 self.going_up = false;
                 if self.jump_duration < 0.0 {
-                    self.jump_duration += delta;
+                    self.jump_duration += time_delta;
                 }
-                }
-        }
-        else {
-            //println!("Not in jump, not even trying!  {}", &self.jump_duration);
-            self.in_jump = false;
-            if self.jump_duration < 0.0 {
-                self.jump_duration += delta;
             }
         }
+        else {
+            println!("Not in jump, not even trying!  {}", &self.jump_duration);
+            self.in_jump = false;
+            if self.jump_duration < 0.0 {
+                self.jump_duration += time_delta;
+            }
+            else {}
+        }
 
-        self.apply_inputs(vel);
+        //self.apply_inputs(coll);
     }
 
     pub fn interp_breath(&mut self, cycle_speed: f32) {
@@ -153,9 +157,37 @@ impl CharacterDisplayComponent {
         // }
     }
 
-    pub fn apply_inputs(&mut self, vel: &mut Velocity) {
+    pub fn apply_collision(&mut self, body: &mut physics::PhysicsBody) {
+        let move_amt = 1000.0;
+        let up_mult = 7.0;
+        if self.going_right {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            
+            body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+            println!("applied right force");
+        }
+        if self.going_left {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
+            println!("applied left force");
+        }
+        if self.going_up {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
+            println!("applied up force");
+        }
+        if self.going_down {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt}, true);
+            println!("applied down force");
+        }
+    }
+
+
+    pub fn apply_inputs(&mut self, coll: &mut Collision) {
+        let mut vel = coll.vel;
         // Single axis vector length
-        let mut vec_amt = 50.0;
+        let mut vec_amt = 300.0;
         // IS the Input direction Multi-axis, i.e. UP + RIGHT is multi-axis
         let multi_axis = (self.going_left && (self.going_up || self.going_down))
             || (self.going_right && (self.going_up || self.going_down));
@@ -163,7 +195,7 @@ impl CharacterDisplayComponent {
         if multi_axis {
             vec_amt = 0.71 * vec_amt;
         }
-        vec_amt = vec_amt * 0.05;
+        vec_amt = vec_amt;// * 0.05;
         // Apply vector length to velocity X
         if self.going_left {
             vel.x -= vec_amt;
@@ -172,11 +204,11 @@ impl CharacterDisplayComponent {
             vel.x += vec_amt;
         }
         else {
-            vel.x = vel.x * 0.995;
+            //vel.x = vel.x * 0.995;
         }
         // Apply vector length to velocity Y
         if self.going_up {
-            vel.y -= vec_amt * 2.5;
+            vel.y -= vec_amt * 1.5;
         }
         else if self.going_down {
             vel.y += vec_amt;
@@ -185,11 +217,11 @@ impl CharacterDisplayComponent {
             // if vel.y < 0.0 {
             //     vel.y = vel.y * 0.98;
             // }
-            vel.x = vel.x * 0.995;
+            //vel.x = vel.x * 0.995;
         }
 
-        vel.x = vel.x.max(-70.0).min(70.0);
-        vel.y = vel.y.max(-80.0);
+        //vel.x = vel.x.max(-70.0).min(70.0);
+        //vel.y = vel.y.max(-80.0);
     }
 
     // pub fn interp_eye(&mut self, speed: f32) -> (f32, f32) {
@@ -280,7 +312,7 @@ impl super::RenderTrait for CharacterDisplayComponent {
         let w = self.image.width();
         let h = self.image.height();
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-        let breath_scale = 2.0 + self.breath_cycle.cos() * 0.02;
+        let breath_scale = 1.5 + self.breath_cycle.cos() * 0.02;
         let breath_y_offset = self.breath_cycle.cos() * -0.3;
 
         let draw_pos = na::Point2::<f32>::new(pos.x, pos.y + breath_y_offset);
@@ -356,8 +388,9 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 x_scale = -x_scale;
             }
 
+            let text_pos = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
             if let Err(_) = ggez::graphics::draw(ctx, &self.image, 
-                DrawParam::default().dest(draw_pos.clone())
+                DrawParam::default().dest(text_pos)
                 .scale(na::Vector2::new(x_scale,breath_scale))
                 .offset(na::Point2::new(0.5,0.5))
                 .rotation(self_rot)
@@ -373,16 +406,16 @@ impl super::RenderTrait for CharacterDisplayComponent {
             // };
 
 
-            if let Ok(rect) = graphics::Mesh::new_rectangle(
-                ctx,
-                graphics::DrawMode::stroke(1.0),
-                graphics::Rect::from([0.0,0.0,50.0,50.0]),
-                graphics::BLACK,
-            ) {
-                if let Err(_) = graphics::draw(ctx, &rect, (na::Point2::new(draw_pos.x-25.0, draw_pos.y-25.0), )) {
+            // if let Ok(rect) = graphics::Mesh::new_rectangle(
+            //     ctx,
+            //     graphics::DrawMode::stroke(1.0),
+            //     graphics::Rect::from([0.0,0.0,50.0,50.0]),
+            //     Color::new(1.0,0.0,0.0,1.0),
+            // ) {
+            //     if let Err(_) = graphics::draw(ctx, &rect, (na::Point2::new(draw_pos.x-25.0, draw_pos.y-25.0), )) {
                     
-                };  
-            }
+            //     };  
+            // }
             
         }
 

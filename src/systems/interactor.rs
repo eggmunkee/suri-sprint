@@ -6,21 +6,28 @@ use specs::prelude::*;
 use specs::{WorldExt};
 use ggez::nalgebra::{Point2,Vector2,distance,distance_squared};
 
-use crate::resources::{InputResource};
+use crate::resources::{InputResource,GameStateResource};
 use crate::components::*;
 use crate::components::collision::*;
 use crate::physics;
+use crate::physics::{PhysicsWorld};
 
 
 // handle interactions between interactive actors
-pub struct InterActorSys;
-impl InterActorSys {
-    pub fn new() -> InterActorSys {
-        InterActorSys
+pub struct InterActorSys<'a> {
+
+    pub physics_world: &'a mut PhysicsWorld
+}
+
+impl<'a> InterActorSys<'a> {
+    pub fn new(physics_world: &'a mut PhysicsWorld) -> InterActorSys<'a> {
+        InterActorSys {
+            physics_world: physics_world
+        }
     }
 }
 
-impl InterActorSys {
+impl<'a> InterActorSys<'a> {
 
     // fn dist_check(pt_1: &Point2<f32>, pt_2: &Point2<f32>, touch_dist: f32) -> (bool, f32) {
     //     //let pt = Point2::new(500.0f32,500.0);
@@ -41,193 +48,204 @@ impl InterActorSys {
     
 }
 
-impl<'a> System<'a> for InterActorSys {
+impl<'a> System<'a> for InterActorSys<'a> {
     type SystemData = (WriteStorage<'a, Position>,
                         WriteStorage<'a, Velocity>,                        
                         ReadStorage<'a, Collision>,
+                        Read<'a, GameStateResource>,
                         Entities<'a>);
 
-    fn run(&mut self, (mut pos, mut vel, collision, ent): Self::SystemData) {
+    fn run(&mut self, (mut pos, mut vel, collision, game_res, ent): Self::SystemData) {
         use specs::Join;
         let mut rng = rand::thread_rng();
+
+        // //let game_res = 
+        // let delta_s = game_res.delta_seconds;
+
+        // let phys_world = &mut self.physics_world;
+
+        // phys_world.step()
+
+
+
         //let mut blocks = Vec::<(u32,f32,f32,i32,i32)>::new();
         // key is col,val of block, value is entity id, position x/y, 
-        let mut block_hash = HashMap::<(i32,i32),Vec<(u32,f32,f32,f32,f32)>>::new();
-        let mut check_hash = HashMap::<(u32,u32),bool>::new();
+        // let mut block_hash = HashMap::<(i32,i32),Vec<(u32,f32,f32,f32,f32)>>::new();
+        // let mut check_hash = HashMap::<(u32,u32),bool>::new();
 
-        // iterator over velocities with player components and input
-        for (pos, coll, e) in (&pos, &collision, &ent).join() {     
+        // // iterator over velocities with player components and input
+        // for (pos, coll, e) in (&pos, &collision, &ent).join() {     
 
-            let ent_id = e.id();
-            let mass = coll.mass;
-            let friction = coll.friction;
-            let px = pos.x;
-            let py = pos.y;
-            let buc_a_sz = 100.0f32;
-            let buc_a_x : i32 = (px / buc_a_sz) as i32;
-            let buc_a_y : i32 = (py / buc_a_sz) as i32;
+        //     let ent_id = e.id();
+        //     let mass = coll.mass;
+        //     let friction = coll.friction;
+        //     let px = pos.x;
+        //     let py = pos.y;
+        //     let buc_a_sz = 100.0f32;
+        //     let buc_a_x : i32 = (px / buc_a_sz) as i32;
+        //     let buc_a_y : i32 = (py / buc_a_sz) as i32;
 
-            // find which neighbor cells to include in
-            let rad = 45.0;
-            let l_rem = px - (buc_a_x as f32) * buc_a_sz;
-            let r_rem = ((buc_a_x + 1) as f32) * buc_a_sz - px;
-            let t_rem = py - (buc_a_y as f32) * buc_a_sz;
-            let b_rem = ((buc_a_y + 1) as f32) * buc_a_sz - py;
+        //     // find which neighbor cells to include in
+        //     let rad = 45.0;
+        //     let l_rem = px - (buc_a_x as f32) * buc_a_sz;
+        //     let r_rem = ((buc_a_x + 1) as f32) * buc_a_sz - px;
+        //     let t_rem = py - (buc_a_y as f32) * buc_a_sz;
+        //     let b_rem = ((buc_a_y + 1) as f32) * buc_a_sz - py;
 
-            let mut buc_a_xs = buc_a_x;
-            let mut buc_a_xe = buc_a_x;
-            let mut buc_a_ys = buc_a_y;
-            let mut buc_a_ye = buc_a_y;
-            if l_rem < rad {
-                buc_a_xs -= 1;
-            }
-            if r_rem < rad {
-                buc_a_xe += 1;
-            }
-            if t_rem < rad {
-                buc_a_ys -= 1;
-            }
-            if b_rem < rad {
-                buc_a_ye += 1;
-            }
+        //     let mut buc_a_xs = buc_a_x;
+        //     let mut buc_a_xe = buc_a_x;
+        //     let mut buc_a_ys = buc_a_y;
+        //     let mut buc_a_ye = buc_a_y;
+        //     if l_rem < rad {
+        //         buc_a_xs -= 1;
+        //     }
+        //     if r_rem < rad {
+        //         buc_a_xe += 1;
+        //     }
+        //     if t_rem < rad {
+        //         buc_a_ys -= 1;
+        //     }
+        //     if b_rem < rad {
+        //         buc_a_ye += 1;
+        //     }
 
-            //println!("Bucket layout for {}, ({},{})-({},{})", &ent_id, &buc_a_xs, &buc_a_ys, &buc_a_xe, &buc_a_ye);
+        //     //println!("Bucket layout for {}, ({},{})-({},{})", &ent_id, &buc_a_xs, &buc_a_ys, &buc_a_xe, &buc_a_ye);
 
-            for i in buc_a_xs..buc_a_xe+1 {
-                for j in buc_a_ys..buc_a_ye+1 {
-                    if block_hash.contains_key(&(i,j)) {
-                        let mut ent_vec = block_hash.get_mut(&(i,j)).unwrap();                
-                        ent_vec.push((
-                            ent_id,
-                            px, py,
-                            mass,
-                            friction,
-                        ));
-                    }
-                    else {
-                        let ent_vec = vec![(
-                            ent_id,
-                            px, py,
-                            mass,
-                            friction,
-                        )];
-                        //let hash_key = buc_a_str.clone().as_str();
-                        block_hash.insert((i,j), ent_vec);
-                    }
-                }
-            }
+        //     for i in buc_a_xs..buc_a_xe+1 {
+        //         for j in buc_a_ys..buc_a_ye+1 {
+        //             if block_hash.contains_key(&(i,j)) {
+        //                 let mut ent_vec = block_hash.get_mut(&(i,j)).unwrap();                
+        //                 ent_vec.push((
+        //                     ent_id,
+        //                     px, py,
+        //                     mass,
+        //                     friction,
+        //                 ));
+        //             }
+        //             else {
+        //                 let ent_vec = vec![(
+        //                     ent_id,
+        //                     px, py,
+        //                     mass,
+        //                     friction,
+        //                 )];
+        //                 //let hash_key = buc_a_str.clone().as_str();
+        //                 block_hash.insert((i,j), ent_vec);
+        //             }
+        //         }
+        //     }
 
             
 
-            //} 
-            //println!("InterActor sys proc for entity: {}", &e.id());   
-        }
-        //println!("Blocks: {:?}", &blocks);
+        //     //} 
+        //     //println!("InterActor sys proc for entity: {}", &e.id());   
+        // }
+        // //println!("Blocks: {:?}", &blocks);
 
-        {
-            for &key in block_hash.keys() {
-                let v = block_hash.get(&key).unwrap();
-                // consider all buckets with multiple items
-                if v.len() > 1 {
-                    //println!("BlockHash {:?} - len {}", key, &v.len());
+        // {
+        //     for &key in block_hash.keys() {
+        //         let v = block_hash.get(&key).unwrap();
+        //         // consider all buckets with multiple items
+        //         if v.len() > 1 {
+        //             //println!("BlockHash {:?} - len {}", key, &v.len());
                    
-                    let mut ind_i = 0usize;
-                    let mut ind_j = 0usize;
-                    for &(entid_i,pos_ix,pos_iy,mass_i,fric_i) in v.iter() {
-                        for &(entid_j,pos_jx,pos_jy,mass_j,fric_j) in v.iter() {
-                            if ind_j != ind_i && entid_i != entid_j {
-                                //println!("Hit: i={} and j={}", &entid_i, &entid_j);
-                                // Check if pair was already processed and skip if so
-                                if check_hash.contains_key(&(entid_i,entid_j)) ||
-                                    check_hash.contains_key(&(entid_j,entid_i)) {
-                                    //println!("Skipping i={} and j={}", &entid_i, &entid_j);
-                                    continue;
-                                }
-                                //println!("Checking i={} and j={}", &entid_i, &entid_j);
-                                check_hash.insert((entid_i,entid_j), true);
+        //             let mut ind_i = 0usize;
+        //             let mut ind_j = 0usize;
+        //             for &(entid_i,pos_ix,pos_iy,mass_i,fric_i) in v.iter() {
+        //                 for &(entid_j,pos_jx,pos_jy,mass_j,fric_j) in v.iter() {
+        //                     if ind_j != ind_i && entid_i != entid_j {
+        //                         //println!("Hit: i={} and j={}", &entid_i, &entid_j);
+        //                         // Check if pair was already processed and skip if so
+        //                         if check_hash.contains_key(&(entid_i,entid_j)) ||
+        //                             check_hash.contains_key(&(entid_j,entid_i)) {
+        //                             //println!("Skipping i={} and j={}", &entid_i, &entid_j);
+        //                             continue;
+        //                         }
+        //                         //println!("Checking i={} and j={}", &entid_i, &entid_j);
+        //                         check_hash.insert((entid_i,entid_j), true);
 
-                                let ent_i = ent.entity(entid_i);
-                                let ent_j = ent.entity(entid_j);
-                                // if both alive
-                                if ent_i.gen().is_alive() && ent_j.gen().is_alive() {
+        //                         let ent_i = ent.entity(entid_i);
+        //                         let ent_j = ent.entity(entid_j);
+        //                         // if both alive
+        //                         if ent_i.gen().is_alive() && ent_j.gen().is_alive() {
 
-                                    // get velocity resources from entity pair
-                                    let svel_i = vel.get(ent_i);
-                                    let svel_j = vel.get(ent_j);
-                                    // build points for each's position
-                                    let pos_i = na::Point2::new(pos_ix, pos_iy);
-                                    let pos_j = na::Point2::new(pos_jx, pos_jy);
-                                    // build holders for possible vector component values
-                                    let mut vel_i : Option<&mut na::Vector2<f32>> = None;
-                                    let mut vel_j : Option<&mut na::Vector2<f32>> = None;
-                                    // build vectors to pass to actors_push - to edit
-                                    let mut vel_veci = na::Vector2::new(0.0,0.0);
-                                    let mut vel_vecj = na::Vector2::new(0.0,0.0);
-                                    // get possibilities of velocity components from
-                                    //  each entity
-                                    let mut any_movable = false;
-                                    if let Some(velocity_i) = svel_i {
-                                        // copy velocity value into edit vel
-                                        if velocity_i.frozen == false {
-                                            vel_veci.x = velocity_i.x;
-                                            vel_veci.y = velocity_i.y;
-                                            vel_i = Some(&mut vel_veci);
-                                            any_movable = true;
-                                        }
-                                    }
-                                    if let Some(velocity_j) = svel_j {
-                                        // copy velocity value into edit vel
-                                        if velocity_j.frozen == false {
-                                            vel_vecj.x = velocity_j.x;
-                                            vel_vecj.y = velocity_j.y;
-                                            vel_j = Some(&mut vel_vecj);
-                                            any_movable = true;
-                                        }
-                                    }
+        //                             // get velocity resources from entity pair
+        //                             let svel_i = vel.get(ent_i);
+        //                             let svel_j = vel.get(ent_j);
+        //                             // build points for each's position
+        //                             let pos_i = na::Point2::new(pos_ix, pos_iy);
+        //                             let pos_j = na::Point2::new(pos_jx, pos_jy);
+        //                             // build holders for possible vector component values
+        //                             let mut vel_i : Option<&mut na::Vector2<f32>> = None;
+        //                             let mut vel_j : Option<&mut na::Vector2<f32>> = None;
+        //                             // build vectors to pass to actors_push - to edit
+        //                             let mut vel_veci = na::Vector2::new(0.0,0.0);
+        //                             let mut vel_vecj = na::Vector2::new(0.0,0.0);
+        //                             // get possibilities of velocity components from
+        //                             //  each entity
+        //                             let mut any_movable = false;
+        //                             if let Some(velocity_i) = svel_i {
+        //                                 // copy velocity value into edit vel
+        //                                 if velocity_i.frozen == false {
+        //                                     vel_veci.x = velocity_i.x;
+        //                                     vel_veci.y = velocity_i.y;
+        //                                     vel_i = Some(&mut vel_veci);
+        //                                     any_movable = true;
+        //                                 }
+        //                             }
+        //                             if let Some(velocity_j) = svel_j {
+        //                                 // copy velocity value into edit vel
+        //                                 if velocity_j.frozen == false {
+        //                                     vel_vecj.x = velocity_j.x;
+        //                                     vel_vecj.y = velocity_j.y;
+        //                                     vel_j = Some(&mut vel_vecj);
+        //                                     any_movable = true;
+        //                                 }
+        //                             }
 
-                                    if any_movable {
-                                        // Calculcate and update the velocities of these two entities
+        //                             if any_movable {
+        //                                 // Calculcate and update the velocities of these two entities
 
-                                        physics::actors_push(&pos_i, &pos_j, vel_i, vel_j,
-                                            mass_i, mass_j, fric_i, fric_j, 50.0);
-                                        // physics::actors_push_squares(&pos_i, &pos_j, vel_i, vel_j,
-                                        //     mass_i, mass_j, fric_i, fric_j, 40.0);
+        //                                 physics::actors_push(&pos_i, &pos_j, vel_i, vel_j,
+        //                                     mass_i, mass_j, fric_i, fric_j, 50.0);
+        //                                 // physics::actors_push_squares(&pos_i, &pos_j, vel_i, vel_j,
+        //                                 //     mass_i, mass_j, fric_i, fric_j, 40.0);
 
-                                        // Update velocities of pair of entities
-                                        // if they have velocity components, update the velocity
-                                        let svel_i = vel.get_mut(ent_i);
-                                        if let Some(mut velocity_i) = svel_i {
-                                            if velocity_i.frozen == false {
-                                                velocity_i.x = vel_veci.x;
-                                                velocity_i.y = vel_veci.y;
-                                            }
-                                            else {
-                                                //velocity_i.frozen = false;
-                                            }
-                                        }
-                                        let svel_j = vel.get_mut(ent_j);
-                                        if let Some(mut velocity_j) = svel_j {
-                                            if velocity_j.frozen == false {
-                                                velocity_j.x = vel_vecj.x;
-                                                velocity_j.y = vel_vecj.y;
-                                            }
-                                            else {
-                                                //velocity_j.frozen = false;
-                                            }
-                                        }
-                                    }
+        //                                 // Update velocities of pair of entities
+        //                                 // if they have velocity components, update the velocity
+        //                                 let svel_i = vel.get_mut(ent_i);
+        //                                 if let Some(mut velocity_i) = svel_i {
+        //                                     if velocity_i.frozen == false {
+        //                                         velocity_i.x = vel_veci.x;
+        //                                         velocity_i.y = vel_veci.y;
+        //                                     }
+        //                                     else {
+        //                                         //velocity_i.frozen = false;
+        //                                     }
+        //                                 }
+        //                                 let svel_j = vel.get_mut(ent_j);
+        //                                 if let Some(mut velocity_j) = svel_j {
+        //                                     if velocity_j.frozen == false {
+        //                                         velocity_j.x = vel_vecj.x;
+        //                                         velocity_j.y = vel_vecj.y;
+        //                                     }
+        //                                     else {
+        //                                         //velocity_j.frozen = false;
+        //                                     }
+        //                                 }
+        //                             }
                                     
                                     
-                                }
+        //                         }
 
-                            }
-                            ind_j += 1;
-                        }
-                        ind_i += 1;
-                    }
-                }
-            }
-        }
+        //                     }
+        //                     ind_j += 1;
+        //                 }
+        //                 ind_i += 1;
+        //             }
+        //         }
+        //     }
+        // }
 
         // let mut interact_ct = 0usize;
         // let mut ind_i = 0usize;
