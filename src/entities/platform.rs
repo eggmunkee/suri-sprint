@@ -27,10 +27,40 @@ impl PlatformBuilder {
         collision.pos.y = y;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
+        collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Ghost);
 
         collision.create_static_body(physics_world);
+
+        let entity = world.create_entity()
+        .with(Position { x: x, y: y })
+        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
+        .with(collision)
+        .build();
+
+        //let entId = entity.id();
+
+        entity
+    }
+
+    pub fn build_dynamic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+        width: f32, height: f32) -> Entity {
+
+
+        let mut collision = Collision::new_specs(3.0,0.25, width, height);
+        // collision.dim_1 = width;
+        // collision.dim_2 = height;
+        collision.pos.x = x;
+        collision.pos.y = y;
+        collision.collision_category = CollisionCategory::Level;
+        collision.collision_mask.clear();
+        collision.collision_mask.push(CollisionCategory::Level);
+        collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Ghost);
+
+        collision.create_dynamic_body_box(physics_world);
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })

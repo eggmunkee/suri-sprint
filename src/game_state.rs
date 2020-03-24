@@ -25,7 +25,7 @@ use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
-//use crate::resources::{ImageResources};
+use crate::entities::platform::{PlatformBuilder};
 use crate::physics;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
 use crate::render;
@@ -308,8 +308,18 @@ impl event::EventHandler for GameState {
         else if keycode == KeyCode::J {
             // Get world action if any
             //println!("Processing AddCircle action");
-            crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
-                30.0, 0.15, 25.0, 25.0);
+            let mut rng = rand::thread_rng();
+
+            let test : u16 = rng.gen::<u16>();
+            if test % 2 == 0 {
+                crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0,
+                    25.0, 25.0);
+            }
+            else {
+                crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
+                    30.0, 0.15, 25.0, 25.0);
+            }
+
 
         }
 
