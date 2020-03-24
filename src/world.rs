@@ -28,21 +28,28 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
 
     for i in 0..35 {
-        let x: f32 = 100.0 + rng.gen::<f32>() * POSX_RANGE;
-        let y: f32 = 100.0 + rng.gen::<f32>() * POSY_RANGE;
+        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE) / 50.0).round() * 50.0;
+        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE) / 50.0).round() * 50.0;
         let vx: f32 = (rng.gen::<f32>() * VELX_RANGE) - (VELX_RANGE / 2.0);
         let vy: f32 = (rng.gen::<f32>() * VELY_RANGE) - (VELY_RANGE / 2.0);
         // build ball entity and add to world
-        if i % 11 < 4 {
+        if i % 11 < 1 {
             // if i % 11 == 0 {
             //     BallBuilder::build(world, ctx, x, y, vx, vy);
             // }
             // else {
-            GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15, 25.0, 25.0);
+            GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15, 20.0, 20.0);
             //}
         }
         else {
-            GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 25.0, 25.0);
+            if i % 2 == 0 {
+                PlatformBuilder::build(world, ctx, physics_world, x, y, 25.0, 25.0);
+            }
+            else {
+                GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 20.0, 20.0);
+            }
+            
+            //GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 25.0, 25.0);
             // GhostBuilder::build_static_collider(world, ctx, x-35.0, y, 20.0, 0.15);
             // GhostBuilder::build_static_collider(world, ctx, x+35.0, y, 20.0, 0.15);
         }

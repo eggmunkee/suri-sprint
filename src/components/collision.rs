@@ -6,7 +6,7 @@ use wrapped2d::user_data::NoUserData;
 
 
 use crate::physics;
-use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
+use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle, CollisionCategory};
 use crate::components::player::{CharacterDisplayComponent};
 
 #[derive(Debug)]
@@ -17,15 +17,21 @@ pub enum CollisionShape {
 
 #[derive(Debug)]
 pub struct Collision {
+    // depricated fields
     pub shape: CollisionShape,
     pub mass: f32,
     pub friction: f32,
+    // real physics props
+    pub density: f32,
+    pub restitution: f32,
     pub body_handle: Option<PhysicsBodyHandle>,
     // generic collision information
     pub dim_1: f32,
     pub dim_2: f32,
     pub pos: Point2::<f32>,
     pub vel: Vector2::<f32>,
+    pub collision_category: CollisionCategory,
+    pub collision_mask: Vec::<CollisionCategory>,
 }
 
 impl Collision {
@@ -35,119 +41,67 @@ impl Collision {
             shape: CollisionShape::Circle(32.0),
             mass: 1.0,
             friction: 0.05,
+            density: 1.0,
+            restitution: 0.25,
             body_handle: None,
             dim_1: 1.0,
             dim_2: 1.0,
             pos: Point2::new(0.0,0.0),
             vel: Vector2::new(0.0,0.0),
+            collision_category: CollisionCategory::Level,
+            collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
         }
     }
-    pub fn new_specs(m: f32, f: f32) -> Collision {
+    pub fn new_specs(density: f32, restitution: f32, dim_1: f32, dim_2: f32) -> Collision {
         Collision {
             shape: CollisionShape::Circle(32.0),
-            mass: m,
-            friction: f,
-            body_handle: None,
-            dim_1: 1.0,
-            dim_2: 1.0,
-            pos: Point2::new(0.0,0.0),
-            vel: Vector2::new(0.0,0.0),
-        }
-    }
-    pub fn new_circle(radius: f32) -> Collision {
-        Collision {
-            shape: CollisionShape::Circle(radius),
             mass: 1.0,
-            friction: 0.05,
+            friction: 0.0,
+            density: density,
+            restitution: restitution,
             body_handle: None,
-            dim_1: 1.0,
-            dim_2: 1.0,
+            dim_1: dim_1,
+            dim_2: dim_2,
             pos: Point2::new(0.0,0.0),
             vel: Vector2::new(0.0,0.0),
+            collision_category: CollisionCategory::Level,
+            collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
         }
     }
-    pub fn new_square(radius: f32) -> Collision {
-        Collision {
-            shape: CollisionShape::Square(radius),
-            mass: 1.0,
-            friction: 0.05,
-            body_handle: None,
-            dim_1: 1.0,
-            dim_2: 1.0,
-            pos: Point2::new(0.0,0.0),
-            vel: Vector2::new(0.0,0.0),
-        }
-    }
-
 
     // Create the physics body as a static body
-    pub fn create_static_body(&mut self, world: &mut World, physics_world: &mut PhysicsWorld) {
+    pub fn create_static_body(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_static_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
-            self.dim_1, self.dim_2);
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask);
 
         self.body_handle = Some(body_handle);
     }
 
     // Create the physics body as a dynamic body
-    pub fn create_dynamic_body(&mut self, world: &mut World, physics_world: &mut PhysicsWorld) {
+    pub fn create_dynamic_body_box(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_dynamic_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
-            self.dim_1, self.dim_2);
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask);
 
         self.body_handle = Some(body_handle);
     }
 
-    // example to get info from physics body
-    pub fn get_physics_body_mass(&self, physics_world: &mut PhysicsWorld) -> f32 {
-        let body_handle = self.body_handle.unwrap();
-        let body = physics_world.body(body_handle);
-
-        let mass = body.mass();
+    // Create the physics body as a dynamic body
+    pub fn create_dynamic_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
         
-        mass
+        let body_handle = physics::add_dynamic_body_circle(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask);
+
+        self.body_handle = Some(body_handle);
     }
 
     pub fn update_body(&mut self, physics_world: &mut PhysicsWorld, character: &mut CharacterDisplayComponent) {
         if let Some(body_handle) = self.body_handle {
             let mut body = physics_world.body_mut(body_handle);
 
+            // have character handle applying inputs to collision body
             character.apply_collision(&mut body);
-
-            // let move_amt = 1000.0;
-            // if character.going_right {
-            //     //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-                
-            //     body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: -10.0}, true);
-            //     println!("applied right force");
-            // }
-            // if character.going_left {
-            //     //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            //     body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
-            //     println!("applied left force");
-            // }
-            // if character.going_up {
-            //     //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            //     body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt}, true);
-            //     println!("applied up force");
-            // }
-            // if character.going_down {
-            //     //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            //     body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt}, true);
-            //     println!("applied down force");
-            // }
-
-            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            
-            //body.apply_force_to_center(&new_lin_vel, true);
-            // if new_lin_vel.x != 0.0 || new_lin_vel.y != 0.0 {
-            //      body.set_linear_velocity(&new_lin_vel);
-            // }
-            //let curr_pos = physics::get_pos(body.position());
-            //self.pos.x = curr_pos.x;
-            //self.pos.y = curr_pos.y;        
-    
-            //println!("New position: {}, {}, new velocity: {}, {}", &self.pos.x, &self.pos.y, &new_lin_vel.x, &new_lin_vel.y);
         }
     }
 

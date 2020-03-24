@@ -1,7 +1,9 @@
 use std::fmt;
 use ggez::{Context,GameResult};
 use ggez::nalgebra as na;
-use specs::{ Component,Entity, VecStorage, World, WorldExt};
+use specs::{ Component,Entity, DenseVecStorage, VecStorage, World, WorldExt};
+
+use specs_derive::*;
 //use specs::shred::{Dispatcher};
 
 use crate::game_state::{GameState};
@@ -17,17 +19,19 @@ pub struct GridLoc {
     pub col: i32,
 }
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Copy,Clone,Component)]
+#[storage(VecStorage)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
 }
 
-impl Component for Position {
-    type Storage = VecStorage<Self>;
-}
+// impl Component for Position {
+//     type Storage = VecStorage<Self>;
+// }
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug,Copy,Clone,Component)]
+#[storage(DenseVecStorage)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,
@@ -35,9 +39,9 @@ pub struct Velocity {
     pub frozen: bool,
 }
 
-impl Component for Velocity {
-    type Storage = VecStorage<Self>;
-}
+// impl Component for Velocity {
+//     type Storage = VecStorage<Self>;
+// }
 
 //pub type draw_fn = fn(game_state: &mut GameState, entity: &Entity, ctx: &mut Context) -> GameResult<()>;
 
@@ -60,7 +64,8 @@ impl fmt::Debug for DisplayCompType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Component)]
+#[storage(VecStorage)]
 pub struct DisplayComp {
     pub circle: bool,
     pub display_type: DisplayCompType,
@@ -72,15 +77,21 @@ impl DisplayComp {
     }
 
 }
-impl Component for DisplayComp {
-    type Storage = VecStorage<Self>;
-}
+// impl Component for DisplayComp {
+//     type Storage = VecStorage<Self>;
+// }
 
 
 pub trait RenderTrait {    
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>);
 }
 
+
+impl RenderTrait for &dyn RenderTrait {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>) {
+
+    }
+}
 
 // Register all possible components for world
 pub fn register_components(world: &mut World) {

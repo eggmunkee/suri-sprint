@@ -11,7 +11,7 @@ use crate::components::collision::{Collision};
 use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
 use crate::systems::*;
-use crate::physics::{PhysicsWorld};
+use crate::physics::{PhysicsWorld,CollisionCategory};
 
 pub struct PlatformBuilder;
 
@@ -20,12 +20,17 @@ impl PlatformBuilder {
         width: f32, height: f32) -> Entity {
 
 
-        let mut collision = Collision::new_specs(75.0,0.02);
-        collision.dim_1 = width;
-        collision.dim_2 = height;
+        let mut collision = Collision::new_specs(5.0,0.72, width, height);
+        // collision.dim_1 = width;
+        // collision.dim_2 = height;
         collision.pos.x = x;
         collision.pos.y = y;
-        collision.create_static_body(world, physics_world);
+        collision.collision_category = CollisionCategory::Level;
+        collision.collision_mask.clear();
+        collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Ghost);
+
+        collision.create_static_body(physics_world);
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })

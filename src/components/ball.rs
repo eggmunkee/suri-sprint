@@ -8,10 +8,11 @@ use specs::{Component, DenseVecStorage, World, WorldExt};
 use rand::prelude::*;
 
 //use crate::game_state::{GameState};
+use crate::resources::{ImageResources};
 
 #[derive(Debug)]
 pub struct BallDisplayComponent {
-    pub image: Image, // component owns image
+    //pub image: Image, // component owns image
     pub path: String,
     pub flash: bool,
     //pub debug_font: graphics::Font,
@@ -22,7 +23,8 @@ impl Component for BallDisplayComponent {
 
 impl BallDisplayComponent {
     pub fn new(ctx: &mut Context, char_img: &String, flash: bool) -> BallDisplayComponent {
-        let image = Image::new(ctx, char_img.clone()).unwrap();
+        
+        //let image = Image::new(ctx, char_img.clone()).unwrap();
 
         //let font = graphics::Font::new(ctx, "/FreeMonoBold.ttf").unwrap();        
         // let text = graphics::Text::new((format!("#{}", &entity.id()), font, 14.0));
@@ -35,7 +37,7 @@ impl BallDisplayComponent {
         // }
         
         BallDisplayComponent {
-            image: image,
+            //image: image,
             path: char_img.clone(),
             flash: flash
         }
@@ -74,27 +76,33 @@ impl BallDisplayComponent {
 // }
 
 impl super::RenderTrait for BallDisplayComponent {
-    fn draw(&self, ctx: &mut Context, _world: &World, _ent: Option<u32>, pos: na::Point2::<f32>) {
+    fn draw(&self, ctx: &mut Context, world: &World, _ent: Option<u32>, pos: na::Point2::<f32>) {
         //println!("BallRender...");
         let mut rng = rand::thread_rng();
 
-        
+        let mut images = world.fetch_mut::<ImageResources>();
+        let mut texture_ref = images.image_ref(self.path.clone());
 
         let mut _draw_ok = true;
-        let w = self.image.width();
-        let h = self.image.height();
         // get centered draw position based on image dimensions
         //let draw_pos = na::Point2::<f32>::new(pos.x - (w as f32 / 2.0), pos.y - (h as f32 / 2.0));
         let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-        if let Err(_) = ggez::graphics::draw(ctx, &self.image, (
-                    draw_pos.clone(),
-                    0.0f32, //rotation
-                    na::Point2::new(0.5f32,0.5f32),
-                    na::Vector2::new(1.0f32,1.0f32),
-                    Color::new(1.0,1.0,1.0,1.0))) { // add back x/y pos  //
-            _draw_ok = false;
-            println!("Failed to render ball image");
+        if let Ok(texture) = texture_ref {
+            let w = texture.width();
+            let h = texture.height();
+            if let Err(_) = ggez::graphics::draw(ctx, texture, (
+                        draw_pos.clone(),
+                        0.0f32, //rotation
+                        na::Point2::new(0.5f32,0.5f32),
+                        na::Vector2::new(1.0f32,1.0f32),
+                        Color::new(1.0,1.0,1.0,1.0))) { // add back x/y pos  //
+                _draw_ok = false;
+                println!("Failed to render ball image");
+            }
+        }
+        else {
+            println!("Couldn't get texture: {}", &self.path);
         }
 
         // if let Some(entity_id) = ent {

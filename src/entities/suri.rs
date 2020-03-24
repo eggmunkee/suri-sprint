@@ -5,29 +5,52 @@ use ggez::nalgebra as na;
 use specs::{Builder,Entity,EntityBuilder,World,WorldExt};
 
 use crate::game_state::{GameState};
-use crate::resources::{GameStateResource};
+use crate::resources::{GameStateResource,ImageResources};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::collision::{Collision};
 use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
 use crate::systems::*;
-use crate::physics::{PhysicsWorld};
+use crate::physics::{PhysicsWorld,CollisionCategory};
 
 pub struct SuriBuilder;
 
 impl SuriBuilder {
+
+    pub fn get_sprite_paths() -> Vec<String> {
+        vec!["/suri-1-r.png".to_string()]
+    }
+
+    pub fn init_images(world: &mut World, ctx: &mut Context, paths: &Vec<String>) {
+        if let Some(mut images) = world.get_mut::<ImageResources>() {
+
+            for path in paths {
+                let has_image = images.has_image(path.clone());
+                if !has_image {
+                    images.load_image(path.clone(), ctx);
+                }
+            }
+            
+        }
+    }
+
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
 
+        ImageResources::init_images(world, ctx, &Self::get_sprite_paths());
 
         let mut player_comp = PlayerComponent::new();
         player_comp.player_name.clear();
         player_comp.player_name.push_str("Noah");
 
-        let mut collision = Collision::new_specs(25.0,0.02);
-        collision.dim_1 = 22.0;
-        collision.dim_2 = 22.0;
+        let mut collision = Collision::new_specs(3.0,0.001, 18.0, 18.0);
+        //collision.dim_1 = 18.0;
+        //collision.dim_2 = 18.0;
         collision.pos.x = x;
         collision.pos.y = y;
-        collision.create_dynamic_body(world, physics_world);
+        collision.collision_category = CollisionCategory::Player;
+        collision.collision_mask.clear();
+        collision.collision_mask.push(CollisionCategory::Level);
+
+        collision.create_dynamic_body_box(physics_world);
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })

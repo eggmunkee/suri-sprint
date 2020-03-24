@@ -5,6 +5,7 @@ use ggez::event::{KeyCode,KeyMods};
 use specs::{World, WorldExt};
 
 use crate::resources::{InputResource,WorldAction};
+use crate::entities::meow::{MeowBuilder};
 
 #[derive(Debug)]
 pub enum MouseInput {
@@ -95,7 +96,10 @@ impl InputMap {
                 },
                 InputKey::SpaceAction => {
                     let mut input = world.fetch_mut::<InputResource>();
-                    input.set_jump(true);
+                    input.set_fire(true);
+                    drop(input);
+
+                    //MeowBuilder::build(world, ctx, physics_world);
                 },
                 InputKey::Exit => {
                     ggez::event::quit(ctx);
@@ -131,7 +135,7 @@ impl InputMap {
                 },
                 InputKey::SpaceAction => {
                     let mut input = world.fetch_mut::<InputResource>();
-                    input.set_jump(false);
+                    input.set_fire(false);
                 },
                 // InputKey::AddCircle => {
                 //     let mut input = world.fetch_mut::<InputResource>();

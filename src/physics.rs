@@ -20,11 +20,44 @@ pub type PhysicsBodyType = b2::BodyType;
 pub type PhysicsBodyHandle = b2::BodyHandle;
 pub type PhysicsVec = b2::Vec2;
 
-pub const WORLD_SCALE : f32 = 10.0;
+pub const WORLD_SCALE : f32 = 50.0;
+
+#[derive(Copy,Clone,Debug)]
+pub enum CollisionCategory {
+    Level = 1,
+    Player = 2,
+    Ghost = 4,
+    Meow = 8,
+}
+
+// Trait for making an object a u16 bit value
+pub trait CollisionBit {
+    fn to_bits(&self) -> u16;
+}
+
+// converting collision category to bits
+impl CollisionBit for CollisionCategory {
+    fn to_bits(&self) -> u16 {
+        *self as u16
+    }
+}
+
+// converting vec of categories to bits by OR-ing
+impl CollisionBit for Vec::<CollisionCategory> {
+    fn to_bits(&self) -> u16 {
+        //let vec = *self;
+        let mut combined = 0u16;
+        for &category in self {
+            combined |= category.to_bits();
+        }
+        combined
+    }
+}
+
 
 pub fn create_physics_world() -> PhysicsWorld {
 
-    let gravity = PhysicsVec { x: 0.0, y: 50.0};
+    let gravity = PhysicsVec { x: 0.0, y: 25.0};
     let world = PhysicsWorld::new(&gravity);
 
     world
@@ -53,11 +86,14 @@ pub fn get_size(phys_size: f32) -> f32 {
     phys_size * WORLD_SCALE
 }
 
-pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32) 
+pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
+    density: f32, restitution: f32,
+    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>) 
         -> b2::BodyHandle {
     let def = b2::BodyDef {
         body_type: PhysicsBodyType::Dynamic,
         position: self::create_pos(pos),
+        linear_damping: 0.8,        
         .. b2::BodyDef::new()
     };
     
@@ -70,10 +106,20 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
     // HOW TO DO CIRCLE SHAPE FIXTURE
     //let shape = b2::CircleShape::new_with(PhysicsVec { x: 0.0, y: 0.0 }, create_size(body_width));
     
+    // let mut mask_bits = 0u16;
+    // for &category in collision_mask {
+    //     mask_bits |= category.to_bits();
+    // }
+
     //let fixture_handle = body.create_fast_fixture(&shape, 2.);
     let mut fixture_def = b2::FixtureDef {
-        density: 2.0,
-        restitution: 0.05,
+        density: density,
+        restitution: restitution,
+        filter: b2::Filter {
+            category_bits: collision_category.to_bits(),
+            mask_bits: collision_mask.to_bits(),
+            group_index: 0,
+        },
         .. b2::FixtureDef::new()
     };
 
@@ -84,7 +130,46 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
 }
 
 
-pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32) 
+pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_radius: f32,
+        density: f32, restitution: f32,
+        collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>)  
+        -> b2::BodyHandle {
+    let def = b2::BodyDef {
+        body_type: PhysicsBodyType::Dynamic,
+        position: self::create_pos(pos),
+        linear_damping: 0.8,
+        .. b2::BodyDef::new()
+    };
+    
+    // create body - getting handle
+    let b_handle = world.create_body(&def);
+    // get mut ref to body
+    let mut body = world.body_mut(b_handle);
+    
+    let shape = b2::CircleShape::new_with(PhysicsVec { x: 0.0, y: 0.0 }, create_size(body_radius));
+    
+    //let fixture_handle = body.create_fast_fixture(&shape, 2.);
+    let mut fixture_def = b2::FixtureDef {
+        density: 2.0,
+        restitution: 0.05,
+        filter: b2::Filter {
+            category_bits: collision_category.to_bits(),
+            mask_bits: collision_mask.to_bits(),
+            group_index: 0,
+        },
+        .. b2::FixtureDef::new()
+    };
+
+    let fixture_handle = body.create_fixture(&shape, &mut fixture_def);
+    let fixture = body.fixture(fixture_handle);
+
+    b_handle
+}
+
+
+pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
+        density: f32, restitution: f32,
+        collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>) 
         -> b2::BodyHandle {
     let mut def = b2::BodyDef {
         body_type: b2::BodyType::Static,
@@ -102,6 +187,11 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
     let mut fixture_def = b2::FixtureDef {
         density: 5.0,
         restitution: 0.05,
+        filter: b2::Filter {
+            category_bits: collision_category.to_bits(),
+            mask_bits: collision_mask.to_bits(),
+            group_index: 0,
+        },
         .. b2::FixtureDef::new()
     };
     
@@ -111,25 +201,24 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
     b_handle
 }
 
+// Handle any component state which affects the physics - ex. player input applied forces
+fn pre_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
+    let mut phys_writer = world.write_storage::<Collision>();
+    let mut char_writer = world.write_storage::<CharacterDisplayComponent>();
+    let entities = world.entities();
+
+    // Make sure collision body has update itself from game loop
+    for (mut collision, mut character, ent) in (&mut phys_writer, &mut char_writer, &entities).join() {
+        
+        // update collision body from character
+        collision.update_body(physics_world, character);
+
+    }
+}
 
 pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
 
-    {
-
-        let mut phys_writer = world.write_storage::<Collision>();
-        let mut char_writer = world.write_storage::<CharacterDisplayComponent>();
-        let entities = world.entities();
-
-        // Make sure collision body has update itself from game loop
-        for (mut collision, mut character, ent) in (&mut phys_writer, &mut char_writer, &entities).join() {
-            
-            // update collision body from character
-            collision.update_body(physics_world, character);
-
-        }
-
-    }
-
+    self::pre_advance_physics(world, physics_world, delta_seconds);
 
     //println!("Running physics engine... delta={}", delta_seconds);
     // update the physics world
@@ -146,24 +235,24 @@ pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
         }
     }
 
+    self::post_advance_physics(world, physics_world, delta_seconds);
 
-    {
-
-        let mut phys_writer = world.write_storage::<Collision>();
-        let mut pos_writer = world.write_storage::<Position>();
-        let entities = world.entities();
-
-        // Update collision components after physics runs
-        for (mut collision, mut pos, ent) in (&mut phys_writer, &mut pos_writer, &entities).join() {
-            collision.update_component(physics_world);
-            // update position from collision position
-            pos.x = collision.pos.x;
-            pos.y = collision.pos.y;
-        }
-
-    }
 }
 
+// Handle physics changes by updating component state
+fn post_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
+    let mut phys_writer = world.write_storage::<Collision>();
+    let mut pos_writer = world.write_storage::<Position>();
+    let entities = world.entities();
+
+    // Update collision components after physics runs
+    for (mut collision, mut pos, ent) in (&mut phys_writer, &mut pos_writer, &entities).join() {
+        collision.update_component(physics_world);
+        // update position from collision position
+        pos.x = collision.pos.x;
+        pos.y = collision.pos.y;
+    }
+}
 
 // let gravity = b2::Vec2 { x: 0., y: -10. };
 // let world = b2::World::<NoUserData>::new(&gravity);

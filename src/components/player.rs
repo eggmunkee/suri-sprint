@@ -7,6 +7,7 @@ use specs::{ Component, DenseVecStorage, World, WorldExt };
 use rand::prelude::*;
 
 //use crate::game_state::{GameState};
+use crate::resources::{ImageResources};
 use crate::components::collision::{Collision};
 use crate::components::{Velocity};
 use crate::physics;
@@ -46,7 +47,7 @@ impl PlayerComponent {
 
 #[derive(Debug)]
 pub struct CharacterDisplayComponent {
-    pub image: Image, // component owns image
+    //pub image: Image, // component owns image
     pub path: String,
     pub going_left: bool,
     pub going_right: bool,
@@ -69,7 +70,7 @@ impl CharacterDisplayComponent {
         let image = Image::new(ctx, char_img.clone()).unwrap();
 
         CharacterDisplayComponent {
-            image: image,
+            //image: image,
             path: char_img.clone(),
             going_left: false,
             going_right: false,
@@ -171,22 +172,28 @@ impl CharacterDisplayComponent {
     }
 
     pub fn apply_collision(&mut self, body: &mut physics::PhysicsBody) {
-        let move_amt = 1300.0;
+        let move_amt = 25.0; //1300.0;
         let up_mult = 5.0;
         if self.going_right {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            if body.linear_velocity().x < 10.0 {
+                body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+            }
             
-            body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
             //println!("applied right force");
         }
         if self.going_left {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
-            //println!("applied left force");
+            if body.linear_velocity().x > -10.0 {
+                body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
+            }
+                //println!("applied left force");
         }
         if self.going_up {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
+            if body.linear_velocity().y > -10.0 {
+                body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
+            }
             //println!("applied up force");
         }
         if self.going_down {
@@ -318,12 +325,10 @@ impl CharacterDisplayComponent {
 // }
 
 impl super::RenderTrait for CharacterDisplayComponent {
-    fn draw(&self, ctx: &mut Context, _world: &World, _ent: Option<u32>, pos: na::Point2::<f32>) {
+    fn draw(&self, ctx: &mut Context, world: &World, _ent: Option<u32>, pos: na::Point2::<f32>) {
         //println!("PlayerRenderTrait drawing...");
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;
-        let w = self.image.width();
-        let h = self.image.height();
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
         let breath_scale = 1.5 + self.breath_cycle.cos() * 0.02;
         let breath_y_offset = self.breath_cycle.cos() * -0.3;
@@ -401,16 +406,26 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 x_scale = -x_scale;
             }
 
-            let text_pos = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
-            if let Err(_) = ggez::graphics::draw(ctx, &self.image, 
-                DrawParam::default().dest(text_pos)
-                .scale(na::Vector2::new(x_scale,breath_scale))
-                .offset(na::Point2::new(0.5,0.5))
-                .rotation(self_rot)
-            ) {
-                //(draw_pos.clone(),)) { // add back x/y pos  //
-                _draw_ok = false;
+            let mut image_resources = world.fetch_mut::<ImageResources>();
+            let mut image_ref = image_resources.image_ref(self.path.clone());
+            if let Ok(image) = image_ref {
+                let w = image.width();
+                let h = image.height();
+        
+                let text_pos = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
+                if let Err(_) = ggez::graphics::draw(ctx, image, 
+                    DrawParam::default().dest(text_pos)
+                    .scale(na::Vector2::new(x_scale,breath_scale))
+                    .offset(na::Point2::new(0.5,0.5))
+                    .rotation(self_rot)
+                ) {
+                    //(draw_pos.clone(),)) { // add back x/y pos  //
+                    _draw_ok = false;
+                }
             }
+
+
+            
 
             //println!("Entity {}, Circle pos: {:?}", ent.id(), pos);
             // if let Err(_) = graphics::draw(ctx, &rect, (na::Point2::new(pos.x+self.eye_curr_x, pos.y+self.eye_curr_y),

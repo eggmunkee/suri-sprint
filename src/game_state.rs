@@ -23,7 +23,7 @@ use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::{Position};
 use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
-use crate::systems::{InterActorSys};
+use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
 //use crate::resources::{ImageResources};
 use crate::physics;
@@ -40,11 +40,11 @@ pub enum State {
 //impl Copy for State
 
 // Main game state struct
-pub struct GameState<'a> {
+pub struct GameState {
     pub current_state: State,
     pub window_w: f32,
     pub window_h: f32,
-    pub dispatcher: Dispatcher<'a,'a>,
+    //pub dispatcher: Dispatcher<'a,'a>,
     pub world: World,
     pub font: graphics::Font,
     pub phys_world: PhysicsWorld,
@@ -53,8 +53,8 @@ pub struct GameState<'a> {
     pub paused_text: graphics::Text,
 }
 
-impl<'a> GameState<'a> {
-    pub fn new(ctx: &mut Context, window_mode: WindowMode) -> GameResult<GameState<'a>> {
+impl GameState {
+    pub fn new(ctx: &mut Context, window_mode: WindowMode) -> GameResult<GameState> {
 
         // Create physics world to place in game state resource
         let mut physics_world = physics::create_physics_world();
@@ -80,7 +80,7 @@ impl<'a> GameState<'a> {
             current_state: State::Running,
             window_w: win_w,
             window_h: win_h,
-            dispatcher: create_dispatcher(), 
+            //dispatcher: create_dispatcher(), 
             world: ecs_world,
             font: font,
             phys_world: physics_world,
@@ -147,7 +147,7 @@ impl<'a> GameState<'a> {
     // }
 }
 
-impl<'a> GameState<'a> {
+impl GameState {
     #[allow(dead_code)]
     pub fn pause(&mut self) {
         let curr_st = self.current_state;
@@ -166,7 +166,7 @@ impl<'a> GameState<'a> {
     }
 }
 
-impl<'a> event::EventHandler for GameState<'a> {
+impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
 
         let delta_s = ggez::timer::duration_to_f64(ggez::timer::delta(ctx)) as f32;
@@ -183,11 +183,18 @@ impl<'a> event::EventHandler for GameState<'a> {
                 game_res.delta_seconds = delta_s;
                 drop(game_res);
                 
-                let dispatcher = &mut self.dispatcher;  //create_dispatcher();
+                //let dispatcher = &mut self.dispatcher;  //create_dispatcher();
+
+                let mut input_sys = InputSystem::new();
+                input_sys.run_now(&world);
+                for m in &input_sys.meows {
+                    println!("Meow at {},{}", &m.x, &m.y);
+                }
+
                 // Call update on the world event dispatcher
-                dispatcher.dispatch(&world);
+                //dispatcher.dispatch(&world);
                 // Update the world state after dispatch changes
-                world.maintain();
+                //world.maintain();
 
 
                 //let physics_world = &mut self.phys_world;
