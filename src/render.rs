@@ -11,7 +11,7 @@ use rand::prelude::*;
 
 //use crate::resources::{ImageResources};
 use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
-use crate::components::sprite::{SpriteComponent};
+use crate::components::sprite::{SpriteComponent,SpriteLayer};
 use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
 use crate::game_state::{GameState,State};
@@ -34,7 +34,8 @@ impl Renderer {
         
         graphics::clear(ctx, [0.15, 0.21, 0.3, 1.0].into());
 
-        let mut render_objects : Vec<(u32,na::Point2<f32>)> = vec![];
+        let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
+        let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
         
         // BUILD RENDER OBJECTS LIST -----------------------------------------------------------------
         {
@@ -49,12 +50,21 @@ impl Renderer {
             for (opt_sprite_disp,opt_char_disp,opt_ball_disp,pos,ent) in 
                 ((&sprite_disp).maybe(), (&char_disp).maybe(),(&ball_disp).maybe(),&pos,&entities).join() {
                 // Check for any of the display components
+                let mut z_order = 1.0;
                 let has_display_comp = match opt_ball_disp {
                     Some(_) => true,
                     _ => match opt_char_disp {
-                        Some(_) => true,
+                        Some(_) => {
+                            player_offset.x = -pos.x;
+                            player_offset.y = -pos.y;
+                            z_order = SpriteLayer::Player.to_z();
+                            true
+                        },
                         _ => match opt_sprite_disp {
-                            Some(_) => true,
+                            Some(sprite) => {
+                                z_order = sprite.z_order;
+                                true
+                            },
                             _ => false
                         }
                     }
@@ -63,7 +73,7 @@ impl Renderer {
                 // If any display component found, add to render objs list
                 if has_display_comp {
                     render_objects.push(
-                        (ent.id(),na::Point2::new(pos.x, pos.y))
+                        (ent.id(),na::Point2::new(pos.x, pos.y), z_order)
                     )
     
                 }
@@ -75,16 +85,35 @@ impl Renderer {
         // ORDER RENDER OBJECTS -----------------------------------------------------------------
         // TODO: implement Z-ordering here
         // remove first render object - the player
-        let r0 = render_objects.remove(0);
+        //let r0 = render_objects.remove(0);
         // reverse order, so first are drawn last
         render_objects.reverse();
         // add player render object to end - drawn very last
-        render_objects.push(r0);
+        //render_objects.push(r0);
+
+        render_objects.sort_by(|a,b| {
+            let by = &b.2;
+            let ay = &a.2;
+
+            if ay < by {
+                std::cmp::Ordering::Less
+            }
+            else if ay > by {
+                std::cmp::Ordering::Greater
+            }
+            else {
+                std::cmp::Ordering::Equal
+            }
+        });
+
+        // });
 
         let render_count = render_objects.len();
 
+        Self::pre_render_list(ctx, world, &player_offset);
+
         // RENDER OBJECT LIST -----------------------------------------------------------------
-        for (ent, pt) in render_objects.iter() {
+        for (ent, pt, _) in render_objects.iter() {
             // Get entity by id
             let entity = game_state.world.entities().entity(ent.clone());
             // If entity is still alive, render it
@@ -93,6 +122,8 @@ impl Renderer {
                 Self::call_renderer(ctx, world, entity, pt);
             }
         }
+
+        Self::post_render_list(ctx, world);
 
         // RENDER UI --------------------------------------------------------------------------
         match &game_state.current_state {
@@ -172,6 +203,23 @@ impl Renderer {
                 res.draw(ctx, &world, Some(entity.id()), pt.clone());
             }
         }
+    }
+
+    fn pre_render_list(ctx: &mut Context, world: &World, offset: &na::Point2<f32>) {
+        let (width, height) = ggez::graphics::size(ctx);
+        //let 
+        let dp = DrawParam::new().dest(na::Point2::new(offset.x + (width / 2.0), offset.y + (height / 2.0)));
+        let transform = dp.to_matrix();
+        graphics::push_transform(ctx, Some(transform));
+
+        graphics::apply_transformations(ctx);
+
+    }
+
+    fn post_render_list(ctx: &mut Context, world: &World) {
+
+        graphics::pop_transform(ctx);
+        graphics::apply_transformations(ctx);
     }
 
 }

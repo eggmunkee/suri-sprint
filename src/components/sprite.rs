@@ -12,25 +12,40 @@ use rand::prelude::*;
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 
+#[derive(Copy,Clone,Debug)]
+pub enum SpriteLayer {
+    World = 10,
+    Entities = 100,
+    Player = 200,
+    UI = 1000
+}
+
+impl SpriteLayer {
+    pub fn to_z(&self) -> f32 {
+        let l : i32 = *self as i32;
+        l as f32
+    }
+}
+
+
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
 pub struct SpriteComponent {
     //pub image: Image, // component owns image
     pub path: String,
     pub scale: na::Vector2::<f32>,
+    pub z_order: f32,
     //pub debug_font: graphics::Font,
 }
-// impl Component for SpriteComponent {
-//     type Storage = DenseVecStorage<Self>;
-// }
 
 impl SpriteComponent {
-    pub fn new(ctx: &mut Context, char_img: &String) -> SpriteComponent {
+    pub fn new(ctx: &mut Context, char_img: &String, z_order: f32) -> SpriteComponent {
         
         SpriteComponent {
             //image: image,
             path: char_img.clone(),
             scale: na::Vector2::new(1.0,1.0),
+            z_order: z_order,
         }
     
         

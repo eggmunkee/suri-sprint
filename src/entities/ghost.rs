@@ -1,6 +1,7 @@
 use ggez::{Context};
 use specs::{Builder,Entity,World,WorldExt};
 
+use crate::components::sprite::*;
 use crate::components::{Position, Velocity, DisplayComp, DisplayCompType};
 use crate::components::ball::*;
 use crate::components::collision::{Collision};
@@ -37,7 +38,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(BallDisplayComponent::new(ctx, &"/ghost-1-r.png".to_string(), true))
+        .with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         //.with(Collision::new_circle(20.0))
         .build()
     }
@@ -50,7 +51,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: true })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
+        .with(SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), SpriteLayer::Entities.to_z()))
         //.with(Collision::new_circle(20.0))
         .build()
     }
@@ -76,7 +77,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(BallDisplayComponent::new(ctx, &"/ghost-1-r.png".to_string(), false))
+        .with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)
         .build()
     }
@@ -100,7 +101,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: true })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(BallDisplayComponent::new(ctx, &"/ghost-1-r.png".to_string(), false))
+        .with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)       //Collision::new_circle(20.0))
         .build()
     }

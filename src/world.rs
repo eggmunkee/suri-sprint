@@ -5,6 +5,7 @@ use rand::prelude::*;
 
 use crate::resources::{add_resources,GameStateResource};
 use crate::components::{register_components}; // Position, Velocity,
+use crate::components::sprite::{SpriteLayer};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::suri::{SuriBuilder};
 use crate::entities::ghost::{GhostBuilder};
@@ -23,10 +24,10 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
 
     UIBuilder::build_icon(world, ctx);
 
-    PlatformBuilder::build(world, ctx, physics_world, 500.0, 0.0, 1000.0, 5.0);
-    PlatformBuilder::build(world, ctx, physics_world, 0.0, 400.0, 5.0, 900.0);
-    PlatformBuilder::build(world, ctx, physics_world, 500.0, 800.0, 1000.0, 5.0);
-    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 400.0, 5.0, 900.0);
+    PlatformBuilder::build(world, ctx, physics_world, 500.0, 0.0, 1000.0, 5.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 0.0, 400.0, 5.0, 900.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 500.0, 800.0, 1000.0, 5.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 400.0, 5.0, 900.0, SpriteLayer::World.to_z());
 
     SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
 
@@ -46,7 +47,7 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
         }
         else {
             if i % 2 == 0 {
-                PlatformBuilder::build(world, ctx, physics_world, x, y, 25.0, 25.0);
+                PlatformBuilder::build(world, ctx, physics_world, x, y, 25.0, 25.0, SpriteLayer::World.to_z());
             }
             else {
                 GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 20.0, 20.0);

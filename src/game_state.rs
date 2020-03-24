@@ -22,6 +22,7 @@ use wrapped2d::user_data::NoUserData;
 use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::{Position};
 use crate::components::collision::{Collision};
+use crate::components::sprite::{SpriteLayer};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
@@ -313,7 +314,7 @@ impl event::EventHandler for GameState {
             let test : u16 = rng.gen::<u16>();
             if test % 5 == 0 {
                 crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0,
-                    50.0, 15.0);
+                    50.0, 15.0, SpriteLayer::Entities.to_z());
             }
             else {
                 crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,

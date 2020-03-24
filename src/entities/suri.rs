@@ -20,19 +20,6 @@ impl SuriBuilder {
         vec!["/suri-1-r.png".to_string()]
     }
 
-    pub fn init_images(world: &mut World, ctx: &mut Context, paths: &Vec<String>) {
-        if let Some(mut images) = world.get_mut::<ImageResources>() {
-
-            for path in paths {
-                let has_image = images.has_image(path.clone());
-                if !has_image {
-                    images.load_image(path.clone(), ctx);
-                }
-            }
-            
-        }
-    }
-
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
 
         ImageResources::init_images(world, ctx, &Self::get_sprite_paths());

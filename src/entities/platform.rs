@@ -23,11 +23,11 @@ impl PlatformBuilder {
     }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32) -> Entity {
+        width: f32, height: f32, z_order: f32,) -> Entity {
 
         ImageResources::init_images(world, ctx, &Self::get_sprite_paths());
 
-        let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string());
+        let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), z_order);
         sprite.scale.x = width / 25.0;
         sprite.scale.y = height / 25.0;
 
@@ -57,11 +57,11 @@ impl PlatformBuilder {
     }
 
     pub fn build_dynamic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32) -> Entity {
+        width: f32, height: f32, z_order: f32) -> Entity {
 
         ImageResources::init_images(world, ctx, &Self::get_sprite_paths());
 
-        let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string());
+        let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), z_order);
         sprite.scale.x = width / 25.0;
         sprite.scale.y = height / 25.0;
 
