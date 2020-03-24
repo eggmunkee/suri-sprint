@@ -30,6 +30,7 @@ pub struct Collision {
     pub dim_2: f32,
     pub pos: Point2::<f32>,
     pub vel: Vector2::<f32>,
+    pub angle: f32,
     pub collision_category: CollisionCategory,
     pub collision_mask: Vec::<CollisionCategory>,
 }
@@ -48,6 +49,7 @@ impl Collision {
             dim_2: 1.0,
             pos: Point2::new(0.0,0.0),
             vel: Vector2::new(0.0,0.0),
+            angle: 0.0,
             collision_category: CollisionCategory::Level,
             collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
         }
@@ -64,6 +66,7 @@ impl Collision {
             dim_2: dim_2,
             pos: Point2::new(0.0,0.0),
             vel: Vector2::new(0.0,0.0),
+            angle: 0.0,
             collision_category: CollisionCategory::Level,
             collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
         }
@@ -115,6 +118,8 @@ impl Collision {
             let curr_vel = body.linear_velocity();
             self.vel.x = curr_vel.x;
             self.vel.y = curr_vel.y;
+
+            self.angle = body.angle();
     
             //println!("New position: {}, {} Velocity: {}, {}", &self.pos.x, &self.pos.y, &self.vel.x, &self.vel.y);
         }

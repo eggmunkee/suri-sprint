@@ -311,9 +311,9 @@ impl event::EventHandler for GameState {
             let mut rng = rand::thread_rng();
 
             let test : u16 = rng.gen::<u16>();
-            if test % 2 == 0 {
+            if test % 5 == 0 {
                 crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0,
-                    25.0, 25.0);
+                    50.0, 15.0);
             }
             else {
                 crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,

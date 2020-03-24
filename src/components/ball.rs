@@ -8,6 +8,7 @@ use specs::{Component, DenseVecStorage, World, WorldExt};
 use rand::prelude::*;
 
 //use crate::game_state::{GameState};
+use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 
 #[derive(Debug)]
@@ -76,9 +77,20 @@ impl BallDisplayComponent {
 // }
 
 impl super::RenderTrait for BallDisplayComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, _ent: Option<u32>, pos: na::Point2::<f32>) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>) {
         //println!("BallRender...");
         let mut rng = rand::thread_rng();
+
+        let mut angle = 0.0;
+        if let Some(ent_id) = ent {
+            let collision_reader = world.read_storage::<Collision>();
+            let entity = world.entities().entity(ent_id);
+            if let Some(coll) = collision_reader.get(entity) {
+                angle = coll.angle;
+            }
+
+        }
+
 
         let mut images = world.fetch_mut::<ImageResources>();
         let mut texture_ref = images.image_ref(self.path.clone());
@@ -93,7 +105,7 @@ impl super::RenderTrait for BallDisplayComponent {
             let h = texture.height();
             if let Err(_) = ggez::graphics::draw(ctx, texture, (
                         draw_pos.clone(),
-                        0.0f32, //rotation
+                        angle, //rotation
                         na::Point2::new(0.5f32,0.5f32),
                         na::Vector2::new(1.0f32,1.0f32),
                         Color::new(1.0,1.0,1.0,1.0))) { // add back x/y pos  //

@@ -8,6 +8,7 @@ use crate::components::{register_components}; // Position, Velocity,
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::suri::{SuriBuilder};
 use crate::entities::ghost::{GhostBuilder};
+use crate::entities::ui::{UIBuilder};
 use crate::systems::*;
 use crate::systems::interactor::{InterActorSys};
 use crate::physics::{PhysicsWorld};
@@ -19,6 +20,8 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     const POSY_RANGE: f32 = 600.0;
     const VELX_RANGE: f32 = 95.0;
     const VELY_RANGE: f32 = 75.0;
+
+    UIBuilder::build_icon(world, ctx);
 
     PlatformBuilder::build(world, ctx, physics_world, 500.0, 0.0, 1000.0, 5.0);
     PlatformBuilder::build(world, ctx, physics_world, 0.0, 400.0, 5.0, 900.0);

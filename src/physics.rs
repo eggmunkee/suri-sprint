@@ -150,8 +150,8 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
     
     //let fixture_handle = body.create_fast_fixture(&shape, 2.);
     let mut fixture_def = b2::FixtureDef {
-        density: 2.0,
-        restitution: 0.05,
+        density: density,
+        restitution: restitution,
         filter: b2::Filter {
             category_bits: collision_category.to_bits(),
             mask_bits: collision_mask.to_bits(),
@@ -161,7 +161,7 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
     };
 
     let fixture_handle = body.create_fixture(&shape, &mut fixture_def);
-    let fixture = body.fixture(fixture_handle);
+    //let fixture = body.fixture(fixture_handle);
 
     b_handle
 }
@@ -185,8 +185,8 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
     let shape = b2::PolygonShape::new_box(create_size(body_width), create_size(body_height));
 
     let mut fixture_def = b2::FixtureDef {
-        density: 5.0,
-        restitution: 0.05,
+        density: density,
+        restitution: restitution,
         filter: b2::Filter {
             category_bits: collision_category.to_bits(),
             mask_bits: collision_mask.to_bits(),
@@ -196,7 +196,7 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
     };
     
     let fixture_handle = body.create_fixture(&shape, &mut fixture_def);
-    let fixture = body.fixture(fixture_handle);
+    //let fixture = body.fixture(fixture_handle);
 
     b_handle
 }
@@ -231,7 +231,9 @@ pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
 
         for (other_body, contact) in body.contacts() {
             
-            //println!("Contact");
+            if physics_world.body(other_body).body_type() == b2::BodyType::Static {
+                println!("Contact with static body {:?} by {:?}", &other_body, &body_handle); 
+            }
         }
     }
 

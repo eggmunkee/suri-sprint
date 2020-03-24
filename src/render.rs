@@ -11,6 +11,7 @@ use rand::prelude::*;
 
 //use crate::resources::{ImageResources};
 use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
+use crate::components::sprite::{SpriteComponent};
 use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
 use crate::game_state::{GameState,State};
@@ -42,15 +43,20 @@ impl Renderer {
             let entities = game_state.world.entities();
 
             // Get read storage for all display components
+            let sprite_disp = game_state.world.read_storage::<SpriteComponent>();
             let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
             let ball_disp = game_state.world.read_storage::<BallDisplayComponent>();
-            for (opt_char_disp,opt_ball_disp,pos,ent) in ((&char_disp).maybe(),(&ball_disp).maybe(),&pos,&entities).join() {
+            for (opt_sprite_disp,opt_char_disp,opt_ball_disp,pos,ent) in 
+                ((&sprite_disp).maybe(), (&char_disp).maybe(),(&ball_disp).maybe(),&pos,&entities).join() {
                 // Check for any of the display components
                 let has_display_comp = match opt_ball_disp {
                     Some(_) => true,
                     _ => match opt_char_disp {
                         Some(_) => true,
-                        _ => false
+                        _ => match opt_sprite_disp {
+                            Some(_) => true,
+                            _ => false
+                        }
                     }
                 };
 
@@ -153,6 +159,15 @@ impl Renderer {
             let ball_disp_comp = world.read_storage::<BallDisplayComponent>();
             let ball_disp_comp_res = ball_disp_comp.get(entity);
             if let Some(res) = ball_disp_comp_res {
+                //res.draw(ctx, &mut game_state.world, Some(ent.clone()), pt.clone());
+                res.draw(ctx, &world, Some(entity.id()), pt.clone());
+            }
+        }
+
+        {
+            let sprite_disp_comp = world.read_storage::<SpriteComponent>();
+            let sprite_disp_comp_res = sprite_disp_comp.get(entity);
+            if let Some(res) = sprite_disp_comp_res {
                 //res.draw(ctx, &mut game_state.world, Some(ent.clone()), pt.clone());
                 res.draw(ctx, &world, Some(entity.id()), pt.clone());
             }
