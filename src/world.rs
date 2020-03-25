@@ -1,11 +1,11 @@
 use ggez::{Context};
-use specs::{World, WorldExt}; // Builder, Component, ReadStorage, System, VecStorage, RunNow
+use specs::{World, WorldExt, Entity, Builder}; // Builder, Component, ReadStorage, System, VecStorage, RunNow
 use specs::shred::{Dispatcher, DispatcherBuilder};
 use rand::prelude::*;
 
 use crate::resources::{add_resources,GameStateResource};
-use crate::components::{register_components}; // Position, Velocity,
-use crate::components::sprite::{SpriteLayer};
+use crate::components::{Position, Velocity,register_components, DisplayComp, DisplayCompType}; // 
+use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::suri::{SuriBuilder};
 use crate::entities::ghost::{GhostBuilder};
@@ -23,6 +23,18 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     const VELY_RANGE: f32 = 375.0;
 
     UIBuilder::build_icon(world, ctx);
+
+    let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/pyramids".to_string());
+    // sprite.scale.x = 3.0;
+    // sprite.scale.y = 3.0;
+    sprite.z_order = SpriteLayer::BG.to_z();
+    
+    world.create_entity()
+        .with(Position { x: POSX_RANGE / 2.0, y: POSY_RANGE / 2.0 })
+        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        .with(sprite) //SpriteComponent::new(ctx, &sprite.pa, 1000.0))
+        //.with(Collision::new_circle(20.0))
+        .build();
 
     PlatformBuilder::build(world, ctx, physics_world, 1000.0, 0.0, 1000.0, 50.0, SpriteLayer::World.to_z());
     PlatformBuilder::build(world, ctx, physics_world, 0.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());

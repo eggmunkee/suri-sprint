@@ -7,16 +7,23 @@ use specs::{Component, DenseVecStorage, World, WorldExt};
 //use specs::shred::{Dispatcher};
 use specs_derive::*;
 use rand::prelude::*;
+use serde::{Deserialize,de::DeserializeOwned};
+
+// ================================
 
 //use crate::game_state::{GameState};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
+use crate::conf::*;
 
+#[allow(dead_code)]
 #[derive(Copy,Clone,Debug)]
 pub enum SpriteLayer {
-    World = 10,
-    Entities = 100,
-    Player = 200,
+    BG = 0,
+    BGNear = 50,
+    World = 100,
+    Entities = 300,
+    Player = 500,
     UI = 1000
 }
 
@@ -28,6 +35,45 @@ impl SpriteLayer {
 }
 
 
+#[derive(Debug,Default,Deserialize)]
+pub struct SpriteConfig {
+    pub spritesheet: bool,
+    pub path: String,
+    pub scale: (f32, f32),
+    pub z_order: f32,
+    pub alpha: f32,
+}
+
+impl SpriteConfig {
+
+    pub fn init_images(world: &mut World, ctx: &mut Context, path: String) {
+        if let Some(mut images) = world.get_mut::<ImageResources>() {
+
+            let has_image = images.has_image(path.clone());
+            if !has_image {
+                images.load_image(path.clone(), ctx);
+            }
+        }
+    }
+
+    pub fn create_from_config(world: &mut World, ctx: &mut Context, config_path: String) -> SpriteComponent {
+
+        let maybe_config = get_ron_config::<SpriteConfig>(config_path.to_string());
+
+        let config = maybe_config.expect(&format!("Invalid SpriteConfig at {}", &config_path));
+
+        Self::init_images(world, ctx, config.path.clone());
+
+        let mut sprite = SpriteComponent::new(ctx, &config.path, config.z_order);
+
+        sprite.scale.x = config.scale.0;
+        sprite.scale.y = config.scale.1;
+        sprite.alpha = config.alpha;
+
+        sprite
+    }
+}
+
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
 pub struct SpriteComponent {
@@ -35,6 +81,7 @@ pub struct SpriteComponent {
     pub path: String,
     pub scale: na::Vector2::<f32>,
     pub z_order: f32,
+    pub alpha: f32,
     //pub debug_font: graphics::Font,
 }
 
@@ -46,6 +93,7 @@ impl SpriteComponent {
             path: char_img.clone(),
             scale: na::Vector2::new(1.0,1.0),
             z_order: z_order,
+            alpha: 1.0,
         }
     
         
@@ -69,7 +117,7 @@ impl super::RenderTrait for SpriteComponent {
         }
 
         let mut images = world.fetch_mut::<ImageResources>();
-        let mut texture_ref = images.image_ref(self.path.clone());
+        let texture_ref = images.image_ref(self.path.clone());
 
         let mut _draw_ok = true;
         // get centered draw position based on image dimensions
@@ -84,7 +132,7 @@ impl super::RenderTrait for SpriteComponent {
                         angle, //rotation
                         na::Point2::new(0.5f32,0.5f32),
                         self.scale,
-                        Color::new(1.0,1.0,1.0,1.0))) { // add back x/y pos  //
+                        Color::new(1.0,1.0,1.0,self.alpha))) { 
                 _draw_ok = false;
                 println!("Failed to render ball image");
             }

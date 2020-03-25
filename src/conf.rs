@@ -1,6 +1,6 @@
 use ggez::{ContextBuilder};
 use ggez::conf::{WindowSetup,WindowMode,FullscreenType,NumSamples};
-use serde::Deserialize;
+use serde::{Deserialize,de::DeserializeOwned};
 use std::{ fs::File};
 use ron::de::from_reader;
 
@@ -11,21 +11,42 @@ pub struct ConfigData {
     pub window_mode: WindowMode,
 }
 
-pub fn get_ron_config() -> Option<ConfigData> {
-    let input_path = format!("{}/src/conf.ron", env!("CARGO_MANIFEST_DIR"));
-    let f = File::open(&input_path).expect("Failed opening file");
-    let config: ConfigData = match from_reader(f) {
-        Ok(x) => x,
-        Err(e) => {
-            println!("Failed to load config: {}", e);
+pub fn get_ron_config<'de,T>(config_path: String) -> Option<T> 
+    where T: DeserializeOwned
+{
+    let input_path = format!("{}/src/{}.ron", env!("CARGO_MANIFEST_DIR"), &config_path);
+    if let Ok(f) = File::open(&input_path) {
+        let config: T = match from_reader(f) {
+            Ok(x) => {
+                return Some(x);
+            },
+            Err(e) => {
+                return None;
+            }
+        };
+    } //.expect("Failed opening file");
 
-            std::process::exit(1);
-        }
+    //println!("Config data: {:?}", &config);
+
+    None
+}
+
+
+pub fn get_game_config() -> Option<ConfigData> {
+
+    let config_maybe = self::get_ron_config::<ConfigData>("conf".to_string());
+
+    let return_config = match config_maybe {
+        Some(config) => Some(config),
+        _ => Some(ConfigData {
+            window_setup: WindowSetup::default(),
+            window_mode: WindowMode::default(),
+        })
     };
 
-    println!("Config data: {:?}", &config);
+    println!("Config data: {:?}", &return_config);
 
-    Some(config)
+    return_config
 }
 
 // pub fn get_window_mode() -> WindowMode {

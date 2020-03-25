@@ -39,7 +39,7 @@ use crate::conf::*;
 // Do setup and start main event loop
 pub fn main() -> GameResult {
 
-    let config : ConfigData = get_ron_config().unwrap();
+    let config : ConfigData = get_game_config().unwrap();
     let win_title = config.window_setup.title.clone();
     //let win_setup = get_window_setup();
     let win_mode = config.window_mode.clone();

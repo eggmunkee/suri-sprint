@@ -33,33 +33,44 @@ impl GhostBuilder {
 
     pub fn build(world: &mut World, ctx: &mut Context, x: f32, y: f32, vx: f32, vy: f32) -> Entity {
 
-        Self::init_images(world, ctx);
+        //Self::init_images(world, ctx);
+
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/ghost".to_string());
+        sprite.z_order = SpriteLayer::Entities.to_z();
 
         world.create_entity()
         .with(Position { x: x, y: y })
         .with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
+        .with(sprite)
+        //.with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         //.with(Collision::new_circle(20.0))
         .build()
     }
 
     pub fn build_static(world: &mut World, ctx: &mut Context, x: f32, y: f32) -> Entity {
 
-        Self::init_images(world, ctx);
+        //Self::init_images(world, ctx);
+
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
+        sprite.z_order = SpriteLayer::Entities.to_z();
 
         world.create_entity()
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: true })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), SpriteLayer::Entities.to_z()))
+        .with(sprite) //SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), SpriteLayer::Entities.to_z()))
         //.with(Collision::new_circle(20.0))
         .build()
     }
 
     pub fn build_collider(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, vx: f32, vy: f32, m: f32, fric: f32, dim_1: f32, dim_2: f32) -> Entity {
 
-        Self::init_images(world, ctx);
+        //Self::init_images(world, ctx);
+
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/ghost".to_string());
+        sprite.z_order = SpriteLayer::Entities.to_z();
+
 
         let mut collision = Collision::new_specs(1.0,0.25, dim_1, dim_2);
         //collision.dim_1 = dim_1;
@@ -71,7 +82,7 @@ impl GhostBuilder {
         collision.collision_category = CollisionCategory::Ghost;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Player);
         collision.create_dynamic_body_circle(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
@@ -80,7 +91,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
+        .with(sprite) // SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)
         .build();
 
@@ -97,7 +108,10 @@ impl GhostBuilder {
 
     pub fn build_static_collider(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, m: f32, fric: f32, dim_1: f32, dim_2: f32) -> Entity {
 
-        Self::init_images(world, ctx);
+        //Self::init_images(world, ctx);
+
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/ghost".to_string());
+        sprite.z_order = SpriteLayer::Entities.to_z();
 
         let mut collision = Collision::new_specs(5.0,0.25, dim_1, dim_2);
         //collision.dim_1 = dim_1;
@@ -105,10 +119,11 @@ impl GhostBuilder {
         collision.pos.x = x;
         collision.pos.y = y;
         collision.angle = 0.0;
-        collision.collision_category = CollisionCategory::Level;
+        collision.collision_category = CollisionCategory::Ghost;
         collision.collision_mask.clear();
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
+        collision.create_static_body(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
 
@@ -116,7 +131,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: true })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
+        .with(sprite) //SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)       //Collision::new_circle(20.0))
         .build();
 

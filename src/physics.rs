@@ -266,7 +266,7 @@ pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
         let mut char_disp_comp_res = world.write_storage::<CharacterDisplayComponent>();
 
         if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
-            println!("Character 1 {:?}", &entity_1);
+            //println!("Character 1 {:?}", &entity_1);
 
             for (other_body_handle, contact) in body.contacts() {
 
@@ -277,7 +277,7 @@ pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
                 let up_normal = b2::Vec2{  x:0.0, y:1.0 };
                 let dot = self::dot_product(&contact_normal,&up_normal);
 
-                println!("contact normal: {:?},body_handle: {:?} other: {:?}, dot: {}", &contact_normal, &body_handle, &other_body_handle, &dot);
+                //println!("contact normal: {:?},body_handle: {:?} other: {:?}, dot: {}", &contact_normal, &body_handle, &other_body_handle, &dot);
 
                 let other_body = physics_world.body(other_body_handle);
                 if other_body.body_type() == b2::BodyType::Static ||  other_body.body_type() == b2::BodyType::Dynamic {
@@ -293,7 +293,7 @@ pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
                     let entity_2 = world.entities().entity(other_id);
 
                     if dot > 0.7 && !character.going_up  {
-                        println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
+                        //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
                         character.since_stand = 0.0;
                     }
                     
@@ -324,7 +324,7 @@ pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
                     let entity_2 = world.entities().entity(other_id);
                     if let Some(character) = char_disp_comp_res.get(entity_2) {
                         
-                        println!("Body 1 {:?} - Character {:?} ", &entity_1, &character);
+                        //println!("Body 1 {:?} - Character {:?} ", &entity_1, &character);
                         
                     }
                     

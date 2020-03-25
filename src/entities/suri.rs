@@ -5,9 +5,11 @@ use ggez::nalgebra as na;
 use specs::{Builder,Entity,EntityBuilder,World,WorldExt};
 use wrapped2d::user_data::*;
 
+use crate::conf::*;
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
+use crate::components::sprite::{SpriteComponent,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
 use crate::systems::*;
@@ -17,13 +19,18 @@ pub struct SuriBuilder;
 
 impl SuriBuilder {
 
-    pub fn get_sprite_paths() -> Vec<String> {
-        vec!["/suri-spritesheet.png".to_string()]
-    }
+    // pub fn get_sprite_paths() -> Vec<String> {
+    //     vec!["/suri-spritesheet.png".to_string()]
+    // }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
 
-        ImageResources::init_images(world, ctx, &Self::get_sprite_paths());
+        //ImageResources::init_images(world, ctx, &Self::get_sprite_paths());
+
+        // Init Suri images from SpriteConfig
+        let maybe_config = get_ron_config::<SpriteConfig>("entities/suri".to_string());
+        let sprite_config = maybe_config.unwrap();
+        SpriteConfig::init_images(world, ctx, sprite_config.path.clone());
 
         let mut player_comp = PlayerComponent::new();
         player_comp.player_name.clear();
@@ -37,6 +44,8 @@ impl SuriBuilder {
         collision.collision_category = CollisionCategory::Player;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
+        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Player);
 
         collision.create_dynamic_body_box_fixed_rot(physics_world);
 
@@ -46,7 +55,7 @@ impl SuriBuilder {
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
-        .with(CharacterDisplayComponent::new(ctx, &"/suri-spritesheet.png".to_string()))
+        .with(CharacterDisplayComponent::new(ctx, &sprite_config.path))
         .with(collision)
         .with(player_comp)
         .build();

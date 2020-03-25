@@ -385,7 +385,6 @@ impl super::RenderTrait for CharacterDisplayComponent {
             let entity = world.entities().entity(ent_id);
             if let Some(coll) = collision_reader.get(entity) {
                 angle = coll.angle;
-                println!("player angle: {}", &angle);
             }
 
         }
