@@ -17,21 +17,21 @@ use crate::physics::{PhysicsWorld};
 // Initialize world entities and state
 fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld) {
     let mut rng = rand::thread_rng();
-    const POSX_RANGE: f32 = 800.0;
-    const POSY_RANGE: f32 = 600.0;
-    const VELX_RANGE: f32 = 95.0;
-    const VELY_RANGE: f32 = 75.0;
+    const POSX_RANGE: f32 = 1800.0;
+    const POSY_RANGE: f32 = 1000.0;
+    const VELX_RANGE: f32 = 395.0;
+    const VELY_RANGE: f32 = 375.0;
 
     UIBuilder::build_icon(world, ctx);
 
-    PlatformBuilder::build(world, ctx, physics_world, 500.0, 0.0, 1000.0, 5.0, SpriteLayer::World.to_z());
-    PlatformBuilder::build(world, ctx, physics_world, 0.0, 400.0, 5.0, 900.0, SpriteLayer::World.to_z());
-    PlatformBuilder::build(world, ctx, physics_world, 500.0, 800.0, 1000.0, 5.0, SpriteLayer::World.to_z());
-    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 400.0, 5.0, 900.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 0.0, 1000.0, 50.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 0.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 1200.0, 1000.0, 50.0, SpriteLayer::World.to_z());
+    PlatformBuilder::build(world, ctx, physics_world, 2000.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
 
     SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
 
-    for i in 0..35 {
+    for i in 0..115 {
         let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE) / 50.0).round() * 50.0;
         let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE) / 50.0).round() * 50.0;
         let vx: f32 = (rng.gen::<f32>() * VELX_RANGE) - (VELX_RANGE / 2.0);

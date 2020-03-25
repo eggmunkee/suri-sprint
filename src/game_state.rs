@@ -42,6 +42,7 @@ pub enum State {
 
 // Main game state struct
 pub struct GameState {
+    pub window_title: String,
     pub current_state: State,
     pub window_w: f32,
     pub window_h: f32,
@@ -55,7 +56,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(ctx: &mut Context, window_mode: WindowMode) -> GameResult<GameState> {
+    pub fn new(ctx: &mut Context, title: String, window_mode: WindowMode) -> GameResult<GameState> {
 
         // Create physics world to place in game state resource
         let mut physics_world = physics::create_physics_world();
@@ -78,6 +79,7 @@ impl GameState {
 
         // Create main state instance with dispatcher and world
         let mut s = GameState { 
+            window_title: title,
             current_state: State::Running,
             window_w: win_w,
             window_h: win_h,

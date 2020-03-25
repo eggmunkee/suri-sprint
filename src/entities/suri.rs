@@ -3,6 +3,7 @@ use ggez::graphics;
 use ggez::graphics::{Image};
 use ggez::nalgebra as na;
 use specs::{Builder,Entity,EntityBuilder,World,WorldExt};
+use wrapped2d::user_data::*;
 
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
@@ -17,7 +18,7 @@ pub struct SuriBuilder;
 impl SuriBuilder {
 
     pub fn get_sprite_paths() -> Vec<String> {
-        vec!["/suri-1-r.png".to_string()]
+        vec!["/suri-spritesheet.png".to_string()]
     }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
@@ -37,18 +38,27 @@ impl SuriBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
 
-        collision.create_dynamic_body_box(physics_world);
+        collision.create_dynamic_body_box_fixed_rot(physics_world);
+
+        let body_handle_clone = collision.body_handle.clone();
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
-        .with(CharacterDisplayComponent::new(ctx, &"/suri-1-r.png".to_string()))
+        .with(CharacterDisplayComponent::new(ctx, &"/suri-spritesheet.png".to_string()))
         .with(collision)
         .with(player_comp)
         .build();
 
-        //let entId = entity.id();
+        let entity_id = entity.id();
+        if let Some(body_handle) = body_handle_clone {
+            let mut collision_body = physics_world.body_mut(body_handle);
+
+            let body_data = &mut *collision_body.user_data_mut();
+            //let data = &*data_ref;
+            body_data.entity_id = entity_id;            
+        }
 
         entity
     }

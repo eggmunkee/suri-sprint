@@ -2171,6 +2171,7 @@ dependencies = [
  "ggez",
  "rand 0.7.3",
  "ron",
+ "serde",
  "specs",
  "specs-derive",
  "winit",

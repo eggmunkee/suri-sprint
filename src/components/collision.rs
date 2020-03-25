@@ -81,11 +81,21 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
+
+    // Create the physics body as a dynamic body
+    pub fn create_dynamic_body_box_fixed_rot(&mut self, physics_world: &mut PhysicsWorld) {
+        
+        let body_handle = physics::add_dynamic_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, true);
+
+        self.body_handle = Some(body_handle);
+    }
+
     // Create the physics body as a dynamic body
     pub fn create_dynamic_body_box(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_dynamic_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
-            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask);
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, false);
 
         self.body_handle = Some(body_handle);
     }

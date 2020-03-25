@@ -39,13 +39,15 @@ use crate::conf::*;
 // Do setup and start main event loop
 pub fn main() -> GameResult {
 
-    let win_setup = get_window_setup();
-    let win_mode = get_window_mode();
+    let config : ConfigData = get_ron_config().unwrap();
+    let win_title = config.window_setup.title.clone();
+    //let win_setup = get_window_setup();
+    let win_mode = config.window_mode.clone();
 
     // get ggez context build - builds window app
     let mut cb = ggez::ContextBuilder::new("super_simple", "ggez")
-        .window_setup(win_setup)
-        .window_mode(win_mode);
+        .window_setup(config.window_setup)
+        .window_mode(config.window_mode);
 
     // insert cargo manifest dir /resources into resources paths
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
@@ -59,7 +61,7 @@ pub fn main() -> GameResult {
 
     //ggez::graphics::set_window_icon(ctx, Some("/icon.png"))?;
     // create app's state
-    let state = &mut crate::game_state::GameState::new(ctx, win_mode)?;
+    let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode)?;
 
     
     filesystem::print_all(ctx);

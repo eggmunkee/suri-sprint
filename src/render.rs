@@ -165,7 +165,7 @@ impl Renderer {
         // Update framerate on title every 5 frames
         if ggez::timer::ticks(ctx) % 10 == 0 {
             let fps = ggez::timer::fps(ctx);
-            set_window_title(ctx, format!("GGEZ ~~~ DEMO ({:.1} fps for {} render objs)", &fps, &render_count).as_str());
+            set_window_title(ctx, format!("{} ({:.1} fps for {} render objs)", &game_state.window_title, &fps, &render_count).as_str());
         }
 
         graphics::present(ctx)?;

@@ -3,6 +3,7 @@ use ggez::graphics;
 use ggez::graphics::{Image};
 use ggez::nalgebra as na;
 use specs::{Builder,Entity,EntityBuilder,World,WorldExt};
+use wrapped2d::user_data::*;
 
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
@@ -36,6 +37,7 @@ impl PlatformBuilder {
         // collision.dim_2 = height;
         collision.pos.x = x;
         collision.pos.y = y;
+        collision.angle = 0.0;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
@@ -43,6 +45,7 @@ impl PlatformBuilder {
         collision.collision_mask.push(CollisionCategory::Ghost);
 
         collision.create_static_body(physics_world);
+        let body_handle_clone = collision.body_handle.clone();
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
@@ -51,7 +54,13 @@ impl PlatformBuilder {
         .with(collision)
         .build();
 
-        //let entId = entity.id();
+        let entity_id = entity.id();
+        if let Some(body_handle) = body_handle_clone {
+            let mut collision_body = physics_world.body_mut(body_handle);
+            let body_data = &mut *collision_body.user_data_mut();
+            //let data = &*data_ref;
+            body_data.entity_id = entity_id;
+        }
 
         entity
     }
@@ -75,8 +84,9 @@ impl PlatformBuilder {
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Ghost);
-
         collision.create_dynamic_body_box(physics_world);
+
+        let body_handle_clone = collision.body_handle.clone();
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
@@ -85,7 +95,13 @@ impl PlatformBuilder {
         .with(collision)
         .build();
 
-        //let entId = entity.id();
+        let entity_id = entity.id();
+        if let Some(body_handle) = body_handle_clone {
+            let mut collision_body = physics_world.body_mut(body_handle);
+            let body_data = &mut *collision_body.user_data_mut();
+            //let data = &*data_ref;
+            body_data.entity_id = entity_id;
+        }
 
         entity
     }

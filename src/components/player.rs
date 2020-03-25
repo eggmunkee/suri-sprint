@@ -1,6 +1,6 @@
 use ggez::{Context};
 use ggez::graphics;
-use ggez::graphics::{Image,Color,DrawParam};
+use ggez::graphics::{Rect,Image,Color,DrawParam};
 use ggez::nalgebra as na;
 use specs::{ Component, DenseVecStorage, World, WorldExt };
 //use specs::shred::{Dispatcher};
@@ -55,6 +55,8 @@ pub struct CharacterDisplayComponent {
     pub going_down: bool,
     pub facing_right: bool,
     pub anim_frame: u32,
+    pub anim_set: u32,
+    pub anim_frame_time: f32,
     pub breath_cycle: f32,
     pub rot: f32,
     pub in_jump: bool,
@@ -67,7 +69,7 @@ impl Component for CharacterDisplayComponent {
 
 impl CharacterDisplayComponent {
     pub fn new(ctx: &mut Context, char_img: &String) -> CharacterDisplayComponent {
-        let image = Image::new(ctx, char_img.clone()).unwrap();
+        //let image = Image::new(ctx, char_img.clone()).unwrap();
 
         CharacterDisplayComponent {
             //image: image,
@@ -78,6 +80,8 @@ impl CharacterDisplayComponent {
             going_down: false,
             facing_right: true,
             anim_frame: 0,
+            anim_set: 0,
+            anim_frame_time: 0.0,
             breath_cycle: 0.0,
             rot: 0.0,
             in_jump: false,
@@ -89,32 +93,19 @@ impl CharacterDisplayComponent {
     pub fn update(&mut self, coll: &mut Collision, time_delta: f32) {
         self.interp_breath(0.08);
 
-        if self.going_left {
-            self.facing_right = false;
+        if coll.vel.x == 0.0 && coll.vel.y == 0.0 {
+            self.since_stand = 0.0;
         }
-        else if self.going_right {
-            self.facing_right = true;
-        }
-
-        //let delta = 0.15;
-
-        // if !self.in_jump && coll.vel.y == 0.0 {
-        //     self.since_stand = 0.0
-        // }
-        // else if self.since_stand < 5.0 {
-        //     self.since_stand += time_delta;            
-        // }
-        // if self.since_stand > 0.0 && self.since_stand < 5.0 {
-        //     println!("Since stand: {}", &self.since_stand);
-        // }
 
         // decide if going_up is allowed with jump rules
+        self.since_stand += time_delta;
+        let recent_stand = self.since_stand < 0.6;
         if self.in_jump {
             if self.jump_duration < 2.5 {
                 self.jump_duration += time_delta;                
                 println!("In jump! {}", &self.jump_duration);
             }
-            else if coll.vel.y > 0.0 {
+            else if recent_stand {
                 self.in_jump = false;
                 self.jump_duration = 0.0;
                 self.since_stand = 0.0;
@@ -127,7 +118,7 @@ impl CharacterDisplayComponent {
             }
         }
         else if self.going_up {
-            if self.jump_duration >= 0.0 {
+            if self.jump_duration >= 0.0 && recent_stand {
                 println!("Start jump! {}", &self.jump_duration);
                 self.in_jump = true;
                 self.jump_duration = 0.0;
@@ -149,7 +140,63 @@ impl CharacterDisplayComponent {
             else {}
         }
 
+        self.update_animation(coll, time_delta);
+
+
         //self.apply_inputs(coll);
+    }
+
+    fn update_animation(&mut self, coll: &mut Collision, time_delta: f32) {
+
+        let mut is_moving = false;
+        if self.going_left {
+            self.facing_right = false;
+            is_moving = true;
+        }
+        else if self.going_right {
+            self.facing_right = true;
+            is_moving = true;
+        }
+
+        if self.in_jump {            
+            if self.anim_set != 1 {
+                self.anim_frame = 0;
+                self.anim_set = 1;
+                self.anim_frame_time = 0.0;
+            }
+
+            if coll.vel.y < 0.0 {
+
+                self.anim_frame_time += time_delta;
+                if self.anim_frame == 0 && self.anim_frame_time > 0.5 ||
+                        self.anim_frame > 0 && self.anim_frame_time > 2.5 {
+                    self.anim_frame += 1;
+                    self.anim_frame_time = 0.0;
+
+                    if self.anim_frame > 3 {
+                        self.anim_frame = 3;
+                    }
+                }
+            }
+        }
+        else if is_moving || coll.vel.x.abs() > 0.25 {
+            self.anim_set = 0;
+            self.anim_frame_time += time_delta * (0.5 * coll.vel.x.abs().max(2.0).min(30.0) );
+            if self.anim_frame_time > 1.5 {
+                self.anim_frame += 1;
+                self.anim_frame_time = 0.0;
+
+                if self.anim_frame > 5 {
+                    self.anim_frame = 0;
+                }
+            }
+        }
+        else {
+            self.anim_set = 0;
+            //self.anim_frame = 0;
+            //self.anim_frame_time = 0.0;
+        }
+
     }
 
     pub fn interp_breath(&mut self, cycle_speed: f32) {
@@ -325,13 +372,23 @@ impl CharacterDisplayComponent {
 // }
 
 impl super::RenderTrait for CharacterDisplayComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, _ent: Option<u32>, pos: na::Point2::<f32>) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>) {
         //println!("PlayerRenderTrait drawing...");
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
         let breath_scale = 1.5 + self.breath_cycle.cos() * 0.02;
         let breath_y_offset = self.breath_cycle.cos() * -0.3;
+        let mut angle = 0.0;
+        if let Some(ent_id) = ent {
+            let collision_reader = world.read_storage::<Collision>();
+            let entity = world.entities().entity(ent_id);
+            if let Some(coll) = collision_reader.get(entity) {
+                angle = coll.angle;
+                println!("player angle: {}", &angle);
+            }
+
+        }
 
         let draw_pos = na::Point2::<f32>::new(pos.x, pos.y + breath_y_offset);
 
@@ -411,13 +468,22 @@ impl super::RenderTrait for CharacterDisplayComponent {
             if let Ok(image) = image_ref {
                 let w = image.width();
                 let h = image.height();
+
+                let src_x = 0.0 + 0.1 * (self.anim_frame as f32);
+                let src_y = 0.0 + 0.1 * (self.anim_set as f32);
+
+                // if !self.going_left && !self.going_right {
+                //     src_x = 0.0;
+                // }
         
                 let text_pos = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
                 if let Err(_) = ggez::graphics::draw(ctx, image, 
-                    DrawParam::default().dest(text_pos)
+                    DrawParam::default()
+                    .src(Rect::new(src_x,src_y,0.1,0.1))
+                    .dest(text_pos)
                     .scale(na::Vector2::new(x_scale,breath_scale))
                     .offset(na::Point2::new(0.5,0.5))
-                    .rotation(self_rot)
+                    .rotation(angle)
                 ) {
                     //(draw_pos.clone(),)) { // add back x/y pos  //
                     _draw_ok = false;

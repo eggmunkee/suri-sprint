@@ -5,16 +5,29 @@ use na::{Point2,Vector2,distance_squared,distance};
 use specs::{World, WorldExt};
 use specs::Join;
 use wrapped2d::b2;
-use wrapped2d::user_data::NoUserData;
+use wrapped2d::user_data::*;
+use wrapped2d::dynamics::body::{MetaBody};
 
 //======================
 use crate::components::{Position};
 use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
 
+#[derive(Default,Copy,Clone)]
+pub struct GameStateBodyData {
+    pub entity_id: u32,
+}
 
+#[derive(Default)]
+pub struct GameStatePhysicsData;
 
-pub type PhysicsWorld = b2::World<NoUserData>;
+impl UserDataTypes for GameStatePhysicsData {
+    type BodyData = GameStateBodyData;
+    type JointData = ();
+    type FixtureData = ();
+}
+
+pub type PhysicsWorld = b2::World<GameStatePhysicsData>;
 pub type PhysicsBody = b2::Body;
 pub type PhysicsBodyType = b2::BodyType;
 pub type PhysicsBodyHandle = b2::BodyHandle;
@@ -64,6 +77,10 @@ pub fn create_physics_world() -> PhysicsWorld {
 
 }
 
+pub fn dot_product(v1: &PhysicsVec, v2: &PhysicsVec) -> f32 {
+    v1.x * v2.x + v1.y * v2.y
+}
+
 pub fn create_pos(pos: &Point2<f32>) -> PhysicsVec {
     let x = pos.x / WORLD_SCALE;
     let y = pos.y / WORLD_SCALE;
@@ -88,17 +105,20 @@ pub fn get_size(phys_size: f32) -> f32 {
 
 pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
     density: f32, restitution: f32,
-    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>) 
+    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
         -> b2::BodyHandle {
     let def = b2::BodyDef {
         body_type: PhysicsBodyType::Dynamic,
         position: self::create_pos(pos),
-        linear_damping: 0.8,        
+        linear_damping: 0.8,
+        fixed_rotation: fixed_rot,
         .. b2::BodyDef::new()
     };
-    
+
+    let body_data = GameStateBodyData { entity_id: 0 };
+
     // create body - getting handle
-    let b_handle = world.create_body(&def);
+    let b_handle = world.create_body_with(&def, body_data);
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
     
@@ -141,8 +161,11 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
         .. b2::BodyDef::new()
     };
     
+    let body_data = GameStateBodyData { entity_id: 0 };
+    
     // create body - getting handle
-    let b_handle = world.create_body(&def);
+    let b_handle = world.create_body_with(&def, body_data);
+    
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
     
@@ -174,11 +197,13 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
     let mut def = b2::BodyDef {
         body_type: b2::BodyType::Static,
         position: self::create_pos(pos),
+        fixed_rotation: true,
         .. b2::BodyDef::new()
     };
+    let body_data = GameStateBodyData { entity_id: 0 };
     
     // create body - getting handle
-    let b_handle = world.create_body(&def);
+    let b_handle = world.create_body_with(&def, body_data);
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
     
@@ -218,25 +243,103 @@ fn pre_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
 
 pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
 
+    // Run Physics setup process - address any inputs to physics system
     self::pre_advance_physics(world, physics_world, delta_seconds);
 
     //println!("Running physics engine... delta={}", delta_seconds);
     // update the physics world
-    physics_world.step(delta_seconds, 2, 2);
+    physics_world.step(delta_seconds, 5, 5);
+
+    let mut delete_entity_list : Vec::<u32> = Vec::new();
+    let mut delete_body_list : Vec::<b2::BodyHandle> = Vec::new();
 
     // iterate bodies
     for (body_handle, meta) in physics_world.bodies() {
         let body = physics_world.body(body_handle);
-        //println!("Body {}", body.mass());
+        let body_data = &*body.user_data();
+        //let meta_data = &*meta_ref;
+        //let e = meta_ref.user_data();
+        let primary_id = body_data.entity_id;
+        let entity_1 = world.entities().entity(primary_id);
 
-        for (other_body, contact) in body.contacts() {
-            
-            if physics_world.body(other_body).body_type() == b2::BodyType::Static {
-                println!("Contact with static body {:?} by {:?}", &other_body, &body_handle); 
+        //let char_disp_comp_res = world.write_storage::<CharacterDisplayComponent>();
+        let mut char_disp_comp_res = world.write_storage::<CharacterDisplayComponent>();
+
+        if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
+            println!("Character 1 {:?}", &entity_1);
+
+            for (other_body_handle, contact) in body.contacts() {
+
+                if contact.is_touching() == false { continue; }
+
+                let manifold = contact.manifold();
+                let contact_normal = manifold.local_normal;
+                let up_normal = b2::Vec2{  x:0.0, y:1.0 };
+                let dot = self::dot_product(&contact_normal,&up_normal);
+
+                println!("contact normal: {:?},body_handle: {:?} other: {:?}, dot: {}", &contact_normal, &body_handle, &other_body_handle, &dot);
+
+                let other_body = physics_world.body(other_body_handle);
+                if other_body.body_type() == b2::BodyType::Static ||  other_body.body_type() == b2::BodyType::Dynamic {
+                    //println!("Contact with static body {:?} by {:?}", &other_body, &body_handle); 
+    
+                    let other_body_data = &*other_body.user_data();
+                    
+                    //let b = other_meta_body.body;
+                    //let other_body_data = (21,); //other_meta_body.();
+                    //let otherbody = &mut *other_meta_body;
+                    let other_id = other_body_data.entity_id;
+    
+                    let entity_2 = world.entities().entity(other_id);
+
+                    if dot > 0.7 && !character.going_up  {
+                        println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
+                        character.since_stand = 0.0;
+                    }
+                    
+                    //delete_entity_list.push(other_id);
+                    //world.entities().delete(entity_2);
+                    //delete_body_list.push(other_body_handle.clone());
+                }
             }
+
         }
+        else {
+
+            for (other_body_handle, contact) in body.contacts() {
+            
+                let other_body = physics_world.body(other_body_handle);
+                if other_body.body_type() == b2::BodyType::Static {
+                    //println!("Contact with static body {:?} by {:?}", &other_body, &body_handle); 
+    
+                    let other_body_data = &*other_body.user_data();
+                    
+                    //let b = other_meta_body.body;
+                    //let other_body_data = (21,); //other_meta_body.();
+                    //let otherbody = &mut *other_meta_body;
+                    let other_id = other_body_data.entity_id;
+
+                    
+    
+                    let entity_2 = world.entities().entity(other_id);
+                    if let Some(character) = char_disp_comp_res.get(entity_2) {
+                        
+                        println!("Body 1 {:?} - Character {:?} ", &entity_1, &character);
+                        
+                    }
+                    
+    
+                }
+            }
+
+
+
+        }
+
+        
     }
 
+    // Run Physics post-run process - address any outputs of physics system to game world
     self::post_advance_physics(world, physics_world, delta_seconds);
 
 }
