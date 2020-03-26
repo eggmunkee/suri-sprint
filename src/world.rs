@@ -36,16 +36,25 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
         //.with(Collision::new_circle(20.0))
         .build();
 
-    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 0.0, 1000.0, 50.0, SpriteLayer::World.to_z());
-    PlatformBuilder::build(world, ctx, physics_world, 0.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
-    PlatformBuilder::build(world, ctx, physics_world, 1000.0, 1200.0, 1000.0, 50.0, SpriteLayer::World.to_z());
-    PlatformBuilder::build(world, ctx, physics_world, 2000.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
+    // PlatformBuilder::build(world, ctx, physics_world, 1000.0, 0.0, 1000.0, 50.0, SpriteLayer::World.to_z());
+    // PlatformBuilder::build(world, ctx, physics_world, 0.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
+    // PlatformBuilder::build(world, ctx, physics_world, 1000.0, 1200.0, 1000.0, 50.0, SpriteLayer::World.to_z());
+    // PlatformBuilder::build(world, ctx, physics_world, 2000.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
 
     SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
 
-    for i in 0..115 {
-        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE) / 50.0).round() * 50.0;
-        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE) / 50.0).round() * 50.0;
+    for i in 0..70 {
+        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE*3.0) / 50.0).round() * 50.0;
+        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE*3.0) / 50.0).round() * 50.0;
+
+        PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0 + rng.gen::<f32>() * 500.0, 10.0 + rng.gen::<f32>() * 20.0, SpriteLayer::BGNear.to_z());
+
+
+    }
+
+    for i in 0..315 {
+        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE * 3.0) / 50.0).round() * 50.0;
+        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE * 3.0) / 50.0).round() * 50.0;
         let vx: f32 = (rng.gen::<f32>() * VELX_RANGE) - (VELX_RANGE / 2.0);
         let vy: f32 = (rng.gen::<f32>() * VELY_RANGE) - (VELY_RANGE / 2.0);
         // build ball entity and add to world
@@ -54,7 +63,8 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
             //     BallBuilder::build(world, ctx, x, y, vx, vy);
             // }
             // else {
-            GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15, 20.0, 20.0);
+            //GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15, 20.0, 20.0);
+            PlatformBuilder::build(world, ctx, physics_world, x, y, 50.0, 50.0, SpriteLayer::BGNear.to_z());
             //}
         }
         else {
@@ -71,6 +81,7 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
         }
         
     }
+
 }
 
 // Build world by loading resources, components, and calling init_world

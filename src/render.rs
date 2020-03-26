@@ -13,26 +13,18 @@ use rand::prelude::*;
 use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer};
 use crate::components::ball::{BallDisplayComponent};
-use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
+use crate::components::player::{CharacterDisplayComponent};
 use crate::game_state::{GameState,State};
 
-// pub mod circle;
-// pub mod square;
 pub struct Renderer {
 
 }
-
-// impl RenderTrait for Renderer {
-//     fn draw(&self, ctx: &mut Context, world: &World, entity: Option<u32>, pos: na::Point2<f32>) {
-
-//     }
-// }
 
 impl Renderer {
 
     pub fn render_frame(game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
         
-        graphics::clear(ctx, [0.15, 0.21, 0.3, 1.0].into());
+        graphics::clear(ctx, [0.4, 0.4, 0.4, 1.0].into());
 
         let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
         let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
@@ -134,7 +126,7 @@ impl Renderer {
 
                 let (w, h) = (game_state.window_w, game_state.window_h);
                 let cent_x = w as f32 / 2.0;
-                let cent_y = h as f32 / 2.0;
+                let cent_y = h as f32 / 5.0;
                 let text_w = game_state.paused_text.width(ctx);
                 let text_h = game_state.paused_text.height(ctx);
 
@@ -175,34 +167,43 @@ impl Renderer {
 
     fn call_renderer(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>) {
         
-        //let (entity, render) = Self::get_renderer(world, entity);
         {
-            //let world = &.world;
+            // Try reading CharacterDisplayComponent to render
             let ch_disp_comp = world.read_storage::<CharacterDisplayComponent>();
             let ch_disp_comp_res = ch_disp_comp.get(entity);
             if let Some(res) = ch_disp_comp_res {
-                //render = res;
+                // Call component render method
                 res.draw(ctx, &world, Some(entity.id()), pt.clone());
+            }
+            else {
+                // Try reading BallDisplayComponent to render
+                {
+                    let ball_disp_comp = world.read_storage::<BallDisplayComponent>();
+                    let ball_disp_comp_res = ball_disp_comp.get(entity);
+                    if let Some(res) = ball_disp_comp_res {
+                        // Call component render method
+                        res.draw(ctx, &world, Some(entity.id()), pt.clone());
+                    }
+                    else {
+                        // Try reading SpriteComponent to render
+                        {
+                            let sprite_disp_comp = world.read_storage::<SpriteComponent>();
+                            let sprite_disp_comp_res = sprite_disp_comp.get(entity);
+                            if let Some(res) = sprite_disp_comp_res {
+                                // Call component render method
+                                res.draw(ctx, &world, Some(entity.id()), pt.clone());
+                            }
+                        }
+
+                    }
+                }
+
             }
         }
 
-        {
-            let ball_disp_comp = world.read_storage::<BallDisplayComponent>();
-            let ball_disp_comp_res = ball_disp_comp.get(entity);
-            if let Some(res) = ball_disp_comp_res {
-                //res.draw(ctx, &mut game_state.world, Some(ent.clone()), pt.clone());
-                res.draw(ctx, &world, Some(entity.id()), pt.clone());
-            }
-        }
+        
 
-        {
-            let sprite_disp_comp = world.read_storage::<SpriteComponent>();
-            let sprite_disp_comp_res = sprite_disp_comp.get(entity);
-            if let Some(res) = sprite_disp_comp_res {
-                //res.draw(ctx, &mut game_state.world, Some(ent.clone()), pt.clone());
-                res.draw(ctx, &world, Some(entity.id()), pt.clone());
-            }
-        }
+        
     }
 
     fn pre_render_list(ctx: &mut Context, world: &World, offset: &na::Point2<f32>) {

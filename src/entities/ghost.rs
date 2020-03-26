@@ -123,7 +123,7 @@ impl GhostBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
-        collision.create_static_body(physics_world);
+        collision.create_static_body_circle(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
 

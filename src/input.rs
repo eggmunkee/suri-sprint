@@ -154,20 +154,20 @@ impl InputMap {
                 MouseInput::Left => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_mouse_down(true, 0);
-                    println!("Mouse button pressed: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
+                    //println!("Mouse button pressed: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
                 },
                 MouseInput::Middle => {
                     let mut input = world.fetch_mut::<InputResource>();
                     //input.set;
                     input.set_mouse_down(true, 1);
-                    println!("Mouse button pressed: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
+                    //println!("Mouse button pressed: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
                     //_ctx.current_state;
                 },
                 MouseInput::Right => {
                     let mut input = world.fetch_mut::<InputResource>();
                     //input.set_jump(false);
                     input.set_mouse_down(true, 2);
-                    println!("Mouse button pressed: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
+                    //println!("Mouse button pressed: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
                 },
                 _ => {}
             },
@@ -182,7 +182,7 @@ impl InputMap {
                 MouseInput::Left => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_mouse_down(false, 0);
-                    println!("Mouse button released: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
+                    //println!("Mouse button released: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
                 },
                 MouseInput::Middle => {
                     let mut input = world.fetch_mut::<InputResource>();
@@ -193,7 +193,7 @@ impl InputMap {
                     let mut input = world.fetch_mut::<InputResource>();
                     //input.set_jump(false);
                     input.set_mouse_down(false, 2);
-                    println!("Mouse button released: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
+                    //println!("Mouse button released: {:?}, x: {}, y: {}", &inp, &input.mouse_x, &input.mouse_y);
                 },
                 _ => {}
             },
@@ -204,6 +204,6 @@ impl InputMap {
     pub fn mouse_set_pos(world: &mut World, _ctx: &mut Context, x: f32, y: f32) {
         let mut input = world.fetch_mut::<InputResource>();
         input.set_mouse_pos(x, y);
-        println!("Mouse motion: x: {}, y: {}", &input.mouse_x, &input.mouse_y);
+        //println!("Mouse motion: x: {}, y: {}", &input.mouse_x, &input.mouse_y);
     }
 }

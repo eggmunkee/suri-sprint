@@ -10,11 +10,7 @@ use specs::{
     Read,
 };
 
-// Internal refs
-use crate::resources::{GameStateResource};
-use crate::components::{Position,Velocity,GridLoc};
-use crate::components::collision::{Collision};
-use crate::components::player::{PlayerComponent};
+// ======================================================
 
 // Input system - takes inputs and applies to player & game
 pub mod input;

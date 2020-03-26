@@ -26,6 +26,8 @@ use crate::components::sprite::{SpriteLayer};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
+use crate::entities::ghost::{GhostBuilder};
+use crate::entities::meow::{MeowBuilder};
 use crate::entities::platform::{PlatformBuilder};
 use crate::physics;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
@@ -192,7 +194,13 @@ impl event::EventHandler for GameState {
                 input_sys.run_now(&world);
                 for m in &input_sys.meows {
                     println!("Meow at {},{}", &m.x, &m.y);
+                    //GhostBuilder::build_collider(world, ctx, &mut self.phys_world, m.x, m.y, -50.0, -20.0, 20.0, 0.0, 10.0, 10.0);
+                    MeowBuilder::build(world, ctx, &mut self.phys_world, m.x, m.y, 10.0, 10.0);
                 }
+
+                input_sys.meows.clear();
+
+
 
                 // Call update on the world event dispatcher
                 //dispatcher.dispatch(&world);
@@ -278,7 +286,7 @@ impl event::EventHandler for GameState {
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
-        println!("Mousewheel event, x: {}, y: {}", x, y);
+        //println!("Mousewheel event, x: {}, y: {}", x, y);
     }
 
     fn key_down_event(

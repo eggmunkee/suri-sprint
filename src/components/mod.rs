@@ -12,6 +12,7 @@ pub mod sprite;
 pub mod ball;
 pub mod player;
 pub mod collision;
+pub mod meow;
 // DEFINE COMMON COMPONENTS
 
 #[derive(Debug)]
@@ -106,4 +107,5 @@ pub fn register_components(world: &mut World) {
     self::collision::register_components(world);
     self::ball::register_components(world);
     self::player::register_components(world);
+    self::meow::register_components(world);
 }

@@ -9,7 +9,7 @@ use crate::resources::{GameStateResource};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::collision::{Collision};
 use crate::components::ball::{BallDisplayComponent};
-use crate::components::player::{PlayerComponent,CharacterDisplayComponent};
+use crate::components::meow::{MeowComponent};
 use crate::systems::*;
 use crate::physics::{PhysicsWorld,CollisionCategory};
 
@@ -29,13 +29,14 @@ impl MeowBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Ghost);
 
-        collision.create_dynamic_body_circle(physics_world);
+        collision.create_static_body_circle(physics_world);
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
         .with(collision)
+        .with(MeowComponent::new())
         .build();
 
         //let entId = entity.id();

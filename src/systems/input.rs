@@ -2,7 +2,7 @@ use ggez::nalgebra as na;
 use ggez::{Context};
 use specs::prelude::*;
 
-use crate::resources::{InputResource,WorldAction};
+use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::*;
 use crate::components::collision::{Collision};
 use crate::components::ball::{BallDisplayComponent};
@@ -22,20 +22,20 @@ impl InputSystem {
         }
     }
 
-    fn handle_player_list<'a>(&mut self, mut v: Vec<(&mut Velocity, &mut Collision, &PlayerComponent, Option<&mut CharacterDisplayComponent>, Entity)>, input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>) {
+    fn handle_player_list<'a>(&mut self, mut v: Vec<(&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity)>, input: &InputResource,
+        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
 
         // handle each input applicable entity
         for inn_v in v.iter_mut() { 
-            let (vel, coll, _player, _display, _e) = inn_v;      
-            self.handle_player_input(inn_v, input, ent, lazy);
+            //let (vel, coll, _display, _e) = inn_v;      
+            self.handle_player_input(inn_v, input, ent, lazy, time_delta);
         }
     }
 
     // handle input updates from an entity
-    fn handle_player_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &PlayerComponent, Option<&mut CharacterDisplayComponent>, Entity), input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>) {
-        let (vel, coll, _player, _display, _e) = v;
+    fn handle_player_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
+        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
+        let (vel, coll, display, _e) = v;
 
         let mut up_pressed = false;
         let mut left_pressed = false;
@@ -57,64 +57,41 @@ impl InputSystem {
             down_pressed = true;
         }
 
-        if input.fire_pressed {
-            //lazy.create_entity(ent: &EntitiesRes);
+        //if let Some(display) = _display {
+        display.going_up = up_pressed;
+        display.going_left = left_pressed;
+        display.going_right = right_pressed;
+        display.going_down = down_pressed;
+        display.meowing = input.fire_pressed;
+
+        display.update(coll, time_delta);
+
+        if display.meowing {
             let x = coll.pos.x;
             let y = coll.pos.y;
 
             self.meows.push(na::Point2::new(x, y));
-
-            // let mut collision = Collision::new_specs(0.1,0.72, 30.0, 30.0);
-            // // collision.dim_1 = width;
-            // // collision.dim_2 = height;
-            // collision.pos.x = x;
-            // collision.pos.y = y;
-            // collision.collision_category = CollisionCategory::Meow;
-            // collision.collision_mask.clear();
-            // collision.collision_mask.push(CollisionCategory::Ghost);
-    
-            // collision.create_dynamic_body_circle(physics_world);
-    
-            // let entity = lazy.create_entity(ent)
-            // .with(Position { x: x, y: y })
-            // .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
-            // .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
-            // //.with(collision)
-            // .build();
+            display.since_meow = 0.0;
 
         }
-
-        if let Some(display) = _display {
-            display.going_up = up_pressed;
-            display.going_left = left_pressed;
-            display.going_right = right_pressed;
-            display.going_down = down_pressed;
-
-            display.update(coll, 0.15);
-
-            up_pressed = display.going_up;
-            left_pressed = display.going_left;
-            right_pressed = display.going_right;
-            down_pressed = display.going_down;
-        }
-
-        
 
     }
 }
 impl<'a> System<'a> for InputSystem {
     type SystemData = (WriteStorage<'a, Velocity>,
                         WriteStorage<'a, Collision>,
-                        ReadStorage<'a, PlayerComponent>,
                         WriteStorage<'a, CharacterDisplayComponent>,
+                        Read<'a, GameStateResource>,
                         Read<'a, InputResource>,
                         Entities<'a>,
                         Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (mut vel, mut coll, player, mut char_display, mut input, mut ent, lazy): Self::SystemData) {
+    fn run(&mut self, (mut vel, mut coll, mut char_display, game_state, mut input, mut ent, lazy): Self::SystemData) {
+
+        let time_delta = game_state.delta_seconds;
 
         // tests collecting storage into vector
-        let mut list = (&mut vel, &mut coll, &player, (&mut char_display).maybe(), &ent).join().collect::<Vec<_>>();
+        let mut list = (&mut vel, &mut coll, &mut char_display, &ent).join().collect::<Vec<_>>();
 
         if list.len() > 1 {
             println!("More than one player!");
@@ -125,7 +102,7 @@ impl<'a> System<'a> for InputSystem {
 
         //let new_ent = ent.create();
 
-        self.handle_player_list(list, &*input, &ent, &lazy);
+        self.handle_player_list(list, &*input, &ent, &lazy, time_delta);
 
         // iterator over velocities with player components and input
         //for (vel, _player, _e) in list.iter_mut() {        

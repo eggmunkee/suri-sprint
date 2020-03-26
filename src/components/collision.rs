@@ -73,7 +73,7 @@ impl Collision {
     }
 
     // Create the physics body as a static body
-    pub fn create_static_body(&mut self, physics_world: &mut PhysicsWorld) {
+    pub fn create_static_body_box(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_static_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
             self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask);
@@ -81,9 +81,19 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
+    // Create the physics body as a static body
+    pub fn create_static_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
+        
+        let body_handle = physics::add_static_body_circle(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask);
+
+        self.body_handle = Some(body_handle);
+    }
+
+
 
     // Create the physics body as a dynamic body
-    pub fn create_dynamic_body_box_fixed_rot(&mut self, physics_world: &mut PhysicsWorld) {
+    pub fn create_dynamic_body_box_upright(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_dynamic_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
             self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, true);
@@ -92,7 +102,7 @@ impl Collision {
     }
 
     // Create the physics body as a dynamic body
-    pub fn create_dynamic_body_box(&mut self, physics_world: &mut PhysicsWorld) {
+    pub fn create_dynamic_body_box_rotable(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_dynamic_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
             self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, false);
@@ -109,7 +119,7 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
-    pub fn update_body(&mut self, physics_world: &mut PhysicsWorld, character: &mut CharacterDisplayComponent) {
+    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, character: &mut CharacterDisplayComponent) {
         if let Some(body_handle) = self.body_handle {
             let mut body = physics_world.body_mut(body_handle);
 
@@ -118,7 +128,7 @@ impl Collision {
         }
     }
 
-    pub fn update_component(&mut self, physics_world: &mut PhysicsWorld) {
+    pub fn post_physics_hook(&mut self, physics_world: &mut PhysicsWorld) {
         if let Some(body_handle) = self.body_handle {
             let body = physics_world.body(body_handle);
 
