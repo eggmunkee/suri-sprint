@@ -1,0 +1,7 @@
+SpriteConfig(
+    spritesheet: false,
+    path: "/meow-shockwave.png",
+    scale: (1.0, 1.0),
+    z_order: 100.0,
+    alpha: 0.3,
+)

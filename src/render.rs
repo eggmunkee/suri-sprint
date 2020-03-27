@@ -24,7 +24,7 @@ impl Renderer {
 
     pub fn render_frame(game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
         
-        graphics::clear(ctx, [0.4, 0.4, 0.4, 1.0].into());
+        graphics::clear(ctx, [0.2, 0.2, 0.2, 1.0].into());
 
         let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
         let mut player_offset = na::Point2::<f32>::new(0.0,0.0);

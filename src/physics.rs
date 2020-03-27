@@ -16,6 +16,7 @@ use crate::components::player::{CharacterDisplayComponent};
 #[derive(Default,Copy,Clone)]
 pub struct GameStateBodyData {
     pub entity_id: u32,
+    pub collider_type: CollisionCategory,
 }
 
 #[derive(Default)]
@@ -35,12 +36,19 @@ pub type PhysicsVec = b2::Vec2;
 
 pub const WORLD_SCALE : f32 = 50.0;
 
-#[derive(Copy,Clone,Debug)]
+#[derive(Copy,Clone,Debug,PartialEq)]
 pub enum CollisionCategory {
     Level = 1,
     Player = 2,
     Ghost = 4,
     Meow = 8,
+    Unused = 128,
+}
+
+impl Default for CollisionCategory {
+    fn default() -> Self {
+        CollisionCategory::Unused
+    }
 }
 
 // Trait for making an object a u16 bit value
@@ -116,36 +124,33 @@ pub fn update_body_entity_data(entity: &Entity, physics_world: &mut PhysicsWorld
 
 }
 
-pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
+
+pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, 
+    body_radius: f32,     
     density: f32, restitution: f32,
-    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
+    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool, is_sensor: bool) 
         -> b2::BodyHandle {
     let def = b2::BodyDef {
-        body_type: PhysicsBodyType::Dynamic,
+        body_type: PhysicsBodyType::Kinematic,
         position: self::create_pos(pos),
+        linear_velocity: b2::Vec2 { x: vel.x, y: vel.y},
         linear_damping: 0.8,
         fixed_rotation: fixed_rot,
         .. b2::BodyDef::new()
     };
 
-    let body_data = GameStateBodyData { entity_id: 0 };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
     
-    let shape = b2::PolygonShape::new_box(create_size(body_width), create_size(body_height));
-    // HOW TO DO CIRCLE SHAPE FIXTURE
-    //let shape = b2::CircleShape::new_with(PhysicsVec { x: 0.0, y: 0.0 }, create_size(body_width));
-    
-    // let mut mask_bits = 0u16;
-    // for &category in collision_mask {
-    //     mask_bits |= category.to_bits();
-    // }
+    let shape = b2::CircleShape::new_with(PhysicsVec { x: 0.0, y: 0.0 }, create_size(body_radius));
 
     //let fixture_handle = body.create_fast_fixture(&shape, 2.);
     let mut fixture_def = b2::FixtureDef {
+        is_sensor: is_sensor,
         density: density,
         restitution: restitution,
         filter: b2::Filter {
@@ -163,18 +168,100 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
 }
 
 
-pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_radius: f32,
-        density: f32, restitution: f32,
-        collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>)  
+pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, 
+    body_width: f32, body_height: f32,    
+    density: f32, restitution: f32,
+    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool, is_sensor: bool) 
+        -> b2::BodyHandle {
+    let def = b2::BodyDef {
+        body_type: PhysicsBodyType::Kinematic,
+        position: self::create_pos(pos),
+        linear_velocity: b2::Vec2 { x: vel.x, y: vel.y},
+        linear_damping: 0.8,
+        fixed_rotation: fixed_rot,
+        .. b2::BodyDef::new()
+    };
+
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+
+    // create body - getting handle
+    let b_handle = world.create_body_with(&def, body_data);
+    // get mut ref to body
+    let mut body = world.body_mut(b_handle);
+    
+    let shape = b2::PolygonShape::new_box(create_size(body_width), create_size(body_height));
+    // HOW TO DO CIRCLE SHAPE FIXTURE
+    //let shape = b2::CircleShape::new_with(PhysicsVec { x: 0.0, y: 0.0 }, create_size(body_width));
+    
+    let mut fixture_def = b2::FixtureDef {
+        density: density,
+        restitution: restitution,
+        is_sensor: is_sensor,
+        filter: b2::Filter {
+            category_bits: collision_category.to_bits(),
+            mask_bits: collision_mask.to_bits(),
+            group_index: 0,
+        },
+        .. b2::FixtureDef::new()
+    };
+
+    body.create_fixture(&shape, &mut fixture_def);
+
+    b_handle
+}
+
+
+pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
+    density: f32, restitution: f32,
+    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
         -> b2::BodyHandle {
     let def = b2::BodyDef {
         body_type: PhysicsBodyType::Dynamic,
         position: self::create_pos(pos),
         linear_damping: 0.8,
+        fixed_rotation: fixed_rot,
+        .. b2::BodyDef::new()
+    };
+
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+
+    // create body - getting handle
+    let b_handle = world.create_body_with(&def, body_data);
+    // get mut ref to body
+    let mut body = world.body_mut(b_handle);
+    
+    let shape = b2::PolygonShape::new_box(create_size(body_width), create_size(body_height));
+
+    let mut fixture_def = b2::FixtureDef {
+        density: density,
+        restitution: restitution,
+        filter: b2::Filter {
+            category_bits: collision_category.to_bits(),
+            mask_bits: collision_mask.to_bits(),
+            group_index: 0,
+        },
+        .. b2::FixtureDef::new()
+    };
+
+    body.create_fixture(&shape, &mut fixture_def);
+
+    b_handle
+}
+
+
+pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_radius: f32,
+        density: f32, restitution: f32,
+        collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool)  
+        -> b2::BodyHandle {
+    let def = b2::BodyDef {
+        body_type: PhysicsBodyType::Dynamic,
+        position: self::create_pos(pos),
+        fixed_rotation: fixed_rot,
+        linear_damping: 0.8,
         .. b2::BodyDef::new()
     };
     
-    let body_data = GameStateBodyData { entity_id: 0 };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
     
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
@@ -196,24 +283,24 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
         .. b2::FixtureDef::new()
     };
 
-    let fixture_handle = body.create_fixture(&shape, &mut fixture_def);
-    //let fixture = body.fixture(fixture_handle);
+    body.create_fixture(&shape, &mut fixture_def);
 
     b_handle
 }
 
 
-pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
+pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f32, body_width: f32, body_height: f32,
         density: f32, restitution: f32,
         collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>) 
         -> b2::BodyHandle {
-    let mut def = b2::BodyDef {
+    let def = b2::BodyDef {
         body_type: b2::BodyType::Static,
         position: self::create_pos(pos),
+        angle: angle,
         fixed_rotation: true,
         .. b2::BodyDef::new()
     };
-    let body_data = GameStateBodyData { entity_id: 0 };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
     
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
@@ -233,8 +320,7 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wid
         .. b2::FixtureDef::new()
     };
     
-    let fixture_handle = body.create_fixture(&shape, &mut fixture_def);
-    //let fixture = body.fixture(fixture_handle);
+    body.create_fixture(&shape, &mut fixture_def);
 
     b_handle
 }
@@ -250,7 +336,7 @@ pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_
         fixed_rotation: true,
         .. b2::BodyDef::new()
     };
-    let body_data = GameStateBodyData { entity_id: 0 };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
@@ -270,8 +356,7 @@ pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_
         .. b2::FixtureDef::new()
     };
 
-    let fixture_handle = body.create_fixture(&shape, &mut fixture_def);
-    //let fixture = body.fixture(fixture_handle);
+    body.create_fixture(&shape, &mut fixture_def);
 
     b_handle
 }
@@ -312,7 +397,6 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
     physics_world.step(delta_seconds, 5, 5);
 
     let mut delete_entity_list : Vec::<u32> = Vec::new();
-    let mut delete_body_list : Vec::<b2::BodyHandle> = Vec::new();
 
     //println!("After physics world step ---------------------------------------------");
 
@@ -320,9 +404,11 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
     for (body_handle, meta) in physics_world.bodies() {
         let body = physics_world.body(body_handle);
         let body_data = &*body.user_data();
+        let body_type = body.body_type();
         //let meta_data = &*meta_ref;
         //let e = meta_ref.user_data();
         let primary_id = body_data.entity_id;
+        let primary_collider_type = body_data.collider_type;
         let entity_1 = world.entities().entity(primary_id);
 
         //let char_disp_comp_res = world.write_storage::<CharacterDisplayComponent>();
@@ -337,8 +423,8 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
 
                 if contact.is_touching() == false { continue; }
 
-                let manifold = contact.manifold();
-                let contact_normal = manifold.local_normal;
+                let manifold = contact.world_manifold();
+                let contact_normal = manifold.normal;
                 let up_normal = b2::Vec2{  x:0.0, y:1.0 };
                 let dot = self::dot_product(&contact_normal,&up_normal);
 
@@ -355,13 +441,20 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                     //let other_body_data = (21,); //other_meta_body.();
                     //let otherbody = &mut *other_meta_body;
                     let other_id = other_body_data.entity_id;
+                    let other_collider_type = other_body_data.collider_type;
     
                     let entity_2 = world.entities().entity(other_id);
+                    if primary_collider_type == CollisionCategory::Ghost || other_collider_type == CollisionCategory::Ghost {
+                        //println!("Body 1 collider type: {:?} -- Body 2 collider type: {:?}", primary_collider_type, other_collider_type);
+                    }
 
+                    // if primary_collider_type == CollisionCategory::Meow && other_collider_type == CollisionCategory::Ghost {
+                    //     delete_entity_list.push(other_id);
+                    // }
 
                     //println!("Character {:?} {:?} - Body 2 {:?} ", &entity_1, &character, &entity_2);
 
-                    if dot > 0.7 && !character.going_up  {
+                    if dot > 0.5 && !character.going_up  {
                         //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
                         any_stand_contact = true;
                     }
@@ -376,7 +469,8 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
         }
         else {
 
-            if body.body_type() == b2::BodyType::Static ||  body.body_type() == b2::BodyType::Dynamic {
+            if body_type == b2::BodyType::Static ||  body_type == b2::BodyType::Dynamic
+                || body_type == b2::BodyType::Kinematic {
 
 
 
@@ -384,15 +478,15 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
 
                     if contact.is_touching() == false { continue; }
 
-                    let manifold = contact.manifold();
-                    let contact_normal = manifold.local_normal;
+                    let manifold = contact.world_manifold();
+                    let contact_normal = manifold.normal;
                     let up_normal = b2::Vec2{  x:0.0, y:1.0 };
                     let dot = self::dot_product(&contact_normal,&up_normal);
 
                     //println!("contact normal: {:?} dot: {}", &contact_normal, &dot);
                 
                     let other_body = physics_world.body(other_body_handle);
-                    if other_body.body_type() == b2::BodyType::Dynamic {
+                    //if other_body.body_type() == b2::BodyType::Dynamic {
                         //println!("Contact with dynamic body {:?} by {:?}", &other_body_handle, &body_handle); 
 
                         let other_body_data = &*other_body.user_data();
@@ -401,30 +495,61 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                         //let other_body_data = (21,); //other_meta_body.();
                         //let otherbody = &mut *other_meta_body;
                         let other_id = other_body_data.entity_id;
+                        let other_collider_type = other_body_data.collider_type;
 
                         let entity_2 = world.entities().entity(other_id);
-                        if let Some(character) = char_disp_comp_res.get(entity_2) {
-                            
-                            //println!("Body 1 {:?} - Character {:?} {:?} ", &entity_1, &entity_2, &character);
 
-                            if dot > 0.7 && !character.going_up  {
-                            
-                                //println!("Update character body status WOULD HAPPEN HERE.");
-                            }
+                        if primary_collider_type == CollisionCategory::Ghost && other_collider_type == CollisionCategory::Meow {
+                            println!("Body 1 collider type: {:?} -- Body 2 collider type: {:?}", primary_collider_type, other_collider_type);
                         }
+                        if other_collider_type == CollisionCategory::Ghost && primary_collider_type == CollisionCategory::Meow {
+                            println!("Body 2 collider type: {:?} -- Body 1 collider type: {:?}", other_collider_type, primary_collider_type);
+                        }
+
+                        if other_collider_type == CollisionCategory::Meow && primary_collider_type == CollisionCategory::Ghost {
+                            delete_entity_list.push(primary_id);
+                        }
+                        if primary_collider_type == CollisionCategory::Meow && other_collider_type == CollisionCategory::Ghost {
+                            delete_entity_list.push(other_id);
+                        }
+
+
                         
 
-                    }
+                    //}
                 }
 
 
             }
+        }
+    }
 
+    // Delete any entities on the list
+    for &entity_id in &delete_entity_list {
+        let entity = world.entities().entity(entity_id);
+
+        if entity.gen().is_alive() {
+
+            // Call destroy body on any collision component of entity
+
+            let mut collision_res = world.write_storage::<Collision>();
+            if let Some(collision) = collision_res.get_mut(entity) {
+                //entry.
+                //collision.body_handle = None;
+                println!("Destroying body for entity: {:?}", entity_id);
+                collision.destroy_body(physics_world);
+
+            }
+
+            world.entities().delete(entity);
 
         }
-
-        
     }
+
+    // for body_handle in delete_body_list {
+    //     physics_world.destroy_body(body_handle);
+    // }
+
 }
 
 // Handle physics changes by updating component state

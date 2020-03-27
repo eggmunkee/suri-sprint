@@ -35,12 +35,14 @@ impl SuriBuilder {
         let mut collision = Collision::new_specs(3.0,0.001, 18.0, 18.0);
         collision.pos.x = x;
         collision.pos.y = y;
+        collision.density = 1.5;
         collision.collision_category = CollisionCategory::Player;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Ghost);
         collision.collision_mask.push(CollisionCategory::Player);
         // Create physics body from collision properties
+        //collision.create_dynamic_body_box_upright(physics_world);
         collision.create_dynamic_body_box_upright(physics_world);
         // get body handle value
         let body_handle_clone = collision.body_handle.clone();

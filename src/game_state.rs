@@ -10,7 +10,7 @@ use ggez::{Context, GameResult, GameError};
 use ggez::conf::{NumSamples,WindowSetup,WindowMode};
 use ggez::graphics::{Rect,Color,Image,set_window_title};
 
-use specs::{Builder, Component, DispatcherBuilder, Dispatcher,// ReadStorage, WriteStorage, 
+use specs::{Builder, Component, DispatcherBuilder, Dispatcher, ReadStorage, WriteStorage, 
     System, VecStorage, World, WorldExt, RunNow};
 use specs::Join;
 use rand::prelude::*;
@@ -22,7 +22,8 @@ use wrapped2d::user_data::NoUserData;
 use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::{Position};
 use crate::components::collision::{Collision};
-use crate::components::sprite::{SpriteLayer};
+use crate::components::sprite::{SpriteLayer,SpriteComponent};
+use crate::components::meow::{MeowComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
@@ -169,48 +170,121 @@ impl GameState {
             _ => {}
         }        
     }
+
+    pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
+        // Get world and dispatcher to increment the entity system
+        let world = &mut self.world;
+
+        // get game resource to set delta
+        let mut game_res = world.fetch_mut::<GameStateResource>();
+        game_res.delta_seconds = time_delta;
+        drop(game_res);
+        
+        // Run Input System
+        let mut input_sys = InputSystem::new();
+        input_sys.run_now(&world);
+
+        // Process meow creation
+        for m in &input_sys.meows {
+            println!("Meow at {},{} - {},{}", &m.0.x, &m.0.y, &m.1.x, &m.1.y);
+            
+            //GhostBuilder::build_collider(world, ctx, &mut self.phys_world, m.x, m.y, -50.0, -20.0, 20.0, 0.0, 18.0, 18.0);
+            MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
+        }
+
+        input_sys.meows.clear();
+
+        {
+
+            let mut meow_writer = world.write_storage::<MeowComponent>();
+            let mut collision_writer = world.write_storage::<Collision>();
+            let mut sprite_writer = world.write_storage::<SpriteComponent>();
+            let entities = world.entities();                
+
+            for (meow, coll, sprite, ent) in (&mut meow_writer, &mut collision_writer, &mut sprite_writer, &entities).join() {
+                println!("Processing meow: {:?}", &ent);
+                meow.update(time_delta, coll, sprite, &mut self.phys_world);
+
+                if meow.meow_time < 0.0 {
+
+                    coll.destroy_body(&mut self.phys_world);
+                    
+                    entities.delete(ent);
+                }
+            }
+
+        }
+
+        // Call update on the world event dispatcher
+        //dispatcher.dispatch(&world);
+        // Update the world state after dispatch changes
+        world.maintain();
+
+
+        //let physics_world = &mut self.phys_world;
+
+        physics::advance_physics(world, &mut self.phys_world, time_delta);
+    }
 }
 
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
 
-        let delta_s = ggez::timer::duration_to_f64(ggez::timer::delta(ctx)) as f32;
+        let time_scale = 1.0;
+        let delta_s = time_scale * (ggez::timer::duration_to_f64(ggez::timer::delta(ctx)) as f32);
   
         // Only update world state when game is running (not paused)
         match &self.current_state {
             State::Running => {
 
-                // Get world and dispatcher to increment the entity system
-                let world = &mut self.world;
+                self.run_update_step(ctx, delta_s);
 
-                // get game resource to set delta
-                let mut game_res = world.fetch_mut::<GameStateResource>();
-                game_res.delta_seconds = delta_s;
-                drop(game_res);
+                // // Get world and dispatcher to increment the entity system
+                // let world = &mut self.world;
+
+                // // get game resource to set delta
+                // let mut game_res = world.fetch_mut::<GameStateResource>();
+                // game_res.delta_seconds = delta_s;
+                // drop(game_res);
                 
-                //let dispatcher = &mut self.dispatcher;  //create_dispatcher();
+                // // Run Input System
+                // let mut input_sys = InputSystem::new();
+                // input_sys.run_now(&world);
 
-                let mut input_sys = InputSystem::new();
-                input_sys.run_now(&world);
-                for m in &input_sys.meows {
-                    println!("Meow at {},{}", &m.x, &m.y);
-                    //GhostBuilder::build_collider(world, ctx, &mut self.phys_world, m.x, m.y, -50.0, -20.0, 20.0, 0.0, 10.0, 10.0);
-                    MeowBuilder::build(world, ctx, &mut self.phys_world, m.x, m.y, 10.0, 10.0);
-                }
+                // // Process meow creation
+                // for m in &input_sys.meows {
+                //     println!("Meow at {},{} - {},{}", &m.0.x, &m.0.y, &m.1.x, &m.1.y);
+                    
+                //     //GhostBuilder::build_collider(world, ctx, &mut self.phys_world, m.x, m.y, -50.0, -20.0, 20.0, 0.0, 18.0, 18.0);
+                //     MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
+                // }
 
-                input_sys.meows.clear();
+                // input_sys.meows.clear();
+
+                // {
+
+                //     let mut meow_writer = world.write_storage::<MeowComponent>();
+                //     let entities = world.entities();                
+
+                //     for (meow, ent) in (&mut meow_writer, &entities).join() {
+                //         meow.update(delta_s);
+
+                //         if meow.meow_time < 0.0 {
+                //             entities.delete(ent);
+                //         }
+                //     }
+
+                // }
+
+                // // Call update on the world event dispatcher
+                // //dispatcher.dispatch(&world);
+                // // Update the world state after dispatch changes
+                // world.maintain();
 
 
+                // //let physics_world = &mut self.phys_world;
 
-                // Call update on the world event dispatcher
-                //dispatcher.dispatch(&world);
-                // Update the world state after dispatch changes
-                //world.maintain();
-
-
-                //let physics_world = &mut self.phys_world;
-
-                physics::advance_physics(world, &mut self.phys_world, delta_s);
+                // physics::advance_physics(world, &mut self.phys_world, delta_s);
 
             },
             _ => {

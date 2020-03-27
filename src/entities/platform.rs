@@ -25,12 +25,13 @@ impl PlatformBuilder {
     // }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32, z_order: f32) -> Entity {
+        width: f32, height: f32, angle: f32, z_order: f32) -> Entity {
 
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
 
         sprite.z_order = z_order;
+        //sprite.rotation = angle;
         sprite.scale.x *= width / 24.0;
         sprite.scale.y *= height / 24.0;
 
@@ -39,7 +40,7 @@ impl PlatformBuilder {
         // collision.dim_2 = height;
         collision.pos.x = x;
         collision.pos.y = y;
-        collision.angle = 0.0;
+        collision.angle = angle;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
@@ -82,6 +83,7 @@ impl PlatformBuilder {
         // collision.dim_2 = height;
         collision.pos.x = x;
         collision.pos.y = y;
+        collision.density = 0.5;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);

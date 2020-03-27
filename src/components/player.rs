@@ -39,6 +39,7 @@ pub struct CharacterDisplayComponent {
     // stand/fall status
     pub since_stand: f32,
     pub in_fall: bool,
+    pub fall_anim_dir: i32,
     // meow status
     pub since_meow: f32,
 }
@@ -60,7 +61,7 @@ impl CharacterDisplayComponent {
             meowing: false,
             facing_right: true,
             anim_frame: 3,
-            anim_set: 2,
+            anim_set: 1,
             anim_frame_time: 0.0,
             breath_cycle: 0.0,
             rot: 0.0,
@@ -68,6 +69,8 @@ impl CharacterDisplayComponent {
             jump_duration: 0.0,
             since_stand: 0.0,
             in_fall: true,
+            fall_anim_dir: 1,
+
             since_meow: 0.0,
         }
     }
@@ -90,7 +93,7 @@ impl CharacterDisplayComponent {
             //println!("In jump! {}", &self.jump_duration);
         }
         else {
-            self.start_fall();
+            //self.start_fall();
             self.going_up = false;
             // self.in_jump = false;
             // self.jump_duration = 0.0;
@@ -125,12 +128,14 @@ impl CharacterDisplayComponent {
     pub fn start_fall(&mut self) {
 
         if self.in_jump {
-            self.anim_set = 2;
+            //self.anim_frame = 3 - (self.anim_frame % 4);
+            self.fall_anim_dir = 1;
         }
         else {
-            self.anim_set = 2;
-            self.anim_frame = 3;
+            self.anim_frame = 6;
+            self.fall_anim_dir = -1;
         }
+        self.anim_set = 1;
         self.anim_frame_time = 0.0;
         self.in_jump = false;
         self.in_fall = true;
@@ -158,18 +163,9 @@ impl CharacterDisplayComponent {
 
     pub fn update(&mut self, coll: &mut Collision, time_delta: f32) {
 
-        // if coll.vel.x == 0.0 && coll.vel.y == 0.0 {
-        //     self.since_stand = 0.0;
-        // }
-
-        // decide if going_up is allowed with jump rules
-        // if self.in_fall || self.in_jump {
-        //     self.since_stand += time_delta;
-        // }
-
         self.since_meow += time_delta;
         if self.meowing {
-            if self.since_meow < 0.5 {
+            if self.since_meow < 0.35 {
                 self.meowing = false;
             }
         }
@@ -217,21 +213,71 @@ impl CharacterDisplayComponent {
             //if coll.vel.y < 0.0 {
 
             self.anim_frame_time += time_delta * 10.0;
-            if self.anim_frame_time > 1.0 {
-                if self.in_jump {
-                    self.anim_frame += 1;
-                    if self.anim_frame > 3 {
-                        self.anim_frame = 3;
-                    }
-                }
-                else {
-                    if self.anim_frame > 0 {
-                        self.anim_frame -= 1;
-                    }
-                }
-                self.anim_frame_time = 0.0;
 
+            match self.in_jump {
+                true => {
+                    if self.anim_frame_time > 2.0 {
+                        self.anim_frame += 1;
+                        if self.anim_frame > 6 {
+                            self.start_fall();
+                            self.anim_frame = 6;
+                            //self.anim_set = 2;
+                            //self.anim_frame = 3;
+                            //self.fall_anim_dir = -1;
+                        }
+                        self.anim_frame_time = 0.0;
+                    }
+                },
+                false => {
+                    if self.fall_anim_dir < 0 {
+                        if self.anim_frame_time > 1.3 {
+                            self.anim_frame -= 1;
+                            if self.anim_frame <= 3 {
+                                self.anim_frame = 3;
+                                self.fall_anim_dir = 1;
+                            }
+                            self.anim_frame_time = 0.0;
+                        }
+                    }
+                    else {
+                        if self.anim_frame_time > 2.0 {
+                            self.anim_frame += 1;
+                            if self.anim_frame >= 6 {
+                                self.anim_frame = 6;
+                                //self.fall_anim_dir = -1;
+                            }
+                            self.anim_frame_time = 0.0;
+                        }
+                    }
+                }
             }
+
+            // if self.anim_frame_time > 1.0 {
+            //     if self.in_jump {
+            //         self.anim_frame += 1;
+            //         if self.anim_frame > 3 {
+            //             self.anim_frame = 3;
+            //         }
+            //     }
+            //     else {
+            //         if self.fall_anim_dir < 0 {
+            //             if self.anim_frame > 0 {
+            //                 self.anim_frame -= 1;
+            //             }
+            //             else {
+            //                 self.fall_anim_dir = 1;
+            //                 self.anim_frame += 1;
+            //             }
+            //         }
+            //         else {
+            //             if self.anim_frame < 3 {
+            //                 self.anim_frame += 1;
+            //             }
+            //         }
+            //     }
+            //     self.anim_frame_time = 0.0;
+
+            // }
             //}
         }
         else if is_moving || coll.vel.x.abs() > 0.5 {
@@ -373,7 +419,7 @@ impl super::RenderTrait for CharacterDisplayComponent {
         let mut _draw_ok = true;
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
         let breath_scale = 1.5 + self.breath_cycle.cos() * 0.02;
-        let breath_y_offset = self.breath_cycle.cos() * -0.3;
+        let breath_y_offset = self.breath_cycle.cos() * -0.7;
         let mut angle = 0.0;
         if let Some(ent_id) = ent {
             let collision_reader = world.read_storage::<Collision>();

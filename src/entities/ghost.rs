@@ -83,6 +83,7 @@ impl GhostBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Meow);
         collision.create_dynamic_body_circle(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
@@ -123,6 +124,8 @@ impl GhostBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Meow);
         collision.create_static_body_circle(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();

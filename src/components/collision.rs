@@ -72,10 +72,21 @@ impl Collision {
         }
     }
 
+    pub fn destroy_body(&mut self, physics_world: &mut PhysicsWorld) {
+        self.body_handle = match self.body_handle {
+            Some(handle) => {
+                println!("Destroying physics body: {:?}", &handle);
+                physics_world.destroy_body(handle);
+                None
+            }, 
+            _ => None
+        }
+    }
+
     // Create the physics body as a static body
     pub fn create_static_body_box(&mut self, physics_world: &mut PhysicsWorld) {
         
-        let body_handle = physics::add_static_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+        let body_handle = physics::add_static_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), self.angle,
             self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask);
 
         self.body_handle = Some(body_handle);
@@ -84,18 +95,34 @@ impl Collision {
     // Create the physics body as a static body
     pub fn create_static_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
         
-        let body_handle = physics::add_static_body_circle(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+        let body_handle = physics::add_static_body_circle(physics_world, &self.pos, 
             self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask);
 
         self.body_handle = Some(body_handle);
     }
 
 
+    // Create the physics body as a dynamic body
+    pub fn create_kinematic_body_circle(&mut self, physics_world: &mut PhysicsWorld, is_sensor: bool) {
+        
+        let body_handle = physics::add_kinematic_body_circle(physics_world, &self.pos, &self.vel,
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, true, is_sensor);
+
+        self.body_handle = Some(body_handle);
+    }
+    // Create the physics body as a dynamic body
+    pub fn create_kinematic_body_box_upright(&mut self, physics_world: &mut PhysicsWorld, is_sensor: bool) {
+        
+        let body_handle = physics::add_kinematic_body_box(physics_world, &self.pos, &self.vel,
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, true, is_sensor);
+
+        self.body_handle = Some(body_handle);
+    }
 
     // Create the physics body as a dynamic body
     pub fn create_dynamic_body_box_upright(&mut self, physics_world: &mut PhysicsWorld) {
         
-        let body_handle = physics::add_dynamic_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+        let body_handle = physics::add_dynamic_body_box(physics_world, &self.pos, 
             self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, true);
 
         self.body_handle = Some(body_handle);
@@ -114,7 +141,16 @@ impl Collision {
     pub fn create_dynamic_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_dynamic_body_circle(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
-            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask);
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, false);
+
+        self.body_handle = Some(body_handle);
+    }
+
+    // Create the physics body as a dynamic body
+    pub fn create_dynamic_body_circle_fixed(&mut self, physics_world: &mut PhysicsWorld) {
+        
+        let body_handle = physics::add_dynamic_body_circle(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), 
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, true);
 
         self.body_handle = Some(body_handle);
     }

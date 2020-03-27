@@ -23,7 +23,9 @@ pub enum SpriteLayer {
     BGNear = 50,
     World = 100,
     Entities = 300,
+    PlayerBehind = 490,
     Player = 500,
+    PlayerFront = 510,
     UI = 1000
 }
 

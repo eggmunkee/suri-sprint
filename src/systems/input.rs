@@ -13,7 +13,7 @@ use crate::physics::{CollisionCategory};
 // every frame, operate on velocity of player components
 //  based on InputResource
 pub struct InputSystem {
-    pub meows: Vec::<na::Point2<f32>>,
+    pub meows: Vec::<(na::Point2<f32>,na::Vector2<f32>)>,
 }
 impl InputSystem {
     pub fn new() -> InputSystem {
@@ -67,10 +67,37 @@ impl InputSystem {
         display.update(coll, time_delta);
 
         if display.meowing {
-            let x = coll.pos.x;
-            let y = coll.pos.y;
+            let mut x = coll.pos.x;
+            let mut y = coll.pos.y;
+            let mut vx = coll.vel.x;
+            let mut vy = 0.0f32;
 
-            self.meows.push(na::Point2::new(x, y));
+            let meow_spd = 4.0f32;
+
+            if right_pressed {
+                vx = vx.max(0.0) + meow_spd; //.max(vx * 1.1);
+                x += 20.0;
+            }
+            else if left_pressed {
+                vx = vx.min(0.0) - meow_spd; //.min(vx * 1.1);
+                x -= 20.0;
+            }
+            else if display.facing_right {
+                vx = meow_spd;
+                x += 20.0;
+            }
+            else {
+                vx = -meow_spd;
+                x -= 20.0;
+            }
+            if up_pressed {
+                vy = -8.0;
+            }
+            else if down_pressed {
+                vy = 8.0;
+            }
+
+            self.meows.push((na::Point2::new(x, y),na::Vector2::new(vx, vy)));
             display.since_meow = 0.0;
 
         }

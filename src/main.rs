@@ -45,7 +45,7 @@ pub fn main() -> GameResult {
     let win_mode = config.window_mode.clone();
 
     // get ggez context build - builds window app
-    let mut cb = ggez::ContextBuilder::new("super_simple", "ggez")
+    let mut cb = ggez::ContextBuilder::new("suri_sprint", "ggez")
         .window_setup(config.window_setup)
         .window_mode(config.window_mode);
 

@@ -24,7 +24,7 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
 
     UIBuilder::build_icon(world, ctx);
 
-    let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/pyramids".to_string());
+    let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/electric-bg".to_string());
     // sprite.scale.x = 3.0;
     // sprite.scale.y = 3.0;
     sprite.z_order = SpriteLayer::BG.to_z();
@@ -46,8 +46,9 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     for i in 0..70 {
         let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE*3.0) / 50.0).round() * 50.0;
         let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE*3.0) / 50.0).round() * 50.0;
+        let ang: f32 = rng.gen::<f32>() * 0.4 - 0.2;
 
-        PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0 + rng.gen::<f32>() * 500.0, 10.0 + rng.gen::<f32>() * 20.0, SpriteLayer::BGNear.to_z());
+        PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0 + rng.gen::<f32>() * 500.0, 10.0 + rng.gen::<f32>() * 20.0, ang, SpriteLayer::BGNear.to_z());
 
 
     }
@@ -57,23 +58,27 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
         let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE * 3.0) / 50.0).round() * 50.0;
         let vx: f32 = (rng.gen::<f32>() * VELX_RANGE) - (VELX_RANGE / 2.0);
         let vy: f32 = (rng.gen::<f32>() * VELY_RANGE) - (VELY_RANGE / 2.0);
+        let ang: f32 = rng.gen::<f32>() * 0.1 - 0.05;
         // build ball entity and add to world
-        if i % 11 < 1 {
-            // if i % 11 == 0 {
+        if i % 11 < 4 {
+            if i % 2 == 0 {
             //     BallBuilder::build(world, ctx, x, y, vx, vy);
-            // }
-            // else {
+                PlatformBuilder::build_dynamic(world, ctx, physics_world, x, y, 50.0, 50.0, SpriteLayer::BGNear.to_z());
+            }
+
+            else {
             //GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15, 20.0, 20.0);
-            PlatformBuilder::build(world, ctx, physics_world, x, y, 50.0, 50.0, SpriteLayer::BGNear.to_z());
-            //}
+                PlatformBuilder::build_dynamic(world, ctx, physics_world, x, y, 50.0, 50.0, SpriteLayer::BGNear.to_z());
+            }
         }
         else {
-            if i % 2 == 0 {
-                PlatformBuilder::build(world, ctx, physics_world, x, y, 25.0, 25.0, SpriteLayer::World.to_z());
-            }
-            else {
-                GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 20.0, 20.0);
-            }
+            //if i % 2 == 0 {
+                //PlatformBuilder::build(world, ctx, physics_world, x, y, 25.0, 25.0, ang, SpriteLayer::World.to_z());
+            //}
+            //else {
+            //    GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 20.0, 20.0);
+            //}
+            GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15,  20.0, 20.0);
             
             //GhostBuilder::build_static_collider(world, ctx, physics_world, x, y, 20.0, 0.15, 25.0, 25.0);
             // GhostBuilder::build_static_collider(world, ctx, x-35.0, y, 20.0, 0.15);
