@@ -136,11 +136,11 @@ impl super::RenderTrait for SpriteComponent {
                         self.scale,
                         Color::new(1.0,1.0,1.0,self.alpha))) { 
                 _draw_ok = false;
-                println!("Failed to render ball image");
+                println!("Failed to render sprite image");
             }
         }
         else {
-            println!("Couldn't get texture: {}", &self.path);
+            println!("Couldn't get sprite texture: {}", &self.path);
         }
 
     }

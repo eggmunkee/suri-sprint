@@ -17,17 +17,22 @@ use crate::components::player::{CharacterDisplayComponent};
 use crate::game_state::{GameState,State};
 
 pub struct Renderer {
-
+    pub display_offset: na::Point2::<f32>,
 }
 
 impl Renderer {
+    pub fn new() -> Renderer {
+        Renderer {
+            display_offset: na::Point2::new(0.0,0.0),
+        }
+    }
 
-    pub fn render_frame(game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
+    pub fn render_frame(&mut self, game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
         
         graphics::clear(ctx, [0.2, 0.2, 0.2, 1.0].into());
 
         let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
-        let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
+        //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
         
         // BUILD RENDER OBJECTS LIST -----------------------------------------------------------------
         {
@@ -47,8 +52,8 @@ impl Renderer {
                     Some(_) => true,
                     _ => match opt_char_disp {
                         Some(_) => {
-                            player_offset.x = -pos.x;
-                            player_offset.y = -pos.y;
+                            self.display_offset.x = -pos.x;
+                            self.display_offset.y = -pos.y;
                             z_order = SpriteLayer::Player.to_z();
                             true
                         },
@@ -102,7 +107,7 @@ impl Renderer {
 
         let render_count = render_objects.len();
 
-        Self::pre_render_list(ctx, world, &player_offset);
+        self.pre_render_list(ctx, world);
 
         // RENDER OBJECT LIST -----------------------------------------------------------------
         for (ent, pt, _) in render_objects.iter() {
@@ -115,7 +120,7 @@ impl Renderer {
             }
         }
 
-        Self::post_render_list(ctx, world);
+        self.post_render_list(ctx, world);
 
         // RENDER UI --------------------------------------------------------------------------
         match &game_state.current_state {
@@ -206,10 +211,14 @@ impl Renderer {
         
     }
 
-    fn pre_render_list(ctx: &mut Context, world: &World, offset: &na::Point2<f32>) {
+    // pub fn get_draw_offset(ctx: &mut Context) -> na::Point2<f32> {
+    //     na::Point2::new(0.0, 0.0)
+    // }
+
+    fn pre_render_list(&self, ctx: &mut Context, world: &World) {
         let (width, height) = ggez::graphics::size(ctx);
         //let 
-        let dp = DrawParam::new().dest(na::Point2::new(offset.x + (width / 2.0), offset.y + (height / 2.0)));
+        let dp = DrawParam::new().dest(na::Point2::new(self.display_offset.x + (width / 2.0), self.display_offset.y + (height / 2.0)));
         let transform = dp.to_matrix();
         graphics::push_transform(ctx, Some(transform));
 
@@ -217,7 +226,7 @@ impl Renderer {
 
     }
 
-    fn post_render_list(ctx: &mut Context, world: &World) {
+    fn post_render_list(&self, ctx: &mut Context, world: &World) {
 
         graphics::pop_transform(ctx);
         graphics::apply_transformations(ctx);

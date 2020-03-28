@@ -3,6 +3,7 @@ use specs::{Component, DenseVecStorage, World, WorldExt};
 use ggez::nalgebra::{Point2,Vector2,distance};
 use wrapped2d::b2;
 use wrapped2d::user_data::NoUserData;
+use rand::prelude::*;
 
 
 use crate::physics;
@@ -10,17 +11,11 @@ use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle, CollisionCate
 use crate::components::player::{CharacterDisplayComponent};
 
 #[derive(Debug)]
-pub enum CollisionShape {
-    Circle(f32),
-    Square(f32)
-}
-
-#[derive(Debug)]
 pub struct Collision {
     // depricated fields
-    pub shape: CollisionShape,
-    pub mass: f32,
-    pub friction: f32,
+    // pub shape: CollisionShape,
+    // pub mass: f32,
+    // pub friction: f32,
     // real physics props
     pub density: f32,
     pub restitution: f32,
@@ -39,9 +34,9 @@ impl Collision {
     #[allow(dead_code)]
     pub fn new() -> Collision {
         Collision {
-            shape: CollisionShape::Circle(32.0),
-            mass: 1.0,
-            friction: 0.05,
+            // shape: CollisionShape::Circle(32.0),
+            // mass: 1.0,
+            // friction: 0.05,
             density: 1.0,
             restitution: 0.25,
             body_handle: None,
@@ -56,9 +51,9 @@ impl Collision {
     }
     pub fn new_specs(density: f32, restitution: f32, dim_1: f32, dim_2: f32) -> Collision {
         Collision {
-            shape: CollisionShape::Circle(32.0),
-            mass: 1.0,
-            friction: 0.0,
+            // shape: CollisionShape::Circle(32.0),
+            // mass: 1.0,
+            // friction: 0.0,
             density: density,
             restitution: restitution,
             body_handle: None,
@@ -155,13 +150,57 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
-    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, character: &mut CharacterDisplayComponent) {
+    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, opt_character: Option<&mut CharacterDisplayComponent>) {
+
+        let mut rng = rand::thread_rng();
+
         if let Some(body_handle) = self.body_handle {
             let mut body = physics_world.body_mut(body_handle);
 
-            // have character handle applying inputs to collision body
-            character.apply_collision(&mut body);
+            if let Some(character) = opt_character {
+                // have character handle applying inputs to collision body
+                character.apply_collision(&mut body);
+            }
+
+            let mut curr_pos = physics::get_pos(body.position());
+
+            let mut updated_pos = false;
+            
+            if curr_pos.y > 10000.0 {
+                curr_pos.y = -1500.0;
+
+                let new_x = (3000.0 * rng.gen::<f32>()) + 200.0;
+
+                // move falling objects inward from edges as they wrap to the top
+                if curr_pos.x > 3500.0 {
+                    curr_pos.x = new_x;
+                }
+                if curr_pos.x < 500.0 {
+                    curr_pos.x = new_x;
+                }
+
+                updated_pos = true;
+            }
+
+            if curr_pos.x < -1250.0 {
+                curr_pos.x = 4750.0;
+                updated_pos = true;
+            }
+            else if curr_pos.x > 5000.0 {
+                curr_pos.x = -1000.0;
+                updated_pos = true;
+            }
+
+            if updated_pos {
+                //println!("collider new position: {}, {}", &curr_pos.x, &curr_pos.y);
+                let phys_pos = physics::create_pos(&curr_pos);
+
+                let curr_ang = body.angle();
+                body.set_transform(&phys_pos, curr_ang);
+            }
+    
         }
+
     }
 
     pub fn post_physics_hook(&mut self, physics_world: &mut PhysicsWorld) {

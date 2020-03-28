@@ -17,8 +17,8 @@ use crate::physics::{PhysicsWorld};
 // Initialize world entities and state
 fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld) {
     let mut rng = rand::thread_rng();
-    const POSX_RANGE: f32 = 1800.0;
-    const POSY_RANGE: f32 = 1000.0;
+    const POSX_RANGE: f32 = 3000.0;
+    const POSY_RANGE: f32 = 9000.0;
     const VELX_RANGE: f32 = 395.0;
     const VELY_RANGE: f32 = 375.0;
 
@@ -43,29 +43,37 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
 
     SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
 
-    for i in 0..70 {
-        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE*3.0) / 50.0).round() * 50.0;
-        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE*3.0) / 50.0).round() * 50.0;
-        let ang: f32 = rng.gen::<f32>() * 0.4 - 0.2;
+    for i in 0..120 {
+        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE) / 50.0).round() * 50.0;
+        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE) / 50.0).round() * 50.0;
+        let ang: f32 = rng.gen::<f32>() * 2.0 - 1.0;
 
-        PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0 + rng.gen::<f32>() * 500.0, 10.0 + rng.gen::<f32>() * 20.0, ang, SpriteLayer::BGNear.to_z());
+        if rng.gen::<f32>() < 0.7 {
+            PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0 + rng.gen::<f32>() * 500.0, 10.0 + rng.gen::<f32>() * 20.0, 0.0, SpriteLayer::BGNear.to_z());
+        }
+        else {
+            PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0 + rng.gen::<f32>() * 500.0, 10.0 + rng.gen::<f32>() * 20.0, (3.14158 / 2.0) + ang, SpriteLayer::BGNear.to_z());
+        }
+
 
 
     }
 
     for i in 0..315 {
-        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE * 3.0) / 50.0).round() * 50.0;
-        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE * 3.0) / 50.0).round() * 50.0;
+        let x: f32 = ((100.0 + rng.gen::<f32>() * POSX_RANGE) / 50.0).round() * 50.0;
+        let y: f32 = ((100.0 + rng.gen::<f32>() * POSY_RANGE) / 50.0).round() * 50.0;
         let vx: f32 = (rng.gen::<f32>() * VELX_RANGE) - (VELX_RANGE / 2.0);
         let vy: f32 = (rng.gen::<f32>() * VELY_RANGE) - (VELY_RANGE / 2.0);
         let ang: f32 = rng.gen::<f32>() * 0.1 - 0.05;
         // build ball entity and add to world
-        if i % 11 < 4 {
+        if i % 11 < 5 {
             if i % 2 == 0 {
             //     BallBuilder::build(world, ctx, x, y, vx, vy);
-                PlatformBuilder::build_dynamic(world, ctx, physics_world, x, y, 50.0, 50.0, SpriteLayer::BGNear.to_z());
+                PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0, 100.0, ang, SpriteLayer::BGNear.to_z());
             }
-
+            else if i % 3 == 0 {
+                PlatformBuilder::build(world, ctx, physics_world, x, y, 100.0, 50.0, ang, SpriteLayer::BGNear.to_z());
+            }
             else {
             //GhostBuilder::build_collider(world, ctx, physics_world, x, y, vx, vy, 20.0, 0.15, 20.0, 20.0);
                 PlatformBuilder::build_dynamic(world, ctx, physics_world, x, y, 50.0, 50.0, SpriteLayer::BGNear.to_z());
@@ -86,6 +94,12 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
         }
         
     }
+
+}
+
+pub fn empty_world(ctx: &mut Context, world: &mut World, physics_world: &mut PhysicsWorld) {
+    
+
 
 }
 

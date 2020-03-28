@@ -11,7 +11,6 @@ use crate::resources::{GameStateResource,ImageResources};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
-use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::*;
 use crate::physics::{PhysicsWorld,CollisionCategory};

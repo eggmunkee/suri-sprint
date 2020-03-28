@@ -10,7 +10,6 @@ use crate::resources::{GameStateResource};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
-use crate::components::ball::{BallDisplayComponent};
 use crate::components::meow::{MeowComponent};
 use crate::systems::*;
 use crate::physics::{PhysicsWorld,CollisionCategory};

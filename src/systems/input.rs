@@ -1,11 +1,11 @@
 use ggez::nalgebra as na;
 use ggez::{Context};
 use specs::prelude::*;
+use wrapped2d::b2;
 
 use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::*;
 use crate::components::collision::{Collision};
-use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::*;
 use crate::physics::{CollisionCategory};
 
@@ -14,23 +14,27 @@ use crate::physics::{CollisionCategory};
 //  based on InputResource
 pub struct InputSystem {
     pub meows: Vec::<(na::Point2<f32>,na::Vector2<f32>)>,
+
+    //pub click_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
+    pub click_info: Vec::<na::Point2<f32>>,
 }
 impl InputSystem {
     pub fn new() -> InputSystem {
         InputSystem {
             meows: vec![],
+            click_info: vec![],
         }
     }
 
-    fn handle_player_list<'a>(&mut self, mut v: Vec<(&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity)>, input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
+    // fn handle_player_list<'a>(&mut self, mut v: Vec<(&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity)>, input: &InputResource,
+    //     ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
 
-        // handle each input applicable entity
-        for inn_v in v.iter_mut() { 
-            //let (vel, coll, _display, _e) = inn_v;      
-            self.handle_player_input(inn_v, input, ent, lazy, time_delta);
-        }
-    }
+    //     // handle each input applicable entity
+    //     for inn_v in v.iter_mut() { 
+    //         //let (vel, coll, _display, _e) = inn_v;      
+    //         self.handle_player_input(inn_v, input, ent, lazy, time_delta);
+    //     }
+    // }
 
     // handle input updates from an entity
     fn handle_player_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
@@ -102,8 +106,14 @@ impl InputSystem {
 
         }
 
+        if input.mouse_down[0] {
+            self.click_info.push(na::Point2::new(input.mouse_x, input.mouse_y));
+        }
+
     }
 }
+
+
 impl<'a> System<'a> for InputSystem {
     type SystemData = (WriteStorage<'a, Velocity>,
                         WriteStorage<'a, Collision>,
@@ -129,7 +139,14 @@ impl<'a> System<'a> for InputSystem {
 
         //let new_ent = ent.create();
 
-        self.handle_player_list(list, &*input, &ent, &lazy, time_delta);
+        // handle each input applicable entity
+        for inn_v in list.iter_mut() { 
+            //let (vel, coll, _display, _e) = inn_v;      
+            self.handle_player_input(inn_v, &*input, &ent, &lazy, time_delta);
+        }        
+
+
+        //self.handle_player_list(list, &*input, &ent, &lazy, time_delta);
 
         // iterator over velocities with player components and input
         //for (vel, _player, _e) in list.iter_mut() {        

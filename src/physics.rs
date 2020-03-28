@@ -383,7 +383,7 @@ fn pre_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
     let entities = world.entities();
 
     // Make sure collision body has update itself from game loop
-    for (mut collision, mut character, ent) in (&mut phys_writer, &mut char_writer, &entities).join() {
+    for (mut collision, mut character, ent) in (&mut phys_writer, (&mut char_writer).maybe(), &entities).join() {
         
         // update collision body from character
         collision.pre_physics_hook(physics_world, character);
@@ -454,7 +454,7 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
 
                     //println!("Character {:?} {:?} - Body 2 {:?} ", &entity_1, &character, &entity_2);
 
-                    if dot > 0.5 && !character.going_up  {
+                    if dot > 0.2 && !character.going_up  {
                         //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
                         any_stand_contact = true;
                     }

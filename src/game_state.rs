@@ -56,6 +56,9 @@ pub struct GameState {
     //pub image_lookup: HashMap<String,usize>,
     //pub images: Vec<Image>
     pub paused_text: graphics::Text,
+
+    pub current_offset: na::Point2::<f32>,
+    pub click_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
 }
 
 impl GameState {
@@ -93,6 +96,8 @@ impl GameState {
             // image_lookup: HashMap::<String,usize>::new(),
             // images: Vec::<Image>::new(),
             paused_text: text,
+            current_offset: na::Point2::new(0.0,0.0),
+            click_info: vec![],
         };
         //s.pause();
 
@@ -171,15 +176,19 @@ impl GameState {
         }        
     }
 
-    pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
-        // Get world and dispatcher to increment the entity system
-        let world = &mut self.world;
-
+    pub fn set_frame_time(&mut self, time_delta: f32) {
         // get game resource to set delta
+        let world = &mut self.world;
         let mut game_res = world.fetch_mut::<GameStateResource>();
         game_res.delta_seconds = time_delta;
-        drop(game_res);
-        
+
+    }
+  
+
+    pub fn run_input_system(&mut self, ctx: &mut Context, time_delta: f32) {
+        let world = &mut self.world;
+
+
         // Run Input System
         let mut input_sys = InputSystem::new();
         input_sys.run_now(&world);
@@ -192,7 +201,37 @@ impl GameState {
             MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
         }
 
+        let dim = ggez::graphics::drawable_size(ctx);
+        let mut display_offset = self.current_offset;
+        display_offset.x += dim.0 as f32 / 2.0;
+        display_offset.y += dim.1 as f32 / 2.0;
+
+        for click in &input_sys.click_info {
+            let mut aabb = b2::AABB::new();
+            // println!("Click position: {}, {}", &click.x, &click.y);
+            // println!("Display offset: {}, {}", &display_offset.x, &display_offset.y);
+            // println!("Click game pos: {}, {}", &(click.x-1.0-display_offset.x), &(click.y-1.0-display_offset.y));
+            aabb.lower = physics::create_pos(&na::Point2::new(click.x-1.0-display_offset.x, click.y-1.0-display_offset.y));
+            aabb.upper = physics::create_pos(&na::Point2::new(click.x+1.0-display_offset.x, click.y+1.0-display_offset.y));
+    
+            {
+                let physics = &self.phys_world;
+                let mut click_info = GameStateClickInfo {
+                    click_info: vec![]
+                };
+                physics.query_aabb(&mut click_info, &aabb);
+    
+                for (b, f) in &click_info.click_info {
+                    println!("Clicked {:?},{:?}", &b, &f);
+                }
+    
+                click_info.click_info.clear();
+    
+            }
+        }
+
         input_sys.meows.clear();
+        input_sys.click_info.clear();
 
         {
 
@@ -214,18 +253,47 @@ impl GameState {
             }
 
         }
+    }
+
+    pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
+        // Get world and dispatcher to increment the entity system
+        //let world = &mut self.world;
+
+        self.set_frame_time(time_delta);
+        
+        self.run_input_system(ctx, time_delta);
 
         // Call update on the world event dispatcher
         //dispatcher.dispatch(&world);
         // Update the world state after dispatch changes
-        world.maintain();
+        self.world.maintain();
 
 
         //let physics_world = &mut self.phys_world;
 
-        physics::advance_physics(world, &mut self.phys_world, time_delta);
+        physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);
     }
 }
+
+pub struct GameStateClickInfo {
+    pub click_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
+}
+
+impl b2::QueryCallback for GameStateClickInfo {
+
+    fn report_fixture(
+        &mut self, 
+        body: b2::BodyHandle, 
+        fixture: b2::FixtureHandle
+    ) -> bool {
+        //println!()
+
+        self.click_info.push((body.clone(), fixture.clone()));
+
+        true
+    }
+}
+
 
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
@@ -299,7 +367,11 @@ impl event::EventHandler for GameState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // Call rendering module        
 
-        let gr = render::Renderer::render_frame(self, &self.world, ctx);
+        let mut renderer = render::Renderer::new();
+
+        let gr = renderer.render_frame(self, &self.world, ctx);
+
+        self.current_offset = renderer.display_offset;
 
         // Yield process to os
         ggez::timer::yield_now();

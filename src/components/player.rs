@@ -192,6 +192,7 @@ impl CharacterDisplayComponent {
     }
 
     fn update_animation(&mut self, coll: &mut Collision, time_delta: f32) {
+        let mut rng = thread_rng();
 
         let mut is_moving = false;
         if self.going_left {
@@ -281,7 +282,7 @@ impl CharacterDisplayComponent {
             //}
         }
         else if is_moving || coll.vel.x.abs() > 0.5 {
-            //self.anim_set = 0;
+            self.anim_set = 0;
             self.anim_frame_time += time_delta * 10.0 * (0.5 * coll.vel.x.abs().max(2.0).min(30.0) );
             if self.anim_frame_time > 1.5 {
                 self.anim_frame += 1;
@@ -293,6 +294,24 @@ impl CharacterDisplayComponent {
             }
         }
         else {
+            self.anim_set = 3;
+            self.anim_frame = self.anim_frame % 4;
+            self.anim_frame_time += time_delta * 10.0;
+
+            if self.anim_frame == 2 && self.anim_frame_time > 1.0 ||
+                self.anim_frame_time > 3.0 {
+                self.anim_frame += 1;
+
+                if self.anim_frame == 2 && rng.gen::<f32>() > 0.3 {
+                    self.anim_frame = 3;
+                }
+                self.anim_frame_time = 0.0;
+
+                if self.anim_frame > 3 {
+                    self.anim_frame = 0;
+                }
+            }
+
             //self.anim_set = 0;
             //self.anim_frame = 0;
             //self.anim_frame_time = 0.0;
@@ -418,8 +437,8 @@ impl super::RenderTrait for CharacterDisplayComponent {
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-        let breath_scale = 1.5 + self.breath_cycle.cos() * 0.02;
-        let breath_y_offset = self.breath_cycle.cos() * -0.7;
+        let breath_scale = 1.5 + 0.0;//self.breath_cycle.cos() * 0.02;
+        let breath_y_offset = 0.0; //self.breath_cycle.cos() * -0.7;
         let mut angle = 0.0;
         if let Some(ent_id) = ent {
             let collision_reader = world.read_storage::<Collision>();
@@ -491,30 +510,33 @@ impl super::RenderTrait for CharacterDisplayComponent {
             //     };  
             // }
 
-            // let font = image_resources.font;
-            // let mut typeText = String::new();
-            // match &self.in_fall {
-            //     true => {
-            //         typeText.push_str(&format!("FALL {}", &self.anim_frame).to_string());
-            //     },
-            //     false => match &self.in_jump {
-            //         true => {
-            //             typeText.push_str(&format!("JUMP {}", &self.anim_frame).to_string());
-            //         },
-            //         false => {
-            //             typeText.push_str(&format!("STAND {}", &self.anim_frame).to_string());
-            //         }                    
-            //     }
-            // };
-            // let text = ggez::graphics::Text::new(typeText);
-            // let text_size_x = text.width(ctx) as f32 / 2.0;
-            // let text_size_y = text.height(ctx) as f32 / 2.0;
-            // if let Err(_) = graphics::draw(ctx, &text,
-            //     DrawParam::default()
-            //     .dest(na::Point2::new(draw_pos.x - text_size_x, draw_pos.y - text_size_y + 28.0))
-            // ) {
-            //     _draw_ok = false;
-            // }
+            if self.since_meow < 0.25 {
+                let font = image_resources.font;
+                let typeText = String::from("*meow*");
+                // match &self.in_fall {
+                //     true => {
+                //         typeText.push_str(&format!("FALL {}", &self.anim_frame).to_string());
+                //     },
+                //     false => match &self.in_jump {
+                //         true => {
+                //             typeText.push_str(&format!("JUMP {}", &self.anim_frame).to_string());
+                //         },
+                //         false => {
+                //             typeText.push_str(&format!("STAND {}", &self.anim_frame).to_string());
+                //         }                    
+                //     }
+                // };
+                let text = ggez::graphics::Text::new(typeText);
+                let text_size_x = text.width(ctx) as f32 / 2.0;
+                let text_size_y = text.height(ctx) as f32 / 2.0;
+                if let Err(_) = graphics::draw(ctx, &text,
+                    DrawParam::default()
+                    .dest(na::Point2::new(draw_pos.x - text_size_x, draw_pos.y - text_size_y + 28.0))
+                ) {
+                    _draw_ok = false;
+                }
+            }
+            
 
         }
 
