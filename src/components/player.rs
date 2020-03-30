@@ -13,6 +13,79 @@ use crate::components::{Velocity};
 use crate::physics;
 use crate::physics::{PhysicsBody};
 
+// #[derive(Debug,Copy,Clone)]
+// pub enum AnimState {
+//     Idle(u32, f32),
+//     Fall(u32, f32),
+//     Jump(u32, f32),
+//     Walk(u32, f32),
+//     Sit(u32, f32)
+// }
+
+// impl AnimState {
+//     fn frame_time(time_mult: f32, time_delta: f32) -> f32 {
+//         time_mult * time_delta
+//     }
+
+//     fn update_value(current_state: &mut AnimState, t: f32) {
+//         match current_state {
+//             AnimState::Idle(frame, ref mut time) => {
+//                 *time += t;
+//             },
+//             _ => {},
+//         }
+//     }
+
+//     pub fn advance(mut current_state: AnimState, time_delta: f32) -> AnimState {
+
+//         let mut time_mult = 1.0;
+//         let mut time_limit = 1.0;
+//         let mut time = 0.0;
+
+//         // get multiplier for time based on state / frame
+//         match &current_state {
+//             AnimState::Idle(_, t) => {
+//                 time_mult *= 1.5;
+//             },
+//             _ => {},
+//         };
+
+//         // get generic frame time delta
+//         time = Self::frame_time(time_mult, time_delta);
+
+//         // update frame time
+//         Self::update_value(&mut current_state, time);
+
+//         // If the current frame is past its time limit, find next state
+//         if time >= time_limit {
+//             match &current_state {
+//                 AnimState::Idle(frame, time) => {
+//                     AnimState::Fall(0,0.0)
+//                 },
+//                 _ => current_state,
+//             }
+//         }
+//         // Return current state with updated timm
+//         else{
+//             current_state
+//         }
+
+        
+
+//     }
+// }
+
+const WALK_SET : u32 = 0;
+const WALK_FRAMES : u32 = 6;
+const JUMP_SET : u32 = 1;
+const JUMP_FRAMES : u32 = 7;
+const FALL_ONLY_SET : u32 = 2;
+const FALL_ONLY_FRAMES : u32 = 4;
+const IDLE_SET : u32 = 3;
+const IDLE_FRAMES : u32 = 4;
+const SIT_SET : u32 = 4;
+const SIT_FRAMES : u32 = 5;
+
 #[derive(Debug)]
 pub struct CharacterDisplayComponent {
     // image path
@@ -26,11 +99,12 @@ pub struct CharacterDisplayComponent {
     // facing status
     pub facing_right: bool,
     // animation status
+    //pub anim_state: AnimState,
     pub anim_frame: u32,
     pub anim_set: u32,
     pub anim_frame_time: f32,
     // breath cycle
-    pub breath_cycle: f32,
+    //pub breath_cycle: f32,
     // roation
     pub rot: f32,
     // jump variables
@@ -40,6 +114,8 @@ pub struct CharacterDisplayComponent {
     pub since_stand: f32,
     pub in_fall: bool,
     pub fall_anim_dir: i32,
+    pub in_walk: bool,
+    pub in_idle: bool,
     // meow status
     pub since_meow: f32,
 }
@@ -60,29 +136,41 @@ impl CharacterDisplayComponent {
             going_down: false,
             meowing: false,
             facing_right: true,
+            //anim_state: AnimState::Fall(0,0.0),
             anim_frame: 3,
-            anim_set: 1,
+            anim_set: JUMP_SET,
             anim_frame_time: 0.0,
-            breath_cycle: 0.0,
+            //breath_cycle: 0.0,
             rot: 0.0,
             in_jump: false,
             jump_duration: 0.0,
             since_stand: 0.0,
             in_fall: true,
             fall_anim_dir: 1,
-
+            in_walk: false,
+            in_idle: false,
             since_meow: 0.0,
         }
     }
 
+    /* ANIMATION STATES =============================================== */
 
+    pub fn clear_anim_state(&mut self) {
+        self.in_jump = false;
+        self.in_fall = false;
+        self.in_walk = false;
+        self.in_idle = false;
+        //self.anim_state = AnimState::Fall(0,0.0);
+    }
+
+    // JUMP ------------------------------
 
     pub fn start_jump(&mut self) {
-        self.anim_set = 1;
+        self.anim_set = JUMP_SET;
         self.anim_frame = 0;
         self.anim_frame_time = 0.0;
+        self.clear_anim_state();
         self.in_jump = true;
-        self.in_fall = false;
         self.jump_duration = 0.0;
         self.since_stand = 50.0;
     }
@@ -102,29 +190,8 @@ impl CharacterDisplayComponent {
         }
     }
 
-    pub fn start_stand(&mut self) {
-        self.anim_set = 0;
-        self.anim_frame = 0;
-        self.anim_frame_time = 0.0;
-        self.in_jump = false;
-        self.in_fall = false;
-        self.jump_duration = 0.0;
-        self.since_stand = 0.0;
-    }
 
-    pub fn process_stand(&mut self, time_delta: f32) {
-        if self.going_up {
-            if self.jump_duration >= 0.0 && self.recent_stand() {
-                //println!("Start jump! {}", &self.jump_duration);
-                self.start_jump();
-            }
-            else {
-                //println!("Can't start jump! {}", &self.jump_duration);
-                self.going_up = false;
-            }
-        }
-    }
-
+    // FALL ------------------------------
     pub fn start_fall(&mut self) {
 
         if self.in_jump {
@@ -135,9 +202,9 @@ impl CharacterDisplayComponent {
             self.anim_frame = 6;
             self.fall_anim_dir = -1;
         }
-        self.anim_set = 1;
+        self.anim_set = JUMP_SET;
         self.anim_frame_time = 0.0;
-        self.in_jump = false;
+        self.clear_anim_state();
         self.in_fall = true;
         self.jump_duration = 0.0;
         //self.since_stand = 0.0;
@@ -153,6 +220,56 @@ impl CharacterDisplayComponent {
         }
         else {
             self.going_up = false;
+        }
+    }
+
+
+    // STAND ------------------------------
+    pub fn start_walk(&mut self) {
+        self.anim_set = WALK_SET;
+        self.anim_frame = 0;
+        self.anim_frame_time = 0.0;
+        self.clear_anim_state();
+        self.in_walk = true;
+        self.jump_duration = 0.0;
+        self.since_stand = 0.0;
+    }
+
+    pub fn process_walk(&mut self, time_delta: f32) {
+        if self.going_up {
+            if self.jump_duration >= 0.0 && self.recent_stand() {
+                //println!("Start jump! {}", &self.jump_duration);
+                self.start_jump();
+            }
+            else {
+                //println!("Can't start jump! {}", &self.jump_duration);
+                self.going_up = false;
+            }
+        }
+    }
+
+    // IDLE -----------------------------------------------
+
+    pub fn start_idle(&mut self) {
+        self.anim_set = IDLE_SET;
+        self.anim_frame = 0;
+        self.anim_frame_time = 0.0;
+        self.clear_anim_state();
+        self.in_idle = true;
+        self.jump_duration = 0.0;
+        self.since_stand = 0.0;
+    }
+
+    pub fn process_idle(&mut self, time_delta: f32) {
+        if self.going_up {
+            if self.jump_duration >= 0.0 && self.recent_stand() {
+                //println!("Start jump! {}", &self.jump_duration);
+                self.start_jump();
+            }
+            else {
+                //println!("Can't start jump! {}", &self.jump_duration);
+                self.going_up = false;
+            }
         }
     }
 
@@ -178,12 +295,15 @@ impl CharacterDisplayComponent {
         else if self.in_fall {
             self.process_fall(time_delta);
         }
-        else {
-            self.process_stand(time_delta);
+        else if self.in_walk {
+            self.process_walk(time_delta);
+        }
+        else if self.in_idle {
+            self.process_idle(time_delta);
         }
 
 
-        self.interp_breath(0.08);
+        //self.interp_breath(0.08);
 
         self.update_animation(coll, time_delta);
 
@@ -204,6 +324,7 @@ impl CharacterDisplayComponent {
             is_moving = true;
         }
 
+        // JUMP/FALL ANIMATION
         if self.in_jump || self.in_fall {            
             // if self.anim_set != 1 {
             //     self.anim_frame = 0;
@@ -219,9 +340,9 @@ impl CharacterDisplayComponent {
                 true => {
                     if self.anim_frame_time > 2.0 {
                         self.anim_frame += 1;
-                        if self.anim_frame > 6 {
+                        if self.anim_frame > JUMP_FRAMES - 1 {
                             self.start_fall();
-                            self.anim_frame = 6;
+                            self.anim_frame = JUMP_FRAMES - 1;
                             //self.anim_set = 2;
                             //self.anim_frame = 3;
                             //self.fall_anim_dir = -1;
@@ -243,8 +364,8 @@ impl CharacterDisplayComponent {
                     else {
                         if self.anim_frame_time > 2.0 {
                             self.anim_frame += 1;
-                            if self.anim_frame >= 6 {
-                                self.anim_frame = 6;
+                            if self.anim_frame >= JUMP_FRAMES - 1 {
+                                self.anim_frame = JUMP_FRAMES - 1;
                                 //self.fall_anim_dir = -1;
                             }
                             self.anim_frame_time = 0.0;
@@ -253,61 +374,37 @@ impl CharacterDisplayComponent {
                 }
             }
 
-            // if self.anim_frame_time > 1.0 {
-            //     if self.in_jump {
-            //         self.anim_frame += 1;
-            //         if self.anim_frame > 3 {
-            //             self.anim_frame = 3;
-            //         }
-            //     }
-            //     else {
-            //         if self.fall_anim_dir < 0 {
-            //             if self.anim_frame > 0 {
-            //                 self.anim_frame -= 1;
-            //             }
-            //             else {
-            //                 self.fall_anim_dir = 1;
-            //                 self.anim_frame += 1;
-            //             }
-            //         }
-            //         else {
-            //             if self.anim_frame < 3 {
-            //                 self.anim_frame += 1;
-            //             }
-            //         }
-            //     }
-            //     self.anim_frame_time = 0.0;
-
-            // }
-            //}
         }
+        // WALKING ANIMATION
         else if is_moving || coll.vel.x.abs() > 0.5 {
-            self.anim_set = 0;
+            self.anim_set = WALK_SET;
+            self.anim_frame = self.anim_frame % WALK_FRAMES;
             self.anim_frame_time += time_delta * 10.0 * (0.5 * coll.vel.x.abs().max(2.0).min(30.0) );
             if self.anim_frame_time > 1.5 {
                 self.anim_frame += 1;
                 self.anim_frame_time = 0.0;
 
-                if self.anim_frame > 5 {
+                if self.anim_frame > WALK_FRAMES - 1 {
                     self.anim_frame = 0;
                 }
             }
         }
+        // IDLE ANIMATION
         else {
-            self.anim_set = 3;
-            self.anim_frame = self.anim_frame % 4;
+            if self.anim_set != IDLE_SET {
+                self.anim_set = IDLE_SET;
+                self.anim_frame = 0;
+                self.anim_frame_time = 0.0;
+            }
+
+            self.anim_frame = self.anim_frame % 5;
             self.anim_frame_time += time_delta * 10.0;
 
-            if self.anim_frame == 2 && self.anim_frame_time > 1.0 ||
-                self.anim_frame_time > 3.0 {
+            if self.anim_frame_time > 1.0 {
                 self.anim_frame += 1;
-
-                if self.anim_frame == 2 && rng.gen::<f32>() > 0.3 {
-                    self.anim_frame = 3;
-                }
                 self.anim_frame_time = 0.0;
 
-                if self.anim_frame > 3 {
+                if self.anim_frame > IDLE_FRAMES - 1 {
                     self.anim_frame = 0;
                 }
             }
@@ -319,24 +416,24 @@ impl CharacterDisplayComponent {
 
     }
 
-    pub fn interp_breath(&mut self, cycle_speed: f32) {
-        let two_pi = 2.0*3.14159;
+    // pub fn interp_breath(&mut self, cycle_speed: f32) {
+    //     let two_pi = 2.0*3.14159;
 
-        if !self.going_left && !self.going_right && !self.going_up && !self.going_down {
-            self.breath_cycle += cycle_speed;
-            if self.breath_cycle >= two_pi {
-                self.breath_cycle -= two_pi;
-            }
-        }
-        else {
-            self.breath_cycle = 0.0;
-        }
+    //     if !self.going_left && !self.going_right && !self.going_up && !self.going_down {
+    //         self.breath_cycle += cycle_speed;
+    //         if self.breath_cycle >= two_pi {
+    //             self.breath_cycle -= two_pi;
+    //         }
+    //     }
+    //     else {
+    //         self.breath_cycle = 0.0;
+    //     }
 
-        // self.rot += 0.01;
-        // if self.rot >= two_pi {
-        //     self.rot -= two_pi;
-        // }
-    }
+    //     // self.rot += 0.01;
+    //     // if self.rot >= two_pi {
+    //     //     self.rot -= two_pi;
+    //     // }
+    // }
 
     pub fn apply_collision(&mut self, body: &mut physics::PhysicsBody) {
         let move_amt = 25.0; //1300.0;
@@ -411,12 +508,13 @@ impl CharacterDisplayComponent {
         //vel.y = vel.y.max(-80.0);
     }
 
+    // Update animation status from collision standing status
     pub fn update_body_status(&mut self, is_standing: bool) {
 
         match is_standing {
             true => {
                 if self.in_jump || self.in_fall {
-                    self.start_stand();
+                    self.start_walk();
                 }
             },
             false => {

@@ -16,6 +16,7 @@ use specs::Join;
 use rand::prelude::*;
 
 use wrapped2d::b2;
+use wrapped2d::user_data::*;
 use wrapped2d::user_data::NoUserData;
 // =====================================
 
@@ -53,6 +54,7 @@ pub struct GameState {
     pub world: World,
     pub font: graphics::Font,
     pub phys_world: PhysicsWorld,
+    pub display_scale: f32,
     //pub image_lookup: HashMap<String,usize>,
     //pub images: Vec<Image>
     pub paused_text: graphics::Text,
@@ -81,6 +83,7 @@ impl GameState {
         let font = graphics::Font::new(ctx, "/FreeMonoBold.ttf")?;
         let text = graphics::Text::new(("PAUSED", font, 52.0));
 
+        println!("World init");
         let ecs_world = create_world(ctx, game_state_resource, &mut physics_world);
 
         // Create main state instance with dispatcher and world
@@ -89,6 +92,7 @@ impl GameState {
             current_state: State::Running,
             window_w: win_w,
             window_h: win_h,
+            display_scale: 2.0,
             //dispatcher: create_dispatcher(), 
             world: ecs_world,
             font: font,
@@ -102,7 +106,6 @@ impl GameState {
         //s.pause();
 
         // Perform initial dispatch and update world
-        println!("Dispatcher & World init");
         //s.dispatcher.dispatch(&s.world);
         //s.world.maintain();
 
@@ -126,36 +129,6 @@ impl GameState {
         Ok(s)
     }
 
-    // pub fn has_image(&mut self, path:String) -> bool {
-    //     return self.image_lookup.contains_key(&path);
-    // }
-
-    // pub fn load_image(&mut self, path:String, ctx: &mut Context) -> GameResult<()> {
-    //     let entry = self.image_lookup.entry(path.clone());
-    //     if let Entry::Vacant(_) = entry {
-    //         let image = Image::new(ctx, path.clone())?;
-    //         let new_idx = self.images.len();
-    //         self.images.push(image);
-    //         self.image_lookup.insert(path.clone(), new_idx);
-    //         //()
-    //     }
-    //     Ok(()) // ok if already loaded
-    // }
-
-    // pub fn image_ref(&mut self, path:String) -> GameResult<&mut Image> {
-        
-    //     //self.load_image(path.clone(), ctx)?;
-
-    //     match self.image_lookup.entry(path.clone()) {
-    //         Entry::Occupied(o) => {
-    //             //let o = o;
-    //             let index = o.get().clone();
-    //             let image = &mut self.images[index];
-    //             Ok(image)
-    //         },
-    //         _ => Err(GameError::ResourceLoadError("Got image_ref for missing image".to_string()))
-    //     }
-    // }
 }
 
 impl GameState {
@@ -185,69 +158,97 @@ impl GameState {
     }
   
 
-    pub fn run_input_system(&mut self, ctx: &mut Context, time_delta: f32) {
+    pub fn run_update_systems(&mut self, ctx: &mut Context, time_delta: f32) {
         let world = &mut self.world;
 
-
         // Run Input System
-        let mut input_sys = InputSystem::new();
-        input_sys.run_now(&world);
-
-        // Process meow creation
-        for m in &input_sys.meows {
-            println!("Meow at {},{} - {},{}", &m.0.x, &m.0.y, &m.1.x, &m.1.y);
-            
-            //GhostBuilder::build_collider(world, ctx, &mut self.phys_world, m.x, m.y, -50.0, -20.0, 20.0, 0.0, 18.0, 18.0);
-            MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
-        }
-
-        let dim = ggez::graphics::drawable_size(ctx);
-        let mut display_offset = self.current_offset;
-        display_offset.x += dim.0 as f32 / 2.0;
-        display_offset.y += dim.1 as f32 / 2.0;
-
-        for click in &input_sys.click_info {
-            let mut aabb = b2::AABB::new();
-            // println!("Click position: {}, {}", &click.x, &click.y);
-            // println!("Display offset: {}, {}", &display_offset.x, &display_offset.y);
-            // println!("Click game pos: {}, {}", &(click.x-1.0-display_offset.x), &(click.y-1.0-display_offset.y));
-            aabb.lower = physics::create_pos(&na::Point2::new(click.x-1.0-display_offset.x, click.y-1.0-display_offset.y));
-            aabb.upper = physics::create_pos(&na::Point2::new(click.x+1.0-display_offset.x, click.y+1.0-display_offset.y));
-    
-            {
-                let physics = &self.phys_world;
-                let mut click_info = GameStateClickInfo {
-                    click_info: vec![]
-                };
-                physics.query_aabb(&mut click_info, &aabb);
-    
-                for (b, f) in &click_info.click_info {
-                    println!("Clicked {:?},{:?}", &b, &f);
-                }
-    
-                click_info.click_info.clear();
-    
-            }
-        }
-
-        input_sys.meows.clear();
-        input_sys.click_info.clear();
-
         {
+            // outputs: meow locations and clicked entity info
+            let mut input_sys = InputSystem::new();
+            input_sys.run_now(&world);
 
+            // Process meow creation
+            for m in &input_sys.meows {
+                // Create a meow bubble
+                MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
+            }
+
+            // Get display size for click position calculations
+            let dim = ggez::graphics::drawable_size(ctx);
+            let mut display_offset = self.current_offset;
+            display_offset.x += dim.0 as f32 / 2.0;
+            display_offset.y += dim.1 as f32 / 2.0;
+
+            // list for entities found at click
+            let mut entity_clicked : Vec<u32> = vec![];
+
+            for click in &input_sys.click_info {
+                // get center x/y based on click and display offset
+                // to get from screen coordinates to game object coords
+                let center_x = click.x - display_offset.x;
+                let center_y = click.y - display_offset.y;
+                // println!("Click position: {}, {}", &click.x, &click.y);
+                // println!("Display offset: {}, {}", &display_offset.x, &display_offset.y);
+                // println!("Click game pos: {}, {}", &(click.x-1.0-display_offset.x), &(click.y-1.0-display_offset.y));
+                // create bounding box for click position to check colliders
+                let mut aabb = b2::AABB::new();
+                aabb.lower = physics::create_pos(&na::Point2::new(center_x-0.1, center_y-0.1));
+                aabb.upper = physics::create_pos(&na::Point2::new(click.x+0.1, click.y+0.1));
+        
+                {
+                    let physics = &self.phys_world;
+                    // create object which received click collide info
+                    let mut click_info = GameStateClickInfo {
+                        click_info: vec![]
+                    };
+                    // query physics world with aabb, updating click_info
+                    physics.query_aabb(&mut click_info, &aabb);
+        
+                    // go through click info from query
+                    for (b, f) in &click_info.click_info {
+                        println!("Clicked {:?},{:?}", &b, &f);
+                        // get physics body
+                        let body = self.phys_world.body(*b);
+                        // get body user data with entity id
+                        let body_data = &*body.user_data();
+                        let ent_id = body_data.entity_id;
+                        // add entity id to vector
+                        entity_clicked.push(ent_id);
+                    }
+        
+                    // clear click info from results object
+                    click_info.click_info.clear();
+                    drop(click_info);
+        
+                }
+            }
+
+            for ent in &entity_clicked {
+                println!("Entity {:?} clicked", &ent);
+            }
+
+            input_sys.meows.clear();
+            input_sys.click_info.clear();
+            drop(input_sys);
+        }
+
+        // Meow "system" - updates meow state and components
+        {
+            // Operator on meows, collisions and sprite components
             let mut meow_writer = world.write_storage::<MeowComponent>();
             let mut collision_writer = world.write_storage::<Collision>();
             let mut sprite_writer = world.write_storage::<SpriteComponent>();
             let entities = world.entities();                
 
             for (meow, coll, sprite, ent) in (&mut meow_writer, &mut collision_writer, &mut sprite_writer, &entities).join() {
-                println!("Processing meow: {:?}", &ent);
+                // update meow components
                 meow.update(time_delta, coll, sprite, &mut self.phys_world);
 
                 if meow.meow_time < 0.0 {
 
+                    // Destroy physics body of collision component
                     coll.destroy_body(&mut self.phys_world);
-                    
+                    // Delete entity from ecs world
                     entities.delete(ent);
                 }
             }
@@ -256,29 +257,25 @@ impl GameState {
     }
 
     pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
-        // Get world and dispatcher to increment the entity system
-        //let world = &mut self.world;
-
-        self.set_frame_time(time_delta);
         
-        self.run_input_system(ctx, time_delta);
+        // Save frame time
+        self.set_frame_time(time_delta);
 
-        // Call update on the world event dispatcher
-        //dispatcher.dispatch(&world);
-        // Update the world state after dispatch changes
+        // Update components
+        self.run_update_systems(ctx, time_delta);
+
+        // Cleanup the world state after changes
         self.world.maintain();
 
-
-        //let physics_world = &mut self.phys_world;
-
+        // Run physics update frame
         physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);
     }
 }
 
+// Struct which holds body/fixture physics query results
 pub struct GameStateClickInfo {
     pub click_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
 }
-
 impl b2::QueryCallback for GameStateClickInfo {
 
     fn report_fixture(
@@ -440,8 +437,24 @@ impl event::EventHandler for GameState {
         ctx: &mut Context,
         keycode: KeyCode,
         keymod: KeyMods,
-        _repeat: bool,
+        repeat: bool,
     ) {
+
+        if repeat {
+            if keycode == KeyCode::Subtract {
+                if self.display_scale > 0.25 {
+                    self.display_scale -= 0.05;
+                }            
+            }
+            else if keycode == KeyCode::Equals {
+                if self.display_scale < 2.75 {
+                    self.display_scale += 0.05;
+                }            
+            }
+    
+        }
+
+
         InputMap::key_down(&mut self.world, ctx, keycode, keymod);
     }
 
@@ -470,7 +483,7 @@ impl event::EventHandler for GameState {
             let test : u16 = rng.gen::<u16>();
             if test % 5 == 0 {
                 crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0,
-                    50.0, 15.0, SpriteLayer::Entities.to_z());
+                    50.0, 15.0, 0.0, SpriteLayer::Entities.to_z());
             }
             else {
                 crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
@@ -478,6 +491,16 @@ impl event::EventHandler for GameState {
             }
 
 
+        }
+        else if keycode == KeyCode::Subtract {
+            if self.display_scale > 0.25 {
+                self.display_scale -= 0.05;
+            }            
+        }
+        else if keycode == KeyCode::Equals {
+            if self.display_scale < 2.75 {
+                self.display_scale += 0.05;
+            }            
         }
 
         InputMap::key_up(&mut self.world, ctx, keycode, keymod);

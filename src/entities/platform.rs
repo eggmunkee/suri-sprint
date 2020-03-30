@@ -68,7 +68,7 @@ impl PlatformBuilder {
     }
 
     pub fn build_dynamic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32, z_order: f32) -> Entity {
+        width: f32, height: f32, angle: f32, z_order: f32) -> Entity {
 
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
@@ -83,6 +83,7 @@ impl PlatformBuilder {
         collision.pos.x = x;
         collision.pos.y = y;
         collision.density = 0.5;
+        collision.angle = angle;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);

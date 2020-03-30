@@ -29,7 +29,7 @@ impl Renderer {
 
     pub fn render_frame(&mut self, game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
         
-        graphics::clear(ctx, [0.2, 0.2, 0.2, 1.0].into());
+        graphics::clear(ctx, [0.0, 0.0, 0.0, 1.0].into());
 
         let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
         //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
@@ -107,7 +107,7 @@ impl Renderer {
 
         let render_count = render_objects.len();
 
-        self.pre_render_list(ctx, world);
+        self.pre_render_list(game_state, ctx, world);
 
         // RENDER OBJECT LIST -----------------------------------------------------------------
         for (ent, pt, _) in render_objects.iter() {
@@ -215,10 +215,12 @@ impl Renderer {
     //     na::Point2::new(0.0, 0.0)
     // }
 
-    fn pre_render_list(&self, ctx: &mut Context, world: &World) {
+    fn pre_render_list(&self, game_state: &GameState, ctx: &mut Context, world: &World) {
         let (width, height) = ggez::graphics::size(ctx);
+        let scale = game_state.display_scale;
         //let 
-        let dp = DrawParam::new().dest(na::Point2::new(self.display_offset.x + (width / 2.0), self.display_offset.y + (height / 2.0)));
+        let mut dp = DrawParam::new().dest(na::Point2::new(self.display_offset.x * scale + (width / 2.0), self.display_offset.y * scale + (height / 2.0)));
+        dp = dp.scale(na::Vector2::new(scale,scale));
         let transform = dp.to_matrix();
         graphics::push_transform(ctx, Some(transform));
 

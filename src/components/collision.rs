@@ -166,16 +166,16 @@ impl Collision {
 
             let mut updated_pos = false;
             
-            if curr_pos.y > 10000.0 {
+            if curr_pos.y > 13000.0 {
                 curr_pos.y = -1500.0;
 
-                let new_x = (3000.0 * rng.gen::<f32>()) + 200.0;
+                let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
 
                 // move falling objects inward from edges as they wrap to the top
-                if curr_pos.x > 3500.0 {
+                if curr_pos.x > 4900.0 {
                     curr_pos.x = new_x;
                 }
-                if curr_pos.x < 500.0 {
+                if curr_pos.x < 100.0 {
                     curr_pos.x = new_x;
                 }
 
@@ -183,10 +183,10 @@ impl Collision {
             }
 
             if curr_pos.x < -1250.0 {
-                curr_pos.x = 4750.0;
+                curr_pos.x = 6750.0;
                 updated_pos = true;
             }
-            else if curr_pos.x > 5000.0 {
+            else if curr_pos.x > 7000.0 {
                 curr_pos.x = -1000.0;
                 updated_pos = true;
             }

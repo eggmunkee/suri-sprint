@@ -53,7 +53,7 @@ pub fn main() -> GameResult {
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
         path.push("resources");
-        println!("Adding path {:?}", path);
+        //println!("Adding path {:?}", path);
         cb = cb.add_resource_path(path);
     }        
     // build
@@ -64,7 +64,7 @@ pub fn main() -> GameResult {
     let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode)?;
 
     
-    filesystem::print_all(ctx);
+    //filesystem::print_all(ctx);
     // run event loop
     event::run(ctx, event_loop, state)
 }
