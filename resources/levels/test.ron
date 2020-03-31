@@ -1,0 +1,11 @@
+LevelConfig(
+    name: "test",
+    items: [
+        Player ( x: 1000.0, y: 2000.0 ),
+        Platform ( x: 400.0, y: 3000.0, w: 400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1000.0, y: 2750.0, w: 400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1400.0, y: 3000.0, w: 400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 2500.0, y: 2500.0, w: 400.0, h: 20.0, ang: -0.75),
+        Ghost ( x: 300.0, y: 2900.0 ),
+    ],
+)

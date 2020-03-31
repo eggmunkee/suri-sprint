@@ -11,7 +11,7 @@ pub struct ConfigData {
     pub window_mode: WindowMode,
 }
 
-pub fn get_ron_config<'de,T>(config_path: String) -> Option<T> 
+pub fn get_ron_config<'a,T>(config_path: String) -> Option<T> 
     where T: DeserializeOwned
 {
     let input_path = format!("{}/resources/{}.ron", env!("CARGO_MANIFEST_DIR"), &config_path);
