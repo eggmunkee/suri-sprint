@@ -9,7 +9,7 @@ use specs_derive::*;
 use crate::game_state::{GameState};
 
 pub mod sprite;
-pub mod ball;
+//pub mod ball;
 pub mod player;
 pub mod collision;
 pub mod meow;
@@ -105,7 +105,7 @@ pub fn register_components(world: &mut World) {
     // sub-module components
     self::sprite::register_components(world);
     self::collision::register_components(world);
-    self::ball::register_components(world);
+    //self::ball::register_components(world);
     self::player::register_components(world);
     self::meow::register_components(world);
 }

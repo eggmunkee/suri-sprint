@@ -41,7 +41,7 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     // PlatformBuilder::build(world, ctx, physics_world, 1000.0, 1200.0, 1000.0, 50.0, SpriteLayer::World.to_z());
     // PlatformBuilder::build(world, ctx, physics_world, 2000.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
 
-    SuriBuilder::build(world, ctx, physics_world, 250.0, 120.0);
+    SuriBuilder::build(world, ctx, physics_world, 2000.0, 2000.0);
 
     for i in 0..120 {
         let x: f32 = ((-500.0 + rng.gen::<f32>() * POSX_RANGE) / 100.0).round() * 100.0;

@@ -4,7 +4,7 @@ use ggez::{Context};
 use specs::{Builder,Entity,World,WorldExt};
 
 use crate::components::{Position, Velocity, DisplayComp, DisplayCompType};
-use crate::components::ball::*;
+//use crate::components::ball::*;
 use crate::components::sprite::*;
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};

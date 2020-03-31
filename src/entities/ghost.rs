@@ -4,7 +4,7 @@ use wrapped2d::user_data::*;
 
 use crate::components::sprite::*;
 use crate::components::{Position, Velocity, DisplayComp, DisplayCompType};
-use crate::components::ball::*;
+//use crate::components::ball::*;
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 use crate::physics::{PhysicsWorld,CollisionCategory};
@@ -82,7 +82,7 @@ impl GhostBuilder {
         collision.collision_category = CollisionCategory::Ghost;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
-        collision.collision_mask.push(CollisionCategory::Player);
+        //collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Meow);
         collision.create_dynamic_body_circle(physics_world);
 

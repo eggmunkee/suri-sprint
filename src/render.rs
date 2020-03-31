@@ -12,7 +12,6 @@ use rand::prelude::*;
 //use crate::resources::{ImageResources};
 use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer};
-use crate::components::ball::{BallDisplayComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::game_state::{GameState,State};
 
@@ -43,27 +42,23 @@ impl Renderer {
             // Get read storage for all display components
             let sprite_disp = game_state.world.read_storage::<SpriteComponent>();
             let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
-            let ball_disp = game_state.world.read_storage::<BallDisplayComponent>();
-            for (opt_sprite_disp,opt_char_disp,opt_ball_disp,pos,ent) in 
-                ((&sprite_disp).maybe(), (&char_disp).maybe(),(&ball_disp).maybe(),&pos,&entities).join() {
+            for (opt_sprite_disp,opt_char_disp,pos,ent) in 
+                ((&sprite_disp).maybe(), (&char_disp).maybe(),&pos,&entities).join() {
                 // Check for any of the display components
                 let mut z_order = 1.0;
-                let has_display_comp = match opt_ball_disp {
-                    Some(_) => true,
-                    _ => match opt_char_disp {
-                        Some(_) => {
-                            self.display_offset.x = -pos.x;
-                            self.display_offset.y = -pos.y;
-                            z_order = SpriteLayer::Player.to_z();
+                let has_display_comp = match opt_char_disp {
+                    Some(_) => {
+                        self.display_offset.x = -pos.x;
+                        self.display_offset.y = -pos.y;
+                        z_order = SpriteLayer::Player.to_z();
+                        true
+                    },
+                    _ => match opt_sprite_disp {
+                        Some(sprite) => {
+                            z_order = sprite.z_order;
                             true
                         },
-                        _ => match opt_sprite_disp {
-                            Some(sprite) => {
-                                z_order = sprite.z_order;
-                                true
-                            },
-                            _ => false
-                        }
+                        _ => false
                     }
                 };
 
@@ -181,33 +176,14 @@ impl Renderer {
                 res.draw(ctx, &world, Some(entity.id()), pt.clone());
             }
             else {
-                // Try reading BallDisplayComponent to render
-                {
-                    let ball_disp_comp = world.read_storage::<BallDisplayComponent>();
-                    let ball_disp_comp_res = ball_disp_comp.get(entity);
-                    if let Some(res) = ball_disp_comp_res {
-                        // Call component render method
-                        res.draw(ctx, &world, Some(entity.id()), pt.clone());
-                    }
-                    else {
-                        // Try reading SpriteComponent to render
-                        {
-                            let sprite_disp_comp = world.read_storage::<SpriteComponent>();
-                            let sprite_disp_comp_res = sprite_disp_comp.get(entity);
-                            if let Some(res) = sprite_disp_comp_res {
-                                // Call component render method
-                                res.draw(ctx, &world, Some(entity.id()), pt.clone());
-                            }
-                        }
-
-                    }
+                let sprite_disp_comp = world.read_storage::<SpriteComponent>();
+                let sprite_disp_comp_res = sprite_disp_comp.get(entity);
+                if let Some(res) = sprite_disp_comp_res {
+                    // Call component render method
+                    res.draw(ctx, &world, Some(entity.id()), pt.clone());
                 }
-
             }
         }
-
-        
-
         
     }
 

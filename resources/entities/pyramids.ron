@@ -1,0 +1,7 @@
+SpriteConfig(
+    spritesheet: false,
+    path: "/pepe-kek-neon-pyramids.png",
+    scale: (5.0, 5.0),
+    z_order: 1.0,
+    alpha: 0.11,
+)

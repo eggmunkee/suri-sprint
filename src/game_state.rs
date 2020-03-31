@@ -103,28 +103,6 @@ impl GameState {
             current_offset: na::Point2::new(0.0,0.0),
             click_info: vec![],
         };
-        //s.pause();
-
-        // Perform initial dispatch and update world
-        //s.dispatcher.dispatch(&s.world);
-        //s.world.maintain();
-
-        // Tests adding images to the image resources Resource
-        // if let Some(img_res) = s.world.get_mut::<ImageResources>() {
-        //     let img_path = String::from("/icon.png");
-        //     // check for image existence
-        //     //println!("ImageResources has {}? {}", &img_path, &(img_res.has_image(img_path.clone())) );
-
-        //     // load image once (if not set)
-        //     img_res.load_image(img_path.clone(), ctx);
-        //     //println!("ImageResources has {}? {}", &img_path, &(img_res.has_image(img_path.clone())) );
-
-        //     // get image reference from path
-        //     let img : &Image = img_res.image_ref(img_path, ctx).unwrap();
-        //     println!("Image: {:?}", img);
-        //     drop(img);
-
-        // }
 
         Ok(s)
     }
@@ -304,53 +282,6 @@ impl event::EventHandler for GameState {
 
                 self.run_update_step(ctx, delta_s);
 
-                // // Get world and dispatcher to increment the entity system
-                // let world = &mut self.world;
-
-                // // get game resource to set delta
-                // let mut game_res = world.fetch_mut::<GameStateResource>();
-                // game_res.delta_seconds = delta_s;
-                // drop(game_res);
-                
-                // // Run Input System
-                // let mut input_sys = InputSystem::new();
-                // input_sys.run_now(&world);
-
-                // // Process meow creation
-                // for m in &input_sys.meows {
-                //     println!("Meow at {},{} - {},{}", &m.0.x, &m.0.y, &m.1.x, &m.1.y);
-                    
-                //     //GhostBuilder::build_collider(world, ctx, &mut self.phys_world, m.x, m.y, -50.0, -20.0, 20.0, 0.0, 18.0, 18.0);
-                //     MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
-                // }
-
-                // input_sys.meows.clear();
-
-                // {
-
-                //     let mut meow_writer = world.write_storage::<MeowComponent>();
-                //     let entities = world.entities();                
-
-                //     for (meow, ent) in (&mut meow_writer, &entities).join() {
-                //         meow.update(delta_s);
-
-                //         if meow.meow_time < 0.0 {
-                //             entities.delete(ent);
-                //         }
-                //     }
-
-                // }
-
-                // // Call update on the world event dispatcher
-                // //dispatcher.dispatch(&world);
-                // // Update the world state after dispatch changes
-                // world.maintain();
-
-
-                // //let physics_world = &mut self.phys_world;
-
-                // physics::advance_physics(world, &mut self.phys_world, delta_s);
-
             },
             _ => {
                 
@@ -393,8 +324,6 @@ impl event::EventHandler for GameState {
         if let Some(index) = button_index {
             InputMap::mouse_button_down(&mut self.world, ctx, index.clone());
         }
-        //self.mouse_down = true;
-        //println!("Mouse button pressed: {:?}, x: {}, y: {}, button index: {:?}", button, x, y, button_index);
     }
 
     fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
@@ -417,15 +346,7 @@ impl event::EventHandler for GameState {
     }
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, xrel: f32, yrel: f32) {
-        // if self.mouse_down {
-        //     self.pos_x = x;
-        //     self.pos_y = y;
-        // }
         InputMap::mouse_set_pos(&mut self.world, _ctx, x, y);
-        // println!(
-        //     "Mouse motion, x: {}, y: {}, relative x: {}, relative y: {}",
-        //     x, y, xrel, yrel
-        // );
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {

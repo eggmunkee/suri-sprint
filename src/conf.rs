@@ -14,7 +14,7 @@ pub struct ConfigData {
 pub fn get_ron_config<'de,T>(config_path: String) -> Option<T> 
     where T: DeserializeOwned
 {
-    let input_path = format!("{}/src/{}.ron", env!("CARGO_MANIFEST_DIR"), &config_path);
+    let input_path = format!("{}/resources/{}.ron", env!("CARGO_MANIFEST_DIR"), &config_path);
     if let Ok(f) = File::open(&input_path) {
         let config: T = match from_reader(f) {
             Ok(x) => {
