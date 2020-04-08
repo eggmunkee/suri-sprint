@@ -10,6 +10,7 @@ use specs::{World};
 // -------------------------
 
 use crate::physics::{PhysicsWorld};
+use crate::entities::level_builder::{LevelBounds};
 
 mod image;
 
@@ -22,6 +23,7 @@ pub struct GameStateResource {
     pub window_h: f32,
     pub window_mode: WindowMode,
     pub delta_seconds: f32,
+    pub level_bounds: LevelBounds,
 }
 
 

@@ -1,33 +1,34 @@
 
-use std::collections::hash_map::*;
+//use std::collections::hash_map::*;
 use ggez;
 use ggez::graphics;
 use ggez::event::{self, KeyCode, KeyMods, MouseButton};
-use winit::dpi::{LogicalPosition};
+//use winit::dpi::{LogicalPosition};
 //use ggez::graphics;
 use ggez::nalgebra as na;
-use ggez::{Context, GameResult, GameError};
-use ggez::conf::{NumSamples,WindowSetup,WindowMode};
-use ggez::graphics::{Rect,Color,Image,set_window_title};
-
-use specs::{Builder, Component, DispatcherBuilder, Dispatcher, ReadStorage, WriteStorage, 
-    System, VecStorage, World, WorldExt, RunNow};
+use ggez::{Context, GameResult};
+use ggez::conf::{WindowMode};
+use ggez::graphics::{Rect};
+use specs::{World, WorldExt, RunNow};
 use specs::Join;
 use rand::prelude::*;
+use std::collections::{HashMap};
 
 use wrapped2d::b2;
 use wrapped2d::user_data::*;
-use wrapped2d::user_data::NoUserData;
 // =====================================
 
 use crate::resources::{InputResource,WorldAction,GameStateResource};
-use crate::components::{Position};
+use crate::components::{Position,Velocity};
 use crate::components::collision::{Collision};
 use crate::components::sprite::{SpriteLayer,SpriteComponent};
 use crate::components::meow::{MeowComponent};
+use crate::components::exit::{ExitComponent};
+use crate::components::portal::{PortalComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
+use crate::entities::level_builder::{LevelConfig,LevelBounds};
 use crate::entities::ghost::{GhostBuilder};
 use crate::entities::meow::{MeowBuilder};
 use crate::entities::platform::{PlatformBuilder};
@@ -41,6 +42,11 @@ pub enum State {
     Running,
     Paused,    
 }
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum GameMode {
+    Play,
+    Edit,
+}
 
 //impl Copy for State
 
@@ -48,6 +54,8 @@ pub enum State {
 pub struct GameState {
     pub window_title: String,
     pub current_state: State,
+    pub mode: GameMode,
+    pub level: LevelConfig,
     pub window_w: f32,
     pub window_h: f32,
     //pub dispatcher: Dispatcher<'a,'a>,
@@ -59,8 +67,14 @@ pub struct GameState {
     //pub images: Vec<Image>
     pub paused_text: graphics::Text,
 
+    // Current view offset
     pub current_offset: na::Point2::<f32>,
+    // what collision item was clicked
     pub click_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
+    // level transition
+    pub level_warping: bool,
+    pub level_warp_timer: f32,
+    pub warp_level_name: String,
 }
 
 impl GameState {
@@ -73,7 +87,7 @@ impl GameState {
         let (win_w, win_h) = ggez::graphics::drawable_size(ctx);
         let game_state_resource = GameStateResource {
             window_w: win_w, window_h: win_h, window_mode: window_mode,
-            delta_seconds: 0.15
+            delta_seconds: 0.15, level_bounds: LevelBounds::new(-500.0, -500.0, 3000.0, 3000.0)
         };
 
         // get window
@@ -87,12 +101,14 @@ impl GameState {
         let ecs_world = create_world(ctx, game_state_resource, &mut physics_world);
 
         // Create main state instance with dispatcher and world
-        let mut s = GameState { 
+        let s = GameState { 
             window_title: title,
             current_state: State::Running,
+            mode: GameMode::Play,
+            level: LevelConfig::new(),
             window_w: win_w,
             window_h: win_h,
-            display_scale: 2.0,
+            display_scale: 1.0,
             //dispatcher: create_dispatcher(), 
             world: ecs_world,
             font: font,
@@ -102,6 +118,9 @@ impl GameState {
             paused_text: text,
             current_offset: na::Point2::new(0.0,0.0),
             click_info: vec![],
+            level_warping: false,
+            level_warp_timer: 0.0,
+            warp_level_name: String::from(""),
         };
 
         Ok(s)
@@ -137,6 +156,18 @@ impl GameState {
   
 
     pub fn run_update_systems(&mut self, ctx: &mut Context, time_delta: f32) {
+
+        if self.level_warping {
+            self.level_warp_timer += time_delta;
+
+            if self.level_warp_timer > 0.5 {
+                let level_name = self.warp_level_name.clone();
+                self.load_level(ctx, level_name);
+                self.level_warp_timer = 0.0;
+                self.level_warping = false;
+            }
+        }
+
         let world = &mut self.world;
 
         // Run Input System
@@ -234,6 +265,147 @@ impl GameState {
         }
     }
 
+
+    pub fn run_post_physics_update(&mut self, ctx: &mut Context, time_delta: f32) {
+        //let world = &mut self.world;
+
+        let mut exit_name = String::from("");
+        let mut portal_id = -1;
+
+        {
+        // get character entities, handle portal & exit statuses
+        let entities = self.world.entities();
+        let mut char_res = self.world.write_storage::<CharacterDisplayComponent>();
+        let mut pos_res = self.world.write_storage::<Position>();
+        let mut vel_res = self.world.write_storage::<Velocity>();
+        let mut coll_res = self.world.write_storage::<Collision>();
+
+        let mut portal_hash = HashMap::<String,(i32,f32,f32)>::new();
+        let portal_res = self.world.read_storage::<PortalComponent>();
+            
+        for (portal, pos, _ent) in (&portal_res, &pos_res, &entities).join() {
+            portal_hash.insert(portal.name.clone(), (_ent.id() as i32, pos.x, pos.y));
+        }
+
+        for (ent, mut character, mut pos, mut vel, mut coll) in (&entities, &mut char_res,  &mut pos_res,  &mut vel_res, &mut coll_res).join() {
+
+            if character.since_warp < 0.5 { continue; }
+
+            if (character.in_exit) {
+                let exit_id = character.exit_id as i32;
+                //println!("Character since warp: {}", &character.since_warp);
+
+                //let exit_res = world
+
+                //println!("Character exiting..., {}", &exit_id);
+                let exit_ent = self.world.entities().entity(exit_id as u32);
+                let exit_res = self.world.read_storage::<ExitComponent>();
+                if let Some(exit) = exit_res.get(exit_ent) {
+                    println!("Exit info {:?}", &exit);
+                    let exit_dest = exit.destination.clone();
+
+                    if exit_dest.is_empty() == false {
+                        exit_name = exit_dest;
+                    }
+                    // if exit_dest.is_empty() == false {
+                    //     self.start_warp(exit_dest);
+                    // }
+
+                    // if let Some((portal_id, x, y)) = portal_hash.get(&exit_dest) {
+
+                    //     println!("Portal at {}, {}", &x, &y);
+                    //     pos.x = *x;
+                    //     pos.y = *y;
+                    //     let nvx = -coll.vel.x * 1.0;
+                    //     let nvy = -coll.vel.y * 1.0;
+                    //     println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
+                    //     if nvx > 0.0 {
+                    //         character.facing_right = true;
+                    //     }
+                    //     else if nvx < 0.0 {
+                    //         character.facing_right = false;
+                    //     }
+                    //     vel.x = nvx;
+                    //     vel.y = nvy;
+                    //     coll.pos.x = *x;
+                    //     coll.pos.y = *y;
+                    //     coll.vel.x = nvx;
+                    //     coll.vel.y = nvy;
+                    //     character.since_warp = 0.0;
+
+
+                    //     //let pos = physics::create_pos(&na::Point2::new(*x, *y));
+                    //     //let vec = b2::Vec2 { x: pos.x, y: pos.y };
+                    //     coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
+
+                    //     coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
+                    //     println!("Suri warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    // }
+                    
+                }
+
+            }
+            if (character.in_portal) {
+                portal_id = character.portal_id as i32;
+                //println!("Character since warp: {}", &character.since_warp);
+
+                //exit_id = character.exit_id as i32;
+
+                //let exit_res = world
+
+                //println!("Character exiting..., {}", &portal_id);
+                let portal_ent = self.world.entities().entity(portal_id as u32);
+                let portal_res = self.world.read_storage::<PortalComponent>();
+                if let Some(portal) = portal_res.get(portal_ent) {
+                    println!("Portal info {:?}", &portal);
+                    let portal_dest = portal.destination.clone();
+
+                    if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
+
+                        println!("Portal at {}, {}", &x, &y);
+                        pos.x = *x;
+                        pos.y = *y;
+                        let nvx = -coll.vel.x * 1.0;
+                        let nvy = -coll.vel.y * 1.0;
+                        println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
+                        if nvx > 0.0 {
+                            character.facing_right = true;
+                        }
+                        else if nvx < 0.0 {
+                            character.facing_right = false;
+                        }
+                        vel.x = nvx;
+                        vel.y = nvy;
+
+                        coll.pos.x = *x;
+                        coll.pos.y = *y;
+                        coll.vel.x = nvx;
+                        coll.vel.y = nvy;
+                        character.since_warp = 0.0;
+
+                        //let pos = physics::create_pos(&na::Point2::new(*x, *y));
+                        //let vec = b2::Vec2 { x: pos.x, y: pos.y };
+                        coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
+                        coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
+                        println!("Suri warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    }
+                    
+                }
+            }
+        }
+        }
+
+        if exit_name.is_empty() == false {
+            self.start_warp(exit_name);
+        }
+
+        // if portal_id != -1 {
+        //     println!("Character portaling..., {}", &portal_id);
+
+        // }
+
+    }
+
     pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
         
         // Save frame time
@@ -247,6 +419,57 @@ impl GameState {
 
         // Run physics update frame
         physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);
+
+        // Update components after physics
+        self.run_post_physics_update(ctx, time_delta);
+    }
+
+    pub fn clear_world(&mut self) {
+        // Clear world of entity and component data
+        self.world.delete_all();
+    }
+
+    pub fn clear_physics(&mut self) {
+        // Drop and replace the physics world
+        self.phys_world = physics::create_physics_world();
+    }
+
+    pub fn set_level_bounds(&mut self) {
+        let bounds = &self.level.bounds;
+        // get game resource to set delta
+        let world = &mut self.world;
+        let mut game_res = world.fetch_mut::<GameStateResource>();
+        game_res.level_bounds = bounds.clone();
+
+        println!("Level bounds: {},{} through {},{}", &game_res.level_bounds.min_x,
+            &game_res.level_bounds.min_y, &game_res.level_bounds.max_x, &game_res.level_bounds.max_y);
+    }
+
+    pub fn start_warp(&mut self, level_name: String) {
+        self.warp_level_name = level_name;
+        self.level_warping = true;
+        self.level_warp_timer = 0.0;
+    }
+
+    pub fn actual_load_level(&mut self, ctx: &mut Context, level_name: String) {
+        // load level from file
+        self.level = LevelConfig::load_level(&level_name);
+
+        self.set_level_bounds();
+
+        // load level into world        
+        let mut world = &mut self.world;
+        // Get mut ref to new physics world
+        let mut physics_world = &mut self.phys_world;
+        &self.level.build_level(&mut world, ctx, &mut physics_world);
+    }
+
+    pub fn load_level(&mut self, ctx: &mut Context, level_name: String) {
+
+        self.clear_world();
+        self.clear_physics();
+
+        self.actual_load_level(ctx, level_name);
     }
 }
 
@@ -403,15 +626,15 @@ impl event::EventHandler for GameState {
 
             let test : u16 = rng.gen::<u16>();
             if test % 5 == 0 {
-                crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0,
-                    50.0, 15.0, 0.0, SpriteLayer::Entities.to_z());
+                let w = 50.0 + 0.001 * test as f32;
+                let h = 10.0 + 0.00025 * test as f32;
+                crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+                    w, h, 0.0, SpriteLayer::Entities.to_z());
             }
             else {
                 crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
                     30.0, 0.15, 25.0, 25.0);
             }
-
-
         }
         else if keycode == KeyCode::Subtract {
             if self.display_scale > 0.25 {
@@ -422,6 +645,17 @@ impl event::EventHandler for GameState {
             if self.display_scale < 2.75 {
                 self.display_scale += 0.05;
             }            
+        }
+        else if keycode == KeyCode::F1 {
+            if self.mode == GameMode::Play {
+                self.mode = GameMode::Edit;
+            }
+            else {
+                self.mode = GameMode::Play;
+            }
+        }
+        else if keycode == KeyCode::R {
+            self.load_level(ctx, "test_small".to_string());
         }
 
         InputMap::key_up(&mut self.world, ctx, keycode, keymod);

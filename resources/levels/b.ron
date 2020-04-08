@@ -1,0 +1,22 @@
+LevelConfig(
+    name: "a",
+    bounds: (
+        min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 600.0,
+        solid_sides: (true, true, true, true),
+    ),
+    items: [
+        Player ( x: 30.0, y: 30.0 ),
+        
+        Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0 ),
+
+        //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
+
+        Platform ( x: 700.0, y: 200.0, w: 100.0, h: 20.0, ang: 0.0),
+        Platform ( x: 200.0, y: 300.0, w: 100.0, h: 20.0, ang: -0.002),
+
+        Exit ( x: 100.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "a"),
+
+        Ghost ( x: 200.0, y: 100.0 ),
+
+    ],
+)

@@ -34,7 +34,7 @@ impl MeowBuilder {
 
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/meow".to_string());
         sprite.scale.x = width / 24.0;
-        sprite.scale.x = width / 24.0;
+        sprite.scale.y = height / 24.0;
         sprite.z_order = SpriteLayer::PlayerBehind.to_z();
 
         let mut collision = Collision::new_specs(0.1,0.72, width, height);
@@ -44,10 +44,11 @@ impl MeowBuilder {
         collision.pos.y = y;
         collision.vel.x = vx;
         collision.vel.y = vy;
+        collision.is_sensor = true;
         collision.collision_category = CollisionCategory::Meow;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Ghost);
-        collision.create_kinematic_body_circle(physics_world, true);
+        collision.create_kinematic_body_circle(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
 

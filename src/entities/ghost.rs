@@ -75,6 +75,7 @@ impl GhostBuilder {
         let mut collision = Collision::new_specs(1.0,0.25, dim_1, dim_2);
         //collision.dim_1 = dim_1;
         //collision.dim_2 = dim_2;
+        collision.density = 0.05;
         collision.pos.x = x;
         collision.pos.y = y;
         collision.vel.x = vx;
@@ -83,6 +84,7 @@ impl GhostBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         //collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Ghost);
         collision.collision_mask.push(CollisionCategory::Meow);
         collision.create_dynamic_body_circle(physics_world);
 

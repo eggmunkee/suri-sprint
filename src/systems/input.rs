@@ -41,6 +41,8 @@ impl InputSystem {
         ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
         let (vel, coll, display, _e) = v;
 
+        let body_movement = coll.get_movement();
+
         let mut up_pressed = false;
         let mut left_pressed = false;
         let mut right_pressed = false;
@@ -68,7 +70,7 @@ impl InputSystem {
         display.going_down = down_pressed;
         display.meowing = input.fire_pressed;
 
-        display.update(coll, time_delta);
+        display.update(body_movement, time_delta);
 
         if display.meowing {
             let mut x = coll.pos.x;

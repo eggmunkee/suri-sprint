@@ -1,7 +1,7 @@
 SpriteConfig(
     spritesheet: false,
     path: "/lightblue_equirectangular.png",
-    scale: (4.0, 13.0),
+    scale: (4.0, 8.0),
     z_order: 1.0,
-    alpha: 0.2,
+    alpha: 0.35,
 )

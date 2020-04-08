@@ -82,7 +82,7 @@ impl PlatformBuilder {
         // collision.dim_2 = height;
         collision.pos.x = x;
         collision.pos.y = y;
-        collision.density = 0.5;
+        collision.density = 0.25;
         collision.angle = angle;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();

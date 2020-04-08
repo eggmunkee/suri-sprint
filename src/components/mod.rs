@@ -13,6 +13,8 @@ pub mod sprite;
 pub mod player;
 pub mod collision;
 pub mod meow;
+pub mod portal;
+pub mod exit;
 // DEFINE COMMON COMPONENTS
 
 #[derive(Debug)]
@@ -105,7 +107,8 @@ pub fn register_components(world: &mut World) {
     // sub-module components
     self::sprite::register_components(world);
     self::collision::register_components(world);
-    //self::ball::register_components(world);
     self::player::register_components(world);
     self::meow::register_components(world);
+    self::portal::register_components(world);
+    self::exit::register_components(world);
 }

@@ -31,7 +31,7 @@ mod input;
 mod game_state;
 
 use crate::conf::*;
-use crate::entities::builder::{LevelConfig};
+use crate::entities::level_builder::{LevelConfig};
 
 
 
@@ -40,9 +40,9 @@ use crate::entities::builder::{LevelConfig};
 // Do setup and start main event loop
 pub fn main() -> GameResult {
 
-    let level : LevelConfig = LevelConfig::load_level("test");
+    //let level : LevelConfig = LevelConfig::load_level("test");
 
-    println!("Loaded level: {:?}", &level);
+    //println!("Loaded level: {:?}", &level);
 
     let config : ConfigData = get_game_config().unwrap();    
     let win_title = config.window_setup.title.clone();
@@ -68,10 +68,11 @@ pub fn main() -> GameResult {
     // create app's state
     let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode)?;
 
+    state.load_level(ctx, "a".to_string());
     //{
         //let mut world = &mut state.world;
         //let mut phys_world = &mut state.phys_world;
-    level.build_level(&mut state.world, ctx, &mut state.phys_world);
+    //level.build_level(&mut state.world, ctx, &mut state.phys_world);
 
     //}
 

@@ -9,11 +9,13 @@ use specs::{Entity,World,WorldExt,System,WriteStorage};
 use specs::join::Join;
 use rand::prelude::*;
 
-//use crate::resources::{ImageResources};
+
+use crate::resources::{GameStateResource};
 use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer};
 use crate::components::player::{CharacterDisplayComponent};
-use crate::game_state::{GameState,State};
+use crate::game_state::{GameState,State,GameMode};
+use crate::entities::level_builder::{LevelItem};
 
 pub struct Renderer {
     pub display_offset: na::Point2::<f32>,
@@ -28,13 +30,15 @@ impl Renderer {
 
     pub fn render_frame(&mut self, game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
         
-        graphics::clear(ctx, [0.0, 0.0, 0.0, 1.0].into());
-
         let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
         //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
-        
+
+        let mut char_in_warp = false;
+        let mut char_in_portal = false;
+
         // BUILD RENDER OBJECTS LIST -----------------------------------------------------------------
         {
+           
             let pos = game_state.world.read_storage::<Position>();
             //let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
             let entities = game_state.world.entities();
@@ -47,10 +51,11 @@ impl Renderer {
                 // Check for any of the display components
                 let mut z_order = 1.0;
                 let has_display_comp = match opt_char_disp {
-                    Some(_) => {
+                    Some(character) => {
                         self.display_offset.x = -pos.x;
                         self.display_offset.y = -pos.y;
                         z_order = SpriteLayer::Player.to_z();
+                        char_in_portal = character.in_exit || character.in_portal;
                         true
                     },
                     _ => match opt_sprite_disp {
@@ -73,6 +78,15 @@ impl Renderer {
             }
 
         }
+
+        if char_in_portal {
+            graphics::clear(ctx, [0.5, 0.5, 0.6, 1.0].into());
+        }
+        else {
+            graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
+        }
+        
+
 
         // ORDER RENDER OBJECTS -----------------------------------------------------------------
         // TODO: implement Z-ordering here
@@ -104,6 +118,27 @@ impl Renderer {
 
         self.pre_render_list(game_state, ctx, world);
 
+        {
+            // draw level bounds
+            let game_res = game_state.world.fetch::<GameStateResource>();
+            let level_bounds = game_res.level_bounds.clone();
+            let width = level_bounds.max_x - level_bounds.min_x;
+            let height = level_bounds.max_y - level_bounds.min_y;
+
+            let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+            stroke_opt.line_width = 5.0;
+
+            if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                ggez::graphics::DrawMode::Stroke(stroke_opt),
+                ggez::graphics::Rect::new(0.0, 0.0, width, height),
+                ggez::graphics::Color::new(1.0, 0.0, 0.0, 1.0)
+            ) {
+                ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                    .dest(na::Point2::new(level_bounds.min_x, level_bounds.min_y)) );
+            }
+
+        }
+
         // RENDER OBJECT LIST -----------------------------------------------------------------
         for (ent, pt, _) in render_objects.iter() {
             // Get entity by id
@@ -113,6 +148,117 @@ impl Renderer {
                 // Call generic renderer, which calls on render component to draw
                 Self::call_renderer(ctx, world, entity, pt);
             }
+        }
+
+        if game_state.mode == GameMode::Edit {
+            // draw level bounds
+            //let level_items = &game_state.level.items;
+            
+            
+
+            for item in &game_state.level.items {
+
+                match &item {
+                    LevelItem::Player{x, y} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
+                            ggez::graphics::Color::new(1.0, 0.0, 0.0, 1.0)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                        }
+                    },
+                    LevelItem::Ghost{x, y, ..} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
+                            ggez::graphics::Color::new(1.0, 0.0, 1.0, 0.5)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                        }
+                    },
+                    LevelItem::Portal{x, y, w, ..} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_circle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            na::Point2::<f32>::new(*x, *y),
+                            *w, 0.5,
+                            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                .dest(na::Point2::<f32>::new(*x, *y)) );
+                        }
+                    },
+                    LevelItem::Exit{x, y, w, ..} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_circle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            na::Point2::<f32>::new(*x, *y),
+                            *w, 0.5,
+                            ggez::graphics::Color::new(0.0, 0.0, 1.0, 0.5)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                .dest(na::Point2::<f32>::new(*x, *y)) );
+                        }
+                    },
+                    LevelItem::Sprite{x, y, ..} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
+                            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                        }
+                    },
+                    LevelItem::Platform{x, y, w, h, ang, ..} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            ggez::graphics::Rect::new(0.0, 0.0, w*2.0, h*2.0),
+                            ggez::graphics::Color::new(1.0, 0.0, 0.0, 0.5)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                //.rotation(*ang)
+                                .dest(na::Point2::new(x - w, y - h))
+                                 );
+                        }
+                    },
+                    LevelItem::DynPlatform{x, y, w, h, ang, ..} => {
+                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                        stroke_opt.line_width = 4.0;
+                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                            ggez::graphics::DrawMode::Stroke(stroke_opt),
+                            ggez::graphics::Rect::new(0.0, 0.0, w*2.0, h*2.0),
+                            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
+                        ) {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                //.rotation(*ang)
+                                .dest(na::Point2::new(x - w, y - h))
+                                 );
+                        }
+                    },
+                    _ => {
+
+                    }
+                }
+
+                
+    
+            }
+
+
         }
 
         self.post_render_list(ctx, world);

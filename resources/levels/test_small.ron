@@ -1,0 +1,21 @@
+LevelConfig(
+    name: "test_old",
+    bounds: (
+        min_x: 0.0, min_y: 0.0, max_x: 2000.0, max_y: 2000.0,
+        solid_sides: (false, true, false, true),
+    ),
+    items: [
+        Player ( x: 500.0, y: 500.0 ),
+
+        Sprite ( x: 1000.0, y: 1000.0, sprite: "entities/electric-bg", z: 1.0 ),
+
+        Portal ( x: 1000.0, y: 1000.0, w: 150.0, h: 150.0),
+        
+        Platform ( x: 200.0, y: 500.0, w: 400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1400.0, y: 1500.0, w: 400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 900.0, y: 1000.0, w: 100.0, h: 20.0, ang: 0.0),
+        Platform ( x: 200.0, y: 1800.0, w: 600.0, h: 20.0, ang: -0.375),
+
+        Ghost ( x: 300.0, y: 2900.0 ),
+    ],
+)

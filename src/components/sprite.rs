@@ -1,7 +1,7 @@
 
 use ggez::{Context};
 use ggez::graphics;
-use ggez::graphics::{Image,Color,DrawParam};
+use ggez::graphics::{Image,Color,DrawParam,WrapMode};
 use ggez::nalgebra as na;
 use specs::{Component, DenseVecStorage, World, WorldExt};
 //use specs::shred::{Dispatcher};
@@ -126,9 +126,10 @@ impl super::RenderTrait for SpriteComponent {
         //let draw_pos = na::Point2::<f32>::new(pos.x - (w as f32 / 2.0), pos.y - (h as f32 / 2.0));
         let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-        if let Ok(texture) = texture_ref {
+        if let Ok(mut texture) = texture_ref {
             let w = texture.width();
             let h = texture.height();
+            texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
             if let Err(_) = ggez::graphics::draw(ctx, texture, (
                         draw_pos.clone(),
                         angle, //rotation

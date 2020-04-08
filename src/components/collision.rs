@@ -6,6 +6,7 @@ use wrapped2d::user_data::NoUserData;
 use rand::prelude::*;
 
 
+use crate::entities::level_builder::{LevelBounds};
 use crate::physics;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle, CollisionCategory};
 use crate::components::player::{CharacterDisplayComponent};
@@ -21,6 +22,7 @@ pub struct Collision {
     pub restitution: f32,
     pub body_handle: Option<PhysicsBodyHandle>,
     // generic collision information
+    pub is_sensor: bool,
     pub dim_1: f32,
     pub dim_2: f32,
     pub pos: Point2::<f32>,
@@ -28,6 +30,14 @@ pub struct Collision {
     pub angle: f32,
     pub collision_category: CollisionCategory,
     pub collision_mask: Vec::<CollisionCategory>,
+    // area status
+    pub enable_warp: bool,
+    pub in_exit: bool,
+    pub in_portal: bool,
+    pub exit_id: i32,
+    pub portal_id: i32,
+    pub since_warp: f32,
+    
 }
 
 impl Collision {
@@ -40,6 +50,7 @@ impl Collision {
             density: 1.0,
             restitution: 0.25,
             body_handle: None,
+            is_sensor: false,
             dim_1: 1.0,
             dim_2: 1.0,
             pos: Point2::new(0.0,0.0),
@@ -47,6 +58,12 @@ impl Collision {
             angle: 0.0,
             collision_category: CollisionCategory::Level,
             collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
+            in_exit: false,
+            in_portal: false,
+            exit_id: -1,
+            portal_id: -1,
+            since_warp: 0.2,
+            enable_warp: false,            
         }
     }
     pub fn new_specs(density: f32, restitution: f32, dim_1: f32, dim_2: f32) -> Collision {
@@ -57,6 +74,7 @@ impl Collision {
             density: density,
             restitution: restitution,
             body_handle: None,
+            is_sensor: false,
             dim_1: dim_1,
             dim_2: dim_2,
             pos: Point2::new(0.0,0.0),
@@ -64,6 +82,23 @@ impl Collision {
             angle: 0.0,
             collision_category: CollisionCategory::Level,
             collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
+            in_exit: false,
+            in_portal: false,
+            exit_id: -1,
+            portal_id: -1,
+            since_warp: 0.2,
+            enable_warp: false,
+        }
+    }
+
+    pub fn set_active(&mut self, physics_world: &mut PhysicsWorld) {
+        self.body_handle = match self.body_handle {
+            Some(handle) => {
+                println!("Destroying physics body: {:?}", &handle);
+                physics_world.destroy_body(handle);
+                None
+            }, 
+            _ => None
         }
     }
 
@@ -78,11 +113,16 @@ impl Collision {
         }
     }
 
+    pub fn get_movement(&self) -> Vector2::<f32> {
+        Vector2::new(self.vel.x, self.vel.y)
+    }
+
+
     // Create the physics body as a static body
     pub fn create_static_body_box(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_static_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), self.angle,
-            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask);
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, self.is_sensor);
 
         self.body_handle = Some(body_handle);
     }
@@ -91,25 +131,25 @@ impl Collision {
     pub fn create_static_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_static_body_circle(physics_world, &self.pos, 
-            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask);
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, self.is_sensor);
 
         self.body_handle = Some(body_handle);
     }
 
 
     // Create the physics body as a dynamic body
-    pub fn create_kinematic_body_circle(&mut self, physics_world: &mut PhysicsWorld, is_sensor: bool) {
+    pub fn create_kinematic_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_kinematic_body_circle(physics_world, &self.pos, &self.vel,
-            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, true, is_sensor);
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, true, self.is_sensor);
 
         self.body_handle = Some(body_handle);
     }
     // Create the physics body as a dynamic body
-    pub fn create_kinematic_body_box_upright(&mut self, physics_world: &mut PhysicsWorld, is_sensor: bool) {
+    pub fn create_kinematic_body_box_upright(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_kinematic_body_box(physics_world, &self.pos, &self.vel,
-            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, true, is_sensor);
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, true, self.is_sensor);
 
         self.body_handle = Some(body_handle);
     }
@@ -150,7 +190,8 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
-    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, opt_character: Option<&mut CharacterDisplayComponent>) {
+    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, opt_character: Option<&mut CharacterDisplayComponent>,
+        level_bounds: &LevelBounds) {
 
         let mut rng = rand::thread_rng();
 
@@ -159,42 +200,48 @@ impl Collision {
 
             if let Some(character) = opt_character {
                 // have character handle applying inputs to collision body
-                character.apply_collision(&mut body);
+                character.apply_movement(&mut body);
+
+                character.in_exit = false;
+                character.in_portal = false;
+                character.exit_id = -1;
+                character.portal_id = -1;
             }
 
             let mut curr_pos = physics::get_pos(body.position());
 
             let mut updated_pos = false;
             
-            if curr_pos.y > 13000.0 {
-                curr_pos.y = -1500.0;
+            if curr_pos.y > level_bounds.max_y {
+                curr_pos.y = level_bounds.min_y;
 
-                let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
+                //let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
 
                 // move falling objects inward from edges as they wrap to the top
-                if curr_pos.x > 4900.0 {
-                    curr_pos.x = new_x;
-                }
-                if curr_pos.x < 100.0 {
-                    curr_pos.x = new_x;
-                }
+                // if curr_pos.x > 4900.0 {
+                //     curr_pos.x = new_x;
+                // }
+                // if curr_pos.x < 100.0 {
+                //     curr_pos.x = new_x;
+                // }
 
                 updated_pos = true;
             }
 
-            if curr_pos.x < -1250.0 {
-                curr_pos.x = 6750.0;
+            if curr_pos.x < level_bounds.min_x {
+                curr_pos.x = level_bounds.max_x - 1.0;
                 updated_pos = true;
             }
-            else if curr_pos.x > 7000.0 {
-                curr_pos.x = -1000.0;
+            else if curr_pos.x > level_bounds.max_x {
+                curr_pos.x = level_bounds.min_x + 1.0;
                 updated_pos = true;
             }
 
             if updated_pos {
                 //println!("collider new position: {}, {}", &curr_pos.x, &curr_pos.y);
-                let phys_pos = physics::create_pos(&curr_pos);
+                //self.update_body_transfrom(physics_world, &curr_pos, &mut body);
 
+                let phys_pos = physics::create_pos(&curr_pos);
                 let curr_ang = body.angle();
                 body.set_transform(&phys_pos, curr_ang);
             }
@@ -202,6 +249,31 @@ impl Collision {
         }
 
     }
+
+    pub fn update_body_transform(&mut self, physics_world: &mut PhysicsWorld, position: &Point2::<f32>) {
+
+        if let Some(body_handle) = self.body_handle {
+            let mut body = physics_world.body_mut(body_handle);
+
+
+            let phys_pos = physics::create_pos(position);
+
+            let curr_ang = body.angle();
+            body.set_transform(&phys_pos, curr_ang);
+        }
+    }
+
+    pub fn update_body_velocity(&mut self, physics_world: &mut PhysicsWorld, velocity: &Vector2::<f32>) {
+
+        if let Some(body_handle) = self.body_handle {
+            let mut body = physics_world.body_mut(body_handle);
+
+            self.vel.x = velocity.x;
+            self.vel.y = velocity.y;
+            body.set_linear_velocity(&b2::Vec2{x: self.vel.x, y: self.vel.y});
+        }
+    }
+    
 
     pub fn post_physics_hook(&mut self, physics_world: &mut PhysicsWorld) {
         if let Some(body_handle) = self.body_handle {

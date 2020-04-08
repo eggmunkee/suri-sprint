@@ -112,12 +112,19 @@ pub struct CharacterDisplayComponent {
     pub jump_duration: f32,
     // stand/fall status
     pub since_stand: f32,
+    pub since_move: f32,
     pub in_fall: bool,
     pub fall_anim_dir: i32,
     pub in_walk: bool,
     pub in_idle: bool,
     // meow status
     pub since_meow: f32,
+    // area status
+    pub in_exit: bool,
+    pub in_portal: bool,
+    pub exit_id: i32,
+    pub portal_id: i32,
+    pub since_warp: f32,
 }
 impl Component for CharacterDisplayComponent {
     type Storage = DenseVecStorage<Self>;
@@ -145,11 +152,17 @@ impl CharacterDisplayComponent {
             in_jump: false,
             jump_duration: 0.0,
             since_stand: 0.0,
+            since_move: 0.0,
             in_fall: true,
             fall_anim_dir: 1,
             in_walk: false,
             in_idle: false,
-            since_meow: 0.0,
+            since_meow: 1.0,
+            in_exit: false,
+            in_portal: false,
+            exit_id: -1,
+            portal_id: -1,
+            since_warp: 0.2,
         }
     }
 
@@ -258,6 +271,7 @@ impl CharacterDisplayComponent {
         self.in_idle = true;
         self.jump_duration = 0.0;
         self.since_stand = 0.0;
+        self.fall_anim_dir = 1;
     }
 
     pub fn process_idle(&mut self, time_delta: f32) {
@@ -278,7 +292,7 @@ impl CharacterDisplayComponent {
         (!self.in_jump && !self.in_fall) || self.since_stand < 0.15
     }
 
-    pub fn update(&mut self, coll: &mut Collision, time_delta: f32) {
+    pub fn update(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
 
         self.since_meow += time_delta;
         if self.meowing {
@@ -286,7 +300,7 @@ impl CharacterDisplayComponent {
                 self.meowing = false;
             }
         }
-
+        self.since_warp += time_delta;
 
         // Handle going up based on state
         if self.in_jump {
@@ -305,13 +319,13 @@ impl CharacterDisplayComponent {
 
         //self.interp_breath(0.08);
 
-        self.update_animation(coll, time_delta);
+        self.update_animation(body_movement, time_delta);
 
 
         //self.apply_inputs(coll);
     }
 
-    fn update_animation(&mut self, coll: &mut Collision, time_delta: f32) {
+    fn update_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
         let mut rng = thread_rng();
 
         let mut is_moving = false;
@@ -323,16 +337,12 @@ impl CharacterDisplayComponent {
             self.facing_right = true;
             is_moving = true;
         }
+        if is_moving {
+            self.since_move = 0.0;
+        }
 
         // JUMP/FALL ANIMATION
         if self.in_jump || self.in_fall {            
-            // if self.anim_set != 1 {
-            //     self.anim_frame = 0;
-            //     self.anim_set = 1;
-            //     self.anim_frame_time = 0.0;
-            // }
-
-            //if coll.vel.y < 0.0 {
 
             self.anim_frame_time += time_delta * 10.0;
 
@@ -376,38 +386,99 @@ impl CharacterDisplayComponent {
 
         }
         // WALKING ANIMATION
-        else if is_moving || coll.vel.x.abs() > 0.5 {
+        else if is_moving || body_movement.x.abs() > 0.5 {
             self.anim_set = WALK_SET;
             self.anim_frame = self.anim_frame % WALK_FRAMES;
-            self.anim_frame_time += time_delta * 10.0 * (0.5 * coll.vel.x.abs().max(2.0).min(30.0) );
+            let move_anim_amt = 0.5 * body_movement.x.abs().max(2.0).min(30.0);
+            self.anim_frame_time += time_delta * 10.0 * move_anim_amt;
             if self.anim_frame_time > 1.5 {
-                self.anim_frame += 1;
                 self.anim_frame_time = 0.0;
-
-                if self.anim_frame > WALK_FRAMES - 1 {
-                    self.anim_frame = 0;
+                // flip animation direction if going against facing direction
+                if (body_movement.x < 0.0 && self.facing_right) || 
+                    (body_movement.x > 0.0 && !self.facing_right) {
+                    // Advance frame backward
+                    if self.anim_frame == 0 {
+                        self.anim_frame = WALK_FRAMES - 1;
+                    }
+                    else {
+                        self.anim_frame -= 1;
+                    }
+                }
+                else {
+                    // Advance frame forward
+                    self.anim_frame += 1;
+                    if self.anim_frame > WALK_FRAMES - 1 {
+                        self.anim_frame = 0;
+                    }
                 }
             }
         }
         // IDLE ANIMATION
         else {
-            if self.anim_set != IDLE_SET {
-                self.anim_set = IDLE_SET;
-                self.anim_frame = 0;
-                self.anim_frame_time = 0.0;
-            }
-
-            self.anim_frame = self.anim_frame % 5;
-            self.anim_frame_time += time_delta * 10.0;
-
-            if self.anim_frame_time > 1.0 {
-                self.anim_frame += 1;
-                self.anim_frame_time = 0.0;
-
-                if self.anim_frame > IDLE_FRAMES - 1 {
-                    self.anim_frame = 0;
+            self.since_move += time_delta;
+            // After a wait time, go into idle animation
+            if self.since_move >= 1.0 {
+                // If just starting idle, pick idle or sit animation set
+                if self.anim_set != IDLE_SET && self.anim_set != SIT_SET {
+                    self.start_idle();
+                    if rng.gen::<f32>() < 0.66 {
+                        self.anim_set = IDLE_SET;
+                    }
+                    else {
+                        self.anim_set = SIT_SET;
+                    }
                 }
+
+                //self.anim_frame = self.anim_frame % 5;
+                self.anim_frame_time += time_delta * 10.0;
+
+                // time to advance frame
+                if self.anim_frame_time > 2.0 {
+                    if self.anim_set == SIT_SET && self.fall_anim_dir == -1 {
+                        if self.anim_frame > 0 {
+                            self.anim_frame -= 1;
+                        }
+                        else {
+                            self.anim_set = IDLE_SET;
+                            self.fall_anim_dir = 1;
+                        }
+                        // random frame time within range 2.0 to 3.0
+                        self.anim_frame_time = rng.gen::<f32>() * -1.0;
+                    }
+                    else {
+                        self.anim_frame += 1;
+                        // random frame time within range 2.0 to 5.5
+                        self.anim_frame_time = rng.gen::<f32>() * -3.5;
+                    }
+                    
+                    // Maybe skip blink frame
+                    if self.anim_set == IDLE_SET && self.anim_frame == 2 {
+                        if rng.gen::<f32>() > 0.4 {
+                            self.anim_frame += 1;
+                        }
+                    }
+                    // wrap around idle animation
+                    if self.anim_set == IDLE_SET && self.anim_frame > IDLE_FRAMES - 1 {
+                        self.anim_frame = 0;
+                        // Maybe go into sit
+                        if rng.gen::<f32>() > 0.95 {
+                            self.anim_set = SIT_SET;
+                            //self.since_move = 1.0; // "reset" since move after idle switch
+                        }
+                    }
+                    else if self.anim_set == SIT_SET && self.anim_frame > SIT_FRAMES - 1 {
+                        self.anim_frame = SIT_FRAMES - 1;
+                        self.anim_frame_time = rng.gen::<f32>() * -7.5;
+
+                        if rng.gen::<f32>() > 0.95 {
+                            self.fall_anim_dir = -1;
+                            //self.since_move = 1.0; // "reset" since move after idle switch
+                        }
+                    }
+                }
+    
             }
+
 
             //self.anim_set = 0;
             //self.anim_frame = 0;
@@ -435,12 +506,12 @@ impl CharacterDisplayComponent {
     //     // }
     // }
 
-    pub fn apply_collision(&mut self, body: &mut physics::PhysicsBody) {
-        let move_amt = 25.0; //1300.0;
-        let up_mult = 5.0;
+    pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody) {
+        let move_amt = 15.0; //1300.0;
+        let up_mult = 3.0;
         if self.going_right {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            if body.linear_velocity().x < 10.0 {
+            if body.linear_velocity().x < 12.0 {
                 body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
             }
             
@@ -448,14 +519,14 @@ impl CharacterDisplayComponent {
         }
         if self.going_left {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            if body.linear_velocity().x > -10.0 {
+            if body.linear_velocity().x > -12.0 {
                 body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
             }
                 //println!("applied left force");
         }
         if self.going_up {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            if body.linear_velocity().y > -10.0 {
+            if body.linear_velocity().y > -12.0 {
                 body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
             }
             //println!("applied up force");
@@ -468,45 +539,45 @@ impl CharacterDisplayComponent {
     }
 
 
-    pub fn apply_inputs(&mut self, coll: &mut Collision) {
-        let mut vel = coll.vel;
-        // Single axis vector length
-        let mut vec_amt = 300.0;
-        // IS the Input direction Multi-axis, i.e. UP + RIGHT is multi-axis
-        let multi_axis = (self.going_left && (self.going_up || self.going_down))
-            || (self.going_right && (self.going_up || self.going_down));
-        // reduce vector length with two axis
-        if multi_axis {
-            vec_amt = 0.71 * vec_amt;
-        }
-        vec_amt = vec_amt;// * 0.05;
-        // Apply vector length to velocity X
-        if self.going_left {
-            vel.x -= vec_amt;
-        }
-        else if self.going_right {
-            vel.x += vec_amt;
-        }
-        else {
-            //vel.x = vel.x * 0.995;
-        }
-        // Apply vector length to velocity Y
-        if self.going_up {
-            vel.y -= vec_amt * 1.5;
-        }
-        else if self.going_down {
-            vel.y += vec_amt;
-        }
-        else {
-            // if vel.y < 0.0 {
-            //     vel.y = vel.y * 0.98;
-            // }
-            //vel.x = vel.x * 0.995;
-        }
+    // pub fn apply_inputs(&mut self, coll: &mut Collision) {
+    //     let mut vel = coll.vel;
+    //     // Single axis vector length
+    //     let mut vec_amt = 300.0;
+    //     // IS the Input direction Multi-axis, i.e. UP + RIGHT is multi-axis
+    //     let multi_axis = (self.going_left && (self.going_up || self.going_down))
+    //         || (self.going_right && (self.going_up || self.going_down));
+    //     // reduce vector length with two axis
+    //     if multi_axis {
+    //         vec_amt = 0.71 * vec_amt;
+    //     }
+    //     vec_amt = vec_amt;// * 0.05;
+    //     // Apply vector length to velocity X
+    //     if self.going_left {
+    //         vel.x -= vec_amt;
+    //     }
+    //     else if self.going_right {
+    //         vel.x += vec_amt;
+    //     }
+    //     else {
+    //         //vel.x = vel.x * 0.995;
+    //     }
+    //     // Apply vector length to velocity Y
+    //     if self.going_up {
+    //         vel.y -= vec_amt * 1.5;
+    //     }
+    //     else if self.going_down {
+    //         vel.y += vec_amt;
+    //     }
+    //     else {
+    //         // if vel.y < 0.0 {
+    //         //     vel.y = vel.y * 0.98;
+    //         // }
+    //         //vel.x = vel.x * 0.995;
+    //     }
 
-        //vel.x = vel.x.max(-70.0).min(70.0);
-        //vel.y = vel.y.max(-80.0);
-    }
+    //     //vel.x = vel.x.max(-70.0).min(70.0);
+    //     //vel.y = vel.y.max(-80.0);
+    // }
 
     // Update animation status from collision standing status
     pub fn update_body_status(&mut self, is_standing: bool) {
@@ -535,8 +606,7 @@ impl super::RenderTrait for CharacterDisplayComponent {
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-        let breath_scale = 1.5 + 0.0;//self.breath_cycle.cos() * 0.02;
-        let breath_y_offset = 0.0; //self.breath_cycle.cos() * -0.7;
+        let texture_scale = 1.5;//self.breath_cycle.cos() * 0.02;
         let mut angle = 0.0;
         if let Some(ent_id) = ent {
             let collision_reader = world.read_storage::<Collision>();
@@ -547,7 +617,7 @@ impl super::RenderTrait for CharacterDisplayComponent {
 
         }
 
-        let draw_pos = na::Point2::<f32>::new(pos.x, pos.y + breath_y_offset);
+        let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
 
         let exhaust_radius = 27.0;
         let self_rot = self.rot;
@@ -560,7 +630,7 @@ impl super::RenderTrait for CharacterDisplayComponent {
         ) {
             let col_vals: (u8,) = rng.gen();
 
-            let mut x_scale = breath_scale;
+            let mut x_scale = texture_scale;
             if self.facing_right == false {
                 x_scale = -x_scale;
             }
@@ -578,12 +648,12 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 //     src_x = 0.0;
                 // }
         
-                let text_pos = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
+                let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
                 if let Err(_) = ggez::graphics::draw(ctx, image, 
                     DrawParam::default()
                     .src(Rect::new(src_x,src_y,0.1,0.1))
-                    .dest(text_pos)
-                    .scale(na::Vector2::new(x_scale,breath_scale))
+                    .dest(texture_position)
+                    .scale(na::Vector2::new(x_scale,texture_scale))
                     .offset(na::Point2::new(0.5,0.5))
                     .rotation(angle)
                 ) {
