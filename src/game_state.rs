@@ -48,7 +48,8 @@ pub enum GameMode {
     Edit,
 }
 
-//impl Copy for State
+const WARP_TIME_LIMIT : f32 = 1.5f32;
+const WARP_TIME_SCALE : f32  = 0.025f32;
 
 // Main game state struct
 pub struct GameState {
@@ -157,10 +158,12 @@ impl GameState {
 
     pub fn run_update_systems(&mut self, ctx: &mut Context, time_delta: f32) {
 
+        let mut time_delta = time_delta;
         if self.level_warping {
             self.level_warp_timer += time_delta;
+            //time_delta *= 0.25;
 
-            if self.level_warp_timer > 0.5 {
+            if self.level_warp_timer > WARP_TIME_LIMIT {
                 let level_name = self.warp_level_name.clone();
                 self.load_level(ctx, level_name);
                 self.level_warp_timer = 0.0;
@@ -273,140 +276,152 @@ impl GameState {
         let mut portal_id = -1;
 
         {
-        // get character entities, handle portal & exit statuses
-        let entities = self.world.entities();
-        let mut char_res = self.world.write_storage::<CharacterDisplayComponent>();
-        let mut pos_res = self.world.write_storage::<Position>();
-        let mut vel_res = self.world.write_storage::<Velocity>();
-        let mut coll_res = self.world.write_storage::<Collision>();
+            // get character entities, handle portal & exit statuses
+            let entities = self.world.entities();
+            let mut char_res = self.world.write_storage::<CharacterDisplayComponent>();
+            let mut pos_res = self.world.write_storage::<Position>();
+            let mut vel_res = self.world.write_storage::<Velocity>();
+            let mut coll_res = self.world.write_storage::<Collision>();
 
-        let mut portal_hash = HashMap::<String,(i32,f32,f32)>::new();
-        let portal_res = self.world.read_storage::<PortalComponent>();
-            
-        for (portal, pos, _ent) in (&portal_res, &pos_res, &entities).join() {
-            portal_hash.insert(portal.name.clone(), (_ent.id() as i32, pos.x, pos.y));
-        }
+            let mut portal_hash = HashMap::<String,(i32,f32,f32)>::new();
+            let portal_res = self.world.read_storage::<PortalComponent>();
+                
+            for (portal, pos, _ent) in (&portal_res, &pos_res, &entities).join() {
+                portal_hash.insert(portal.name.clone(), (_ent.id() as i32, pos.x, pos.y));
+            }
 
-        for (ent, mut character, mut pos, mut vel, mut coll) in (&entities, &mut char_res,  &mut pos_res,  &mut vel_res, &mut coll_res).join() {
+            for (ent, mut character_opt, mut pos, mut vel, mut coll) in (&entities, (&mut char_res).maybe(),  &mut pos_res,  &mut vel_res, &mut coll_res).join() {
 
-            if character.since_warp < 0.5 { continue; }
+                let mut facing_right = true;
 
-            if (character.in_exit) {
-                let exit_id = character.exit_id as i32;
-                //println!("Character since warp: {}", &character.since_warp);
-
-                //let exit_res = world
-
-                //println!("Character exiting..., {}", &exit_id);
-                let exit_ent = self.world.entities().entity(exit_id as u32);
-                let exit_res = self.world.read_storage::<ExitComponent>();
-                if let Some(exit) = exit_res.get(exit_ent) {
-                    println!("Exit info {:?}", &exit);
-                    let exit_dest = exit.destination.clone();
-
-                    if exit_dest.is_empty() == false {
-                        exit_name = exit_dest;
+                if let Some(character) = character_opt {
+                    if character.since_warp < 0.5 { continue; }
+                    if (character.in_exit) {
+                        let exit_id = character.exit_id as i32;
+                        //println!("Character since warp: {}", &character.since_warp);
+                        facing_right = character.facing_right;
+                        //let exit_res = world
+        
+                        //println!("Character exiting..., {}", &exit_id);
+                        let exit_ent = self.world.entities().entity(exit_id as u32);
+                        let exit_res = self.world.read_storage::<ExitComponent>();
+                        if let Some(exit) = exit_res.get(exit_ent) {
+                            println!("Exit info {:?}", &exit);
+                            let exit_dest = exit.destination.clone();
+        
+                            if exit_dest.is_empty() == false {
+                                exit_name = exit_dest;
+                            }
+                            // if exit_dest.is_empty() == false {
+                            //     self.start_warp(exit_dest);
+                            // }
+        
+                            // if let Some((portal_id, x, y)) = portal_hash.get(&exit_dest) {
+        
+                            //     println!("Portal at {}, {}", &x, &y);
+                            //     pos.x = *x;
+                            //     pos.y = *y;
+                            //     let nvx = -coll.vel.x * 1.0;
+                            //     let nvy = -coll.vel.y * 1.0;
+                            //     println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
+                            //     if nvx > 0.0 {
+                            //         character.facing_right = true;
+                            //     }
+                            //     else if nvx < 0.0 {
+                            //         character.facing_right = false;
+                            //     }
+                            //     vel.x = nvx;
+                            //     vel.y = nvy;
+                            //     coll.pos.x = *x;
+                            //     coll.pos.y = *y;
+                            //     coll.vel.x = nvx;
+                            //     coll.vel.y = nvy;
+                            //     character.since_warp = 0.0;
+        
+        
+                            //     //let pos = physics::create_pos(&na::Point2::new(*x, *y));
+                            //     //let vec = b2::Vec2 { x: pos.x, y: pos.y };
+                            //     coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
+        
+                            //     coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
+                            //     println!("Suri warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                            // }
+                            
+                        }
+        
                     }
-                    // if exit_dest.is_empty() == false {
-                    //     self.start_warp(exit_dest);
-                    // }
 
-                    // if let Some((portal_id, x, y)) = portal_hash.get(&exit_dest) {
-
-                    //     println!("Portal at {}, {}", &x, &y);
-                    //     pos.x = *x;
-                    //     pos.y = *y;
-                    //     let nvx = -coll.vel.x * 1.0;
-                    //     let nvy = -coll.vel.y * 1.0;
-                    //     println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
-                    //     if nvx > 0.0 {
-                    //         character.facing_right = true;
-                    //     }
-                    //     else if nvx < 0.0 {
-                    //         character.facing_right = false;
-                    //     }
-                    //     vel.x = nvx;
-                    //     vel.y = nvy;
-                    //     coll.pos.x = *x;
-                    //     coll.pos.y = *y;
-                    //     coll.vel.x = nvx;
-                    //     coll.vel.y = nvy;
-                    //     character.since_warp = 0.0;
-
-
-                    //     //let pos = physics::create_pos(&na::Point2::new(*x, *y));
-                    //     //let vec = b2::Vec2 { x: pos.x, y: pos.y };
-                    //     coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
-
-                    //     coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
-                    //     println!("Suri warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    // }
-                    
                 }
 
-            }
-            if (character.in_portal) {
-                portal_id = character.portal_id as i32;
-                //println!("Character since warp: {}", &character.since_warp);
+                if coll.in_portal {
+                    portal_id = coll.portal_id as i32;
+                    //println!("Character since warp: {}", &character.since_warp);
 
-                //exit_id = character.exit_id as i32;
+                    //exit_id = character.exit_id as i32;
 
-                //let exit_res = world
+                    //let exit_res = world
 
-                //println!("Character exiting..., {}", &portal_id);
-                let portal_ent = self.world.entities().entity(portal_id as u32);
-                let portal_res = self.world.read_storage::<PortalComponent>();
-                if let Some(portal) = portal_res.get(portal_ent) {
-                    println!("Portal info {:?}", &portal);
-                    let portal_dest = portal.destination.clone();
+                    //println!("Character exiting..., {}", &portal_id);
+                    let portal_ent = self.world.entities().entity(portal_id as u32);
+                    let portal_res = self.world.read_storage::<PortalComponent>();
+                    if let Some(portal) = portal_res.get(portal_ent) {
+                        println!("Portal info {:?}", &portal);
+                        let portal_dest = portal.destination.clone();
 
-                    if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
+                        if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
 
-                        println!("Portal at {}, {}", &x, &y);
-                        pos.x = *x;
-                        pos.y = *y;
-                        let nvx = -coll.vel.x * 1.0;
-                        let nvy = -coll.vel.y * 1.0;
-                        println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
-                        if nvx > 0.0 {
-                            character.facing_right = true;
+                            println!("Portal at {}, {}", &x, &y);
+                            pos.x = *x;
+                            pos.y = *y;
+                            let nvx = -coll.vel.x * 1.0;
+                            let nvy = -coll.vel.y * 1.0;
+                            println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
+                            if nvx > 0.0 {
+                                facing_right = true;
+                            }
+                            else if nvx < 0.0 {
+                                facing_right = false;
+                            }
+                            vel.x = nvx;
+                            vel.y = nvy;
+
+                            coll.pos.x = *x;
+                            coll.pos.y = *y;
+                            coll.vel.x = nvx;
+                            coll.vel.y = nvy;
+                            coll.since_warp = 0.0;
+
+                            //let pos = physics::create_pos(&na::Point2::new(*x, *y));
+                            //let vec = b2::Vec2 { x: pos.x, y: pos.y };
+                            coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
+                            coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
+                            println!("Item warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                         }
-                        else if nvx < 0.0 {
-                            character.facing_right = false;
-                        }
-                        vel.x = nvx;
-                        vel.y = nvy;
-
-                        coll.pos.x = *x;
-                        coll.pos.y = *y;
-                        coll.vel.x = nvx;
-                        coll.vel.y = nvy;
-                        character.since_warp = 0.0;
-
-                        //let pos = physics::create_pos(&na::Point2::new(*x, *y));
-                        //let vec = b2::Vec2 { x: pos.x, y: pos.y };
-                        coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
-                        coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
-                        println!("Suri warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        
                     }
-                    
                 }
             }
-        }
+
+            // if portal_id != -1 {
+            //     println!("Character portaling..., {}", &portal_id);
+
+            // }
+
         }
 
-        if exit_name.is_empty() == false {
+        if self.level_warping == false && exit_name.is_empty() == false {
             self.start_warp(exit_name);
         }
-
-        // if portal_id != -1 {
-        //     println!("Character portaling..., {}", &portal_id);
-
-        // }
 
     }
 
     pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
+
+        let mut time_delta = time_delta;
+        if self.level_warping {
+            self.level_warp_timer += time_delta;
+            time_delta *= WARP_TIME_SCALE;
+        }
         
         // Save frame time
         self.set_frame_time(time_delta);
@@ -416,6 +431,7 @@ impl GameState {
 
         // Cleanup the world state after changes
         self.world.maintain();
+
 
         // Run physics update frame
         physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);

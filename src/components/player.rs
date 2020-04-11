@@ -599,6 +599,23 @@ impl CharacterDisplayComponent {
 
 }
 
+impl super::CharLevelInteractor for CharacterDisplayComponent {
+    fn set_standing(&mut self, is_standing: bool) {
+        match is_standing {
+            true => {
+                if self.in_jump || self.in_fall {
+                    self.start_walk();
+                }
+            },
+            false => {
+                if !self.in_jump && !self.in_fall {
+                    self.start_fall();
+                }
+            }
+        }
+    }
+}
+
 
 impl super::RenderTrait for CharacterDisplayComponent {
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>) {

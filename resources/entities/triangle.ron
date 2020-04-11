@@ -1,0 +1,8 @@
+SpriteConfig(
+    spritesheet: false,
+    path: "/tall_triangle_block.png",
+    scale: (1.0, 1.0),
+    z_order: 100.0,
+    alpha: 1.0,
+    angle: 0.0,
+)

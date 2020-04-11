@@ -71,6 +71,7 @@ impl SpriteConfig {
         sprite.scale.x = config.scale.0;
         sprite.scale.y = config.scale.1;
         sprite.alpha = config.alpha;
+        //sprite.an
 
         sprite
     }
@@ -84,6 +85,7 @@ pub struct SpriteComponent {
     pub scale: na::Vector2::<f32>,
     pub z_order: f32,
     pub alpha: f32,
+    pub angle: f32,
     //pub debug_font: graphics::Font,
 }
 
@@ -96,6 +98,7 @@ impl SpriteComponent {
             scale: na::Vector2::new(1.0,1.0),
             z_order: z_order,
             alpha: 1.0,
+            angle: 0.0,
         }
     
         
@@ -108,7 +111,9 @@ impl super::RenderTrait for SpriteComponent {
         //println!("BallRender...");
         let mut rng = rand::thread_rng();
 
-        let mut angle = 0.0;
+        // get sprite base angle
+        let mut angle = self.angle;
+        // Override angle with collision angle
         if let Some(ent_id) = ent {
             let collision_reader = world.read_storage::<Collision>();
             let entity = world.entities().entity(ent_id);

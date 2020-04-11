@@ -12,6 +12,7 @@ use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
+use crate::components::npc::{NpcComponent};
 use crate::systems::*;
 use crate::physics;
 use crate::physics::{PhysicsWorld,CollisionCategory};
@@ -31,12 +32,15 @@ impl SuriBuilder {
         let sprite_config = maybe_config.unwrap();
         SpriteConfig::init_images(world, ctx, sprite_config.path.clone());
 
+        let npc = NpcComponent::new();
+
         // Create collision component
         let mut collision = Collision::new_specs(3.0,0.001, 18.0, 18.0);
         collision.pos.x = x;
         collision.pos.y = y;
         collision.density = 1.0;
         collision.collision_category = CollisionCategory::Player;
+        collision.enable_warp = true;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Portal);
@@ -50,6 +54,7 @@ impl SuriBuilder {
 
         // Create entity
         let entity = world.create_entity()
+        //.with(npc)
         .with(Position { x: x, y: y })
         .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })

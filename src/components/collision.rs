@@ -8,8 +8,9 @@ use rand::prelude::*;
 
 use crate::entities::level_builder::{LevelBounds};
 use crate::physics;
-use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle, CollisionCategory};
+use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle, CollisionCategory, CollideType};
 use crate::components::player::{CharacterDisplayComponent};
+use crate::components::npc::{NpcComponent};
 
 #[derive(Debug)]
 pub struct Collision {
@@ -37,6 +38,9 @@ pub struct Collision {
     pub exit_id: i32,
     pub portal_id: i32,
     pub since_warp: f32,
+    // collision status
+    // body contacts list  (entity_id, collide_type)
+    pub body_contacts: Vec::<(i32, CollideType)>,
     
 }
 
@@ -64,6 +68,7 @@ impl Collision {
             portal_id: -1,
             since_warp: 0.2,
             enable_warp: false,            
+            body_contacts: vec![],
         }
     }
     pub fn new_specs(density: f32, restitution: f32, dim_1: f32, dim_2: f32) -> Collision {
@@ -88,6 +93,7 @@ impl Collision {
             portal_id: -1,
             since_warp: 0.2,
             enable_warp: false,
+            body_contacts: vec![],
         }
     }
 
@@ -190,13 +196,22 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
-    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, opt_character: Option<&mut CharacterDisplayComponent>,
+    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld,
+        opt_character: Option<&mut CharacterDisplayComponent>,
+        opt_npc: Option<&mut NpcComponent>,
         level_bounds: &LevelBounds) {
 
         let mut rng = rand::thread_rng();
 
+        self.body_contacts.clear();
+
         if let Some(body_handle) = self.body_handle {
             let mut body = physics_world.body_mut(body_handle);
+
+            self.in_portal = false;
+            self.in_exit = false;
+            self.exit_id = -1;
+            self.portal_id = -1;
 
             if let Some(character) = opt_character {
                 // have character handle applying inputs to collision body
@@ -206,6 +221,12 @@ impl Collision {
                 character.in_portal = false;
                 character.exit_id = -1;
                 character.portal_id = -1;
+            }
+
+            if let Some(npc) = opt_npc {
+                // have character handle applying inputs to collision body
+                npc.apply_movement(&mut body);
+
             }
 
             let mut curr_pos = physics::get_pos(body.position());
@@ -288,6 +309,14 @@ impl Collision {
 
             self.angle = body.angle();
     
+            for (entity_id, collide_type) in &self.body_contacts {
+                //println!("Body contact: {} {:?}", &entity_id, &collide_type);
+
+                // match &collide_type {
+                //     CollideType::Player_Portal
+                // }
+            }
+
             //println!("New position: {}, {} Velocity: {}, {}", &self.pos.x, &self.pos.y, &self.vel.x, &self.vel.y);
         }
     }

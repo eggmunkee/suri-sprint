@@ -9,6 +9,7 @@ use ron::de::from_reader;
 pub struct ConfigData {
     pub window_setup: WindowSetup,
     pub window_mode: WindowMode,
+    pub start_level: String,
 }
 
 pub fn get_ron_config<'a,T>(config_path: String) -> Option<T> 
@@ -24,9 +25,7 @@ pub fn get_ron_config<'a,T>(config_path: String) -> Option<T>
                 return None;
             }
         };
-    } //.expect("Failed opening file");
-
-    //println!("Config data: {:?}", &config);
+    }
 
     None
 }
@@ -41,6 +40,7 @@ pub fn get_game_config() -> Option<ConfigData> {
         _ => Some(ConfigData {
             window_setup: WindowSetup::default(),
             window_mode: WindowMode::default(),
+            start_level: "start".to_string(),
         })
     };
 

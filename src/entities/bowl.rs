@@ -11,14 +11,13 @@ use crate::resources::{GameStateResource,ImageResources};
 use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
-use crate::components::npc::{NpcComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::*;
 use crate::physics::{PhysicsWorld,CollisionCategory};
 
-pub struct PlatformBuilder;
+pub struct BowlBuilder;
 
-impl PlatformBuilder {
+impl BowlBuilder {
 
     // pub fn get_sprite_paths() -> Vec<String> {
     //     vec!["/dirty-box-1.png".to_string()]
@@ -28,27 +27,9 @@ impl PlatformBuilder {
         width: f32, height: f32, angle: f32, z_order: f32) -> Entity {
 
         // Create sprite from config
-        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/bowl".to_string());
 
-        sprite.z_order = z_order;
-        //sprite.rotation = angle;
-        sprite.scale.x *= width / 24.0;
-        sprite.scale.y *= height / 24.0;
-
-        let mut collision = Collision::new_specs(5.0,0.02, width, height);
-        // collision.dim_1 = width;
-        // collision.dim_2 = height;
-        collision.pos.x = x;
-        collision.pos.y = y;
-        collision.angle = angle;
-        collision.collision_category = CollisionCategory::Level;
-        collision.collision_mask.clear();
-        collision.collision_mask.push(CollisionCategory::Level);
-        collision.collision_mask.push(CollisionCategory::Player);
-        collision.collision_mask.push(CollisionCategory::Ghost);
-
-        collision.create_static_body_box(physics_world);
-        let body_handle_clone = collision.body_handle.clone();
+        sprite.z_order = Sprite;
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
@@ -78,8 +59,6 @@ impl PlatformBuilder {
         sprite.scale.x *= width / 24.0;
         sprite.scale.y *= height / 24.0;
 
-        let npc = NpcComponent::new();
-
         let mut collision = Collision::new_specs(3.0,0.25, width, height);
         // collision.dim_1 = width;
         // collision.dim_2 = height;
@@ -97,7 +76,6 @@ impl PlatformBuilder {
         let body_handle_clone = collision.body_handle.clone();
 
         let entity = world.create_entity()
-        .with(npc)
         .with(Position { x: x, y: y })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)

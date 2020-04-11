@@ -68,7 +68,7 @@ pub fn main() -> GameResult {
     // create app's state
     let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode)?;
 
-    state.load_level(ctx, "a".to_string());
+    state.load_level(ctx, config.start_level);
     //{
         //let mut world = &mut state.world;
         //let mut phys_world = &mut state.phys_world;

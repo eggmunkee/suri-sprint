@@ -1,8 +1,8 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/ghost-1-r.png",
-    scale: (1.2, 1.2),
+    path: "/food_bown.png",
+    scale: (1.0, 1.0),
     z_order: 100.0,
-    alpha: 0.25,
+    alpha: 1.0,
     angle: 0.0,
 )

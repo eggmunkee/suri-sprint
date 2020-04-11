@@ -7,34 +7,35 @@ LevelConfig(
     items: [
         Player ( x: 1000.0, y: 1000.0 ),
         //
-        Sprite ( x: 1500.0, y: 1500.0, sprite: "entities/electric-bg", z: 1.0 ),
+        Sprite ( x: 1500.0, y: 1500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
         
         Platform ( x: -999.0, y: 1500.0, w: 2500.0, h: 100.0, ang: -1.57),
         Platform ( x: 3000.0, y: 1000.0, w: 1200.0, h: 100.0, ang: 1.57),
 
         Platform ( x: 3999.0, y: 1500.0, w: 2500.0, h: 100.0, ang: -1.57),
 
-        Platform ( x: 1600.0, y: 3999.0, w: 2400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1550.0, y: 3999.0, w: 2200.0, h: 20.0, ang: 0.0),
 
         Platform ( x: 3500.0, y: -750.0, w: 400.0, h: 20.0, ang: -0.2),
         Platform ( x: 3000.0, y: -500.0, w: 400.0, h: 20.0, ang: -0.2),
         Platform ( x: 2500.0, y: -250.0, w: 400.0, h: 20.0, ang: -0.2),
-        Platform ( x: 2000.0, y: 0.0, w: 400.0, h: 20.0, ang: -0.2),
-        Platform ( x: 1500.0, y: 250.0, w: 400.0, h: 20.0, ang: -0.2),
+        //Platform ( x: 2000.0, y: 0.0, w: 400.0, h: 20.0, ang: -0.2),
+        //Platform ( x: 1500.0, y: 250.0, w: 400.0, h: 20.0, ang: -0.2),
 
         Platform ( x: -870.0, y: -500.0, w: 50.0, h: 10.0, ang: 0.2),
         Platform ( x: -100.0, y: -500.0, w: 150.0, h: 10.0, ang: -0.1),
 
 
-        Portal ( x: 1500.0, y: -500.0, w: 200.0, h: 200.0, name: "a", destination: "b" ),
+        Portal ( x: 1500.0, y: -500.0, w: 200.0, h: 200.0, name: "a", destination: "" ),
 
-        Portal ( x: 1000.0, y: 3500.0, w: 400.0, h: 400.0, name: "b", destination: "a"),
+        Portal ( x: 2400.0, y: 1800.0, w: 200.0, h: 200.0, name: "b", destination: "a"),
 
         Platform ( x: 400.0, y: 2000.0, w: 400.0, h: 20.0, ang: -0.2),
         Platform ( x: -200.0, y: 2000.0, w: 400.0, h: 20.0, ang: 0.2),
         Platform ( x: 1000.0, y: 1750.0, w: 400.0, h: 20.0, ang: 0.0),
         Platform ( x: 1400.0, y: 2000.0, w: 400.0, h: 20.0, ang: 0.0),
-        Platform ( x: 2400.0, y: 1500.0, w: 400.0, h: 20.0, ang: -0.375),
+        Platform ( x: 1550.0, y: 1000.0, w: 400.0, h: 20.0, ang: 0.15),
+        Platform ( x: 1950.0, y: 1300.0, w: 400.0, h: 20.0, ang: -0.375),
         Ghost ( x: 300.0, y: 1300.0 ),
         Ghost ( x: 500.0, y: 1300.0 ),
         Ghost ( x: 700.0, y: 1500.0 ),
@@ -43,6 +44,6 @@ LevelConfig(
         Ghost ( x: 1300.0, y: 1500.0 ),
         Ghost ( x: 1500.0, y: 1700.0 ),
 
-        Exit ( x: 3500.0, y: -1000.0, w: 20.0, h: 20.0, name: "exit", destination: "test" ),
+        Exit ( x: 3500.0, y: -1000.0, w: 25.0, h: 25.0, name: "exit", destination: "test" ),
     ],
 )

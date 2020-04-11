@@ -7,41 +7,49 @@ LevelConfig(
     items: [
         Player ( x: 30.0, y: 30.0 ),
         
-        Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0 ),
+        Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
 
-        Portal ( x: 1000.0, y: -50.0, w: 40.0, h: 40.0, name: "portal_fun", destination: ""),
+        Portal ( x: 1000.0, y: -50.0, w: 40.0, h: 40.0, name: "portal_fun", destination: "portal_b"),
 
         //Portal ( x: 700.0, y: 800.0, w: 50.0, h: 50.0, name: "portal_c", destination: ""),
         //Portal ( x: 1800.0, y: 300.0, w: 50.0, h: 50.0, name: "portal_d", destination: "exit_portal"),
 
         Portal ( x: 350.0, y: 800.0, w: 50.0, h: 50.0, name: "portal_a", destination: "portal_b"),
 
-        Platform ( x: 100.0, y: 350.0, w: 100.0, h: 20.0, ang: 0.0),
         DynPlatform ( x: 150.0, y: 320.0, w: 80.0, h: 15.0, ang: 0.0),
-        Platform ( x: 450.0, y: 950.0, w: 250.0, h: 20.0, ang: 0.0),
-        Platform ( x: 750.0, y: 499.0, w: 70.0, h: 20.0, ang: 0.0),
 
-        DynPlatform ( x: 1450.0, y: 320.0, w: 120.0, h: 15.0, ang: 0.0),
+        Platform ( x: 100.0, y: 350.0, w: 100.0, h: 20.0, ang: 0.0),
+        Platform ( x: 450.0, y: 950.0, w: 225.0, h: 20.0, ang: 0.0),
+        Platform ( x: 500.0, y: 499.0, w: 70.0, h: 20.0, ang: 0.0),
+
+        Platform ( x: 800.0, y: 350.0, w: 150.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1050.0, y: 950.0, w: 150.0, h: 20.0, ang: -0.07),
+
+        // vertical walls
         Platform ( x: 1210.0, y: 217.0, w: 150.0, h: 20.0, ang: -1.47),
         Platform ( x: 1200.0, y: 800.0, w: 150.0, h: 20.0, ang: -1.57),
 
-        Platform ( x: 1000.0, y: 350.0, w: 100.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1320.0, y: 950.0, w: 150.0, h: 20.0, ang: 0.2),
+
+        DynPlatform ( x: 1450.0, y: 320.0, w: 120.0, h: 15.0, ang: 0.0),
+
+        Portal ( x: 1600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
+
+        Platform ( x: 1650.0, y: 950.0, w: 150.0, h: 20.0, ang: -0.2),
+        Platform ( x: 1755.0, y: 950.0, w: 150.0, h: 20.0, ang: 0.07),
+
+        Platform ( x: 1900.0, y: 450.0, w: 420.0, h: 20.0, ang: 0.03),
+
 
         Platform ( x: 2210.0, y: 206.0, w: 250.0, h: 20.0, ang: -1.47),
         Platform ( x: 2207.0, y: 814.0, w: 260.0, h: 20.0, ang: -1.57),
 
-        Platform ( x: 1050.0, y: 950.0, w: 150.0, h: 20.0, ang: -0.2),
-        Platform ( x: 1320.0, y: 950.0, w: 150.0, h: 20.0, ang: 0.2),
-        Platform ( x: 1650.0, y: 950.0, w: 150.0, h: 20.0, ang: -0.2),
-        Platform ( x: 1900.0, y: 450.0, w: 420.0, h: 20.0, ang: 0.03),
         Platform ( x: 2205.0, y: 555.0, w: 420.0, h: 20.0, ang: -0.04),
 
-        Portal ( x: 1600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: "portal_fun"),
 
-        Platform ( x: 1605.0, y: 950.0, w: 150.0, h: 20.0, ang: 0.07),
         Platform ( x: 2100.0, y: 950.0, w: 100.0, h: 20.0, ang: -0.03),
 
-        Exit ( x: 2500.0, y: 500.0, w: 50.0, h: 50.0, name: "exit_fun", destination: "testa"),
+        Exit ( x: 2500.0, y: 500.0, w: 25.0, h: 25.0, name: "exit_fun", destination: "testa"),
         //Portal ( x: 2800.0, y: 500.0, w: 50.0, h: 50.0, name: "exit_portal", destination: ""),
 
 

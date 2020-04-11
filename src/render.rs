@@ -3,7 +3,7 @@ use ggez::{Context, GameResult, GameError};
 
 use ggez::graphics;
 use ggez::nalgebra as na;
-use ggez::graphics::{Color,DrawParam,set_window_title};
+use ggez::graphics::{Color,DrawParam,Scale,set_window_title};
 
 use specs::{Entity,World,WorldExt,System,WriteStorage};
 use specs::join::Join;
@@ -193,7 +193,10 @@ impl Renderer {
                             ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
                         ) {
                             ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::<f32>::new(*x, *y)) );
+                                .dest(na::Point2::new(*x-*w, *y-*w))
+                                .offset(na::Point2::new(*w, *w))
+                                
+                            );
                         }
                     },
                     LevelItem::Exit{x, y, w, ..} => {
@@ -209,7 +212,7 @@ impl Renderer {
                                 .dest(na::Point2::<f32>::new(*x, *y)) );
                         }
                     },
-                    LevelItem::Sprite{x, y, ..} => {
+                    LevelItem::Sprite{x, y, angle, ..} => {
                         let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                         stroke_opt.line_width = 4.0;
                         if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
@@ -218,7 +221,9 @@ impl Renderer {
                             ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
                         ) {
                             ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                                //.dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                                .dest(na::Point2::new(*x-5.0, *y-5.0))
+                                .rotation(*angle));
                         }
                     },
                     LevelItem::Platform{x, y, w, h, ang, ..} => {
@@ -229,9 +234,10 @@ impl Renderer {
                             ggez::graphics::Rect::new(0.0, 0.0, w*2.0, h*2.0),
                             ggez::graphics::Color::new(1.0, 0.0, 0.0, 0.5)
                         ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                //.rotation(*ang)
-                                .dest(na::Point2::new(x - w, y - h))
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()                                
+                                .dest(na::Point2::new(*x-*w, *y-*h))
+                                .offset(na::Point2::new(*w, *h))
+                                .rotation(*ang)
                                  );
                         }
                     },
@@ -244,8 +250,9 @@ impl Renderer {
                             ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
                         ) {
                             ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                //.rotation(*ang)
-                                .dest(na::Point2::new(x - w, y - h))
+                                .dest(na::Point2::new(*x-*w, *y-*h))
+                                .offset(na::Point2::new(*w, *h))
+                                .rotation(*ang)
                                  );
                         }
                     },
@@ -262,6 +269,34 @@ impl Renderer {
         }
 
         self.post_render_list(ctx, world);
+
+        if game_state.level_warping {
+            let mut draw_ok = true;
+            let (w, h) = (game_state.window_w, game_state.window_h);
+            let cent_x = w as f32 / 2.0;
+            let cent_y = h as f32 / 5.0;
+
+            //let text_w = game_state.paused_text.width(ctx);
+            //let text_h = game_state.paused_text.height(ctx);
+
+
+            // // Render paused graphis
+            // if let Err(_) = graphics::draw(ctx, &game_state.paused_text, 
+            //         DrawParam::new()
+            //         .dest(na::Point2::new(cent_x-2.0-(text_w as f32 / 2.0),cent_y+2.0-(text_h as f32 / 2.0)))
+            //         .color(Color::new(0.0,0.0,0.0,1.0))
+            //         ) {
+            //     draw_ok = false;
+            // };
+            // if let Err(_) = graphics::draw(ctx, &game_state.paused_text, //(na::Point2::new(cent_x,cent_y),
+            //         //Color::new(0.8,0.85,1.0,1.0)) ) 
+            //         DrawParam::new()
+            //         .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),cent_y-(text_h as f32 / 2.0)))
+            //         .color(Color::new(0.8,0.85,1.0,1.0))
+            //         ) {
+            //     draw_ok = false;
+            // };
+        }
 
         // RENDER UI --------------------------------------------------------------------------
         match &game_state.current_state {
@@ -283,7 +318,7 @@ impl Renderer {
                         .color(Color::new(0.0,0.0,0.0,1.0))
                         ) {
                     draw_ok = false;
-                };
+                }
                 if let Err(_) = graphics::draw(ctx, &game_state.paused_text, //(na::Point2::new(cent_x,cent_y),
                         //Color::new(0.8,0.85,1.0,1.0)) ) 
                         DrawParam::new()
@@ -291,8 +326,22 @@ impl Renderer {
                         .color(Color::new(0.8,0.85,1.0,1.0))
                         ) {
                     draw_ok = false;
-                };
+                }
 
+                let level_name_y = 4.0 * h as f32 / 5.0;
+                let level_name_content = String::from(format!("Level \"{}\"", &game_state.level.name));
+                //level_name_content.pusgame_state.level.name.clone();
+                let mut level_name_text = ggez::graphics::Text::new(level_name_content);
+                level_name_text.set_font(game_state.font, Scale { x: 20.0, y: 20.0 });
+                let text_w = level_name_text.width(ctx);
+                let text_h = level_name_text.height(ctx);
+                if let Err(_) = graphics::draw(ctx, &level_name_text,
+                    DrawParam::new()
+                    .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),level_name_y-(text_h as f32 / 2.0)))
+                    //.scale(na::Vector2::new(2.0,2.0))
+                ) {
+                    draw_ok = false;
+                }
                 if !draw_ok {
                     println!("Draw error occurred");
                 }

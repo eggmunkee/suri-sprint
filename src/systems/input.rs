@@ -7,6 +7,7 @@ use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::*;
 use crate::components::collision::{Collision};
 use crate::components::player::*;
+use crate::components::npc::{NpcComponent};
 use crate::physics::{CollisionCategory};
 
 // handle input state to control Players
@@ -35,6 +36,16 @@ impl InputSystem {
     //         self.handle_player_input(inn_v, input, ent, lazy, time_delta);
     //     }
     // }
+
+    fn handle_npc_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &mut NpcComponent, Entity), input: &InputResource,
+        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
+        let (vel, coll, display, _e) = v;
+
+        let body_movement = coll.get_movement();
+
+        display.update(body_movement, time_delta);
+        
+    }
 
     // handle input updates from an entity
     fn handle_player_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
@@ -120,12 +131,13 @@ impl<'a> System<'a> for InputSystem {
     type SystemData = (WriteStorage<'a, Velocity>,
                         WriteStorage<'a, Collision>,
                         WriteStorage<'a, CharacterDisplayComponent>,
+                        WriteStorage<'a, NpcComponent>,
                         Read<'a, GameStateResource>,
                         Read<'a, InputResource>,
                         Entities<'a>,
                         Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (mut vel, mut coll, mut char_display, game_state, mut input, mut ent, lazy): Self::SystemData) {
+    fn run(&mut self, (mut vel, mut coll, mut char_display, mut npc, game_state, mut input, mut ent, lazy): Self::SystemData) {
 
         let time_delta = game_state.delta_seconds;
 
@@ -147,6 +159,14 @@ impl<'a> System<'a> for InputSystem {
             self.handle_player_input(inn_v, &*input, &ent, &lazy, time_delta);
         }        
 
+        drop(list);
+
+        // call npc input step
+        let mut list = (&mut vel, &mut coll, &mut npc, &ent).join().collect::<Vec<_>>();
+        for inn_v in list.iter_mut() { 
+            //let (vel, coll, _display, _e) = inn_v;      
+            self.handle_npc_input(inn_v, &*input, &ent, &lazy, time_delta);
+        }  
 
         //self.handle_player_list(list, &*input, &ent, &lazy, time_delta);
 

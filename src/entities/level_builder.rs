@@ -62,7 +62,7 @@ pub enum LevelItem {
         x: f32, y: f32,
     },
     Sprite {
-        x: f32, y: f32, sprite: String,
+        x: f32, y: f32, sprite: String, angle: f32,
     },
     Portal {
         x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
@@ -108,17 +108,18 @@ impl LevelConfig {
                     SuriBuilder::build(world, ctx, physics_world, *x, *y);
                 },
                 LevelItem::Platform{ x, y, w, h, ang} => {
-                    PlatformBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
+                    PlatformBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
                 },
                 LevelItem::DynPlatform{ x, y, w, h, ang} => {
-                    PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
+                    PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
                 },
                 LevelItem::Ghost{ x, y } => {
                     GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
-                LevelItem::Sprite{ x, y, sprite } => {
+                LevelItem::Sprite{ x, y, sprite, angle } => {
                     let sprite_path = &*sprite;
-                    let sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
+                    let mut sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
+                    sprite.angle = *angle;
 
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
                     //GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
