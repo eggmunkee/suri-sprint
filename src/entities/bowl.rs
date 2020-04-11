@@ -23,13 +23,24 @@ impl BowlBuilder {
     //     vec!["/dirty-box-1.png".to_string()]
     // }
 
-    pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32, angle: f32, z_order: f32) -> Entity {
+    pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
 
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/bowl".to_string());
+        sprite.z_order = SpriteLayer::Entities.to_z();
 
-        sprite.z_order = Sprite;
+        let mut collision = Collision::new_specs(3.0,0.25, 10.0, 2.5);
+        collision.pos.x = x;
+        collision.pos.y = y;
+        collision.density = 0.5;
+        collision.collision_category = CollisionCategory::Level;
+        collision.collision_mask.clear();
+        collision.collision_mask.push(CollisionCategory::Level);
+        collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.create_dynamic_body_box_upright(physics_world);
+
+        let body_handle_clone = collision.body_handle.clone();
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })

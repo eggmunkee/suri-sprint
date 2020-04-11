@@ -26,6 +26,7 @@ use crate::components::meow::{MeowComponent};
 use crate::components::exit::{ExitComponent};
 use crate::components::portal::{PortalComponent};
 use crate::components::player::{CharacterDisplayComponent};
+use crate::components::npc::{NpcComponent};
 use crate::systems::{InterActorSys,InputSystem};
 use crate::world::{create_world,create_dispatcher};
 use crate::entities::level_builder::{LevelConfig,LevelBounds};
@@ -173,8 +174,9 @@ impl GameState {
 
         let world = &mut self.world;
 
-        // Run Input System
+        // Run Input System - Mainly handle meow creation right now
         {
+            // Run InputSystem on world
             // outputs: meow locations and clicked entity info
             let mut input_sys = InputSystem::new();
             input_sys.run_now(&world);
@@ -185,6 +187,7 @@ impl GameState {
                 MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
             }
 
+            // CLICK - COLLIDER HANDLING CODE - in testing =========================
             // Get display size for click position calculations
             let dim = ggez::graphics::drawable_size(ctx);
             let mut display_offset = self.current_offset;
@@ -194,6 +197,7 @@ impl GameState {
             // list for entities found at click
             let mut entity_clicked : Vec<u32> = vec![];
 
+            // Iterate through any click_info item from input system
             for click in &input_sys.click_info {
                 // get center x/y based on click and display offset
                 // to get from screen coordinates to game object coords
@@ -202,8 +206,11 @@ impl GameState {
                 // println!("Click position: {}, {}", &click.x, &click.y);
                 // println!("Display offset: {}, {}", &display_offset.x, &display_offset.y);
                 // println!("Click game pos: {}, {}", &(click.x-1.0-display_offset.x), &(click.y-1.0-display_offset.y));
+
                 // create bounding box for click position to check colliders
+                // very small rectangle around the cursor position translated into world coords
                 let mut aabb = b2::AABB::new();
+                // create physics-scale positions for bounding box
                 aabb.lower = physics::create_pos(&na::Point2::new(center_x-0.1, center_y-0.1));
                 aabb.upper = physics::create_pos(&na::Point2::new(click.x+0.1, click.y+0.1));
         
@@ -245,6 +252,7 @@ impl GameState {
         }
 
         // Meow "system" - updates meow state and components
+        //  This could be moved into a system as long as the physics data was accessible & writable from the system class
         {
             // Operator on meows, collisions and sprite components
             let mut meow_writer = world.write_storage::<MeowComponent>();
@@ -278,29 +286,37 @@ impl GameState {
         {
             // get character entities, handle portal & exit statuses
             let entities = self.world.entities();
+            // operate on optional characters or npcs
             let mut char_res = self.world.write_storage::<CharacterDisplayComponent>();
+            let mut npc_res = self.world.write_storage::<NpcComponent>();
+            // position/velocity components
             let mut pos_res = self.world.write_storage::<Position>();
             let mut vel_res = self.world.write_storage::<Velocity>();
+            // collision component
             let mut coll_res = self.world.write_storage::<Collision>();
 
+            // hash to store portal names and their positions - avoid needing to search for them later
             let mut portal_hash = HashMap::<String,(i32,f32,f32)>::new();
             let portal_res = self.world.read_storage::<PortalComponent>();
-                
+            // Insert portal information into hash
             for (portal, pos, _ent) in (&portal_res, &pos_res, &entities).join() {
                 portal_hash.insert(portal.name.clone(), (_ent.id() as i32, pos.x, pos.y));
             }
 
-            for (ent, mut character_opt, mut pos, mut vel, mut coll) in (&entities, (&mut char_res).maybe(),  &mut pos_res,  &mut vel_res, &mut coll_res).join() {
+            // Join entities and their components to process physics update
+            for (ent, mut character_opt, mut npc_opt,  mut pos, mut vel, mut coll) in 
+                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(),  &mut pos_res,  &mut vel_res, &mut coll_res).join() {
 
                 let mut facing_right = true;
 
-                if let Some(character) = character_opt {
+                // Handle character-exit specially
+                if let Some(ref mut character) = character_opt {
                     if character.since_warp < 0.5 { continue; }
-                    if (character.in_exit) {
+                    // Handle character entered an exit and not already level warping
+                    if character.in_exit && !self.level_warping {
+                        // Get exit 
                         let exit_id = character.exit_id as i32;
-                        //println!("Character since warp: {}", &character.since_warp);
                         facing_right = character.facing_right;
-                        //let exit_res = world
         
                         //println!("Character exiting..., {}", &exit_id);
                         let exit_ent = self.world.entities().entity(exit_id as u32);
@@ -311,61 +327,29 @@ impl GameState {
         
                             if exit_dest.is_empty() == false {
                                 exit_name = exit_dest;
-                            }
-                            // if exit_dest.is_empty() == false {
-                            //     self.start_warp(exit_dest);
-                            // }
-        
-                            // if let Some((portal_id, x, y)) = portal_hash.get(&exit_dest) {
-        
-                            //     println!("Portal at {}, {}", &x, &y);
-                            //     pos.x = *x;
-                            //     pos.y = *y;
-                            //     let nvx = -coll.vel.x * 1.0;
-                            //     let nvy = -coll.vel.y * 1.0;
-                            //     println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
-                            //     if nvx > 0.0 {
-                            //         character.facing_right = true;
-                            //     }
-                            //     else if nvx < 0.0 {
-                            //         character.facing_right = false;
-                            //     }
-                            //     vel.x = nvx;
-                            //     vel.y = nvy;
-                            //     coll.pos.x = *x;
-                            //     coll.pos.y = *y;
-                            //     coll.vel.x = nvx;
-                            //     coll.vel.y = nvy;
-                            //     character.since_warp = 0.0;
-        
-        
-                            //     //let pos = physics::create_pos(&na::Point2::new(*x, *y));
-                            //     //let vec = b2::Vec2 { x: pos.x, y: pos.y };
-                            //     coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
-        
-                            //     coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
-                            //     println!("Suri warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                            // }
-                            
+                            }                            
                         }
         
                     }
 
                 }
 
+                // Handle Collider entered portal - generic portal behavior
                 if coll.in_portal {
+                    // get
                     portal_id = coll.portal_id as i32;
-                    //println!("Character since warp: {}", &character.since_warp);
+                    println!("Collider since warp: {}", &coll.since_warp);
 
                     //exit_id = character.exit_id as i32;
 
                     //let exit_res = world
 
-                    //println!("Character exiting..., {}", &portal_id);
+                    println!("Collider exiting..., {}", &portal_id);
+                    
                     let portal_ent = self.world.entities().entity(portal_id as u32);
                     let portal_res = self.world.read_storage::<PortalComponent>();
                     if let Some(portal) = portal_res.get(portal_ent) {
-                        println!("Portal info {:?}", &portal);
+                        //println!("Portal info {:?}", &portal);
                         let portal_dest = portal.destination.clone();
 
                         if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
@@ -375,7 +359,7 @@ impl GameState {
                             pos.y = *y;
                             let nvx = -coll.vel.x * 1.0;
                             let nvy = -coll.vel.y * 1.0;
-                            println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
+                            //println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
                             if nvx > 0.0 {
                                 facing_right = true;
                             }
@@ -391,21 +375,22 @@ impl GameState {
                             coll.vel.y = nvy;
                             coll.since_warp = 0.0;
 
-                            //let pos = physics::create_pos(&na::Point2::new(*x, *y));
-                            //let vec = b2::Vec2 { x: pos.x, y: pos.y };
+                            // Update Position and Velocity of collider body
                             coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
                             coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
-                            println!("Item warped!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                         }
                         
                     }
+
+                    // Update Facing flags based on portal change for Char/NPC
+                    if let Some(ref mut character) = character_opt {
+                        character.facing_right = facing_right;
+                    }
+                    if let Some(ref mut npc) = npc_opt {
+                        npc.facing_right = facing_right;
+                    }
                 }
             }
-
-            // if portal_id != -1 {
-            //     println!("Character portaling..., {}", &portal_id);
-
-            // }
 
         }
 

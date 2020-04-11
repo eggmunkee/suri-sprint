@@ -13,6 +13,7 @@ use crate::entities::portal_area::{PortalBuilder};
 use crate::entities::exit::{ExitBuilder};
 use crate::entities::suri::{SuriBuilder};
 use crate::entities::ghost::{GhostBuilder};
+use crate::entities::bowl::{BowlBuilder};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 use crate::physics::{PhysicsWorld,CollisionCategory};
@@ -69,6 +70,9 @@ pub enum LevelItem {
     },
     Exit {
         x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
+    },
+    Bowl {
+        x: f32, y: f32,
     }
 }
 
@@ -129,6 +133,9 @@ impl LevelConfig {
                 },
                 LevelItem::Exit { x, y, w, h, name, destination } => {
                     ExitBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());
+                },
+                LevelItem::Bowl { x, y } => {
+                    BowlBuilder::build(world, ctx, physics_world, *x, *y);
                 },
                 _ => {}
             }

@@ -1,5 +1,5 @@
 LevelConfig(
-    name: "test_old",
+    name: "test_small",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 2000.0, max_y: 2000.0,
         solid_sides: (false, true, false, true),
@@ -16,9 +16,11 @@ LevelConfig(
         Platform ( x: 900.0, y: 1000.0, w: 100.0, h: 20.0, ang: 0.0),
         Platform ( x: 200.0, y: 1800.0, w: 600.0, h: 20.0, ang: -0.375),
 
-        Portal ( x: 1900.0, y: -50.0, w: 25.0, h: 25.0, name: "over_exit", destination: ""),
+        Bowl ( x: 500.0, y: 500.0 ),
 
-        Exit ( x: 1950.0, y: 50.0, w: 25.0, h: 25.0, name: "exit", destination: "test_old"),
+        Portal ( x: 1900.0, y: -50.0, w: 50.0, h: 50.0, name: "over_exit", destination: ""),
+
+        Exit ( x: 1950.0, y: 50.0, w: 40.0, h: 40.0, name: "exit", destination: "test_old"),
 
         Ghost ( x: 300.0, y: 2900.0 ),
     ],

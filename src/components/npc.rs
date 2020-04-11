@@ -92,7 +92,7 @@ impl NpcComponent {
     }
 
     pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody) {
-        let move_amt = 5.0; //1300.0;
+        let move_amt = 2.0; //1300.0;
         let up_mult = 3.0;
         if self.going_right {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));

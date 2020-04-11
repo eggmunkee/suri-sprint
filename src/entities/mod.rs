@@ -6,5 +6,6 @@ pub mod ghost;
 pub mod suri;
 pub mod meow;
 pub mod ui;
+pub mod bowl;
 
 pub mod level_builder;

@@ -574,11 +574,13 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                     character.exit_id = exit_id;
                 }
                 if let Some(portal) = portal_res.get(entity_2) {
+                    println!("Chararcter touched portal: {}", &other_id);
                     portal_id = other_id as i32;
                     character.in_portal = true;
                     character.portal_id = portal_id;
 
                     if let Some(collider) = coll_res.get_mut(entity_1) {
+                        println!("Chararcter collider get_mut...");
                         collider.in_portal = true;
                         collider.portal_id = portal_id;
                     }
