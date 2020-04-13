@@ -14,7 +14,7 @@ LevelConfig(
         Platform ( x: 700.0, y: 250.0, w: 100.0, h: 20.0, ang: 0.0),
         Platform ( x: 200.0, y: 400.0, w: 100.0, h: 20.0, ang: -0.002),
 
-        Exit ( x: 100.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "start"),
+        Exit ( x: 100.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "test"),
 
         Ghost ( x: 200.0, y: 100.0 ),
 

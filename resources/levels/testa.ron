@@ -44,6 +44,6 @@ LevelConfig(
         Ghost ( x: 1300.0, y: 1500.0 ),
         Ghost ( x: 1500.0, y: 1700.0 ),
 
-        Exit ( x: 3500.0, y: -1000.0, w: 25.0, h: 25.0, name: "exit", destination: "test" ),
+        Exit ( x: 3500.0, y: -1000.0, w: 25.0, h: 25.0, name: "exit", destination: "test_small" ),
     ],
 )

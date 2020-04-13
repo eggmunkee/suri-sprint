@@ -12,7 +12,7 @@ LevelConfig(
         Platform ( x: 250.0, y: 999.0, w: 170.0, h: 15.0, ang: 0.0),
 
 
-        Exit ( x: 250.0, y: 900.0, w: 25.0, h: 25.0, name: "", destination: "test"),
+        Exit ( x: 250.0, y: 900.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
 
         Ghost ( x: 200.0, y: 100.0 ),
 
