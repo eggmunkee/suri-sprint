@@ -44,7 +44,7 @@ impl SuriBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Portal);
-        //collision.collision_mask.push(CollisionCategory::Ghost);
+        //collision.collision_mask.push(CollisionCategory::Etherial);
         //collision.collision_mask.push(CollisionCategory::Player);
         // Create physics body from collision properties
         //collision.create_dynamic_body_box_upright(physics_world);
@@ -56,7 +56,7 @@ impl SuriBuilder {
         let entity = world.create_entity()
         //.with(npc)
         .with(Position { x: x, y: y })
-        .with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false })
+        //.with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(CharacterDisplayComponent::new(ctx, &sprite_config.path))
         .with(collision)

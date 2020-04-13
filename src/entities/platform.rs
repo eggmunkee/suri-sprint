@@ -45,7 +45,7 @@ impl PlatformBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Etherial);
 
         collision.create_static_body_box(physics_world);
         let body_handle_clone = collision.body_handle.clone();
@@ -91,7 +91,8 @@ impl PlatformBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Player);
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Portal);
+        collision.collision_mask.push(CollisionCategory::Etherial);
         collision.create_dynamic_body_box_rotable(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
@@ -99,6 +100,7 @@ impl PlatformBuilder {
         let entity = world.create_entity()
         .with(npc)
         .with(Position { x: x, y: y })
+        //.with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false  })
         .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)

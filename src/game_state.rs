@@ -291,7 +291,7 @@ impl GameState {
             let mut npc_res = self.world.write_storage::<NpcComponent>();
             // position/velocity components
             let mut pos_res = self.world.write_storage::<Position>();
-            let mut vel_res = self.world.write_storage::<Velocity>();
+            //let mut vel_res = self.world.write_storage::<Velocity>();
             // collision component
             let mut coll_res = self.world.write_storage::<Collision>();
 
@@ -304,8 +304,8 @@ impl GameState {
             }
 
             // Join entities and their components to process physics update
-            for (ent, mut character_opt, mut npc_opt,  mut pos, mut vel, mut coll) in 
-                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(),  &mut pos_res,  &mut vel_res, &mut coll_res).join() {
+            for (ent, mut character_opt, mut npc_opt,  mut pos, mut coll) in 
+                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res).join() {
 
                 let mut facing_right = true;
 
@@ -335,7 +335,7 @@ impl GameState {
                 }
 
                 // Handle Collider entered portal - generic portal behavior
-                if coll.in_portal {
+                if coll.in_portal && coll.since_warp > 0.2 {
                     // get
                     portal_id = coll.portal_id as i32;
                     println!("Collider since warp: {}", &coll.since_warp);
@@ -366,8 +366,8 @@ impl GameState {
                             else if nvx < 0.0 {
                                 facing_right = false;
                             }
-                            vel.x = nvx;
-                            vel.y = nvy;
+                            //vel.x = nvx;
+                            //vel.y = nvy;
 
                             coll.pos.x = *x;
                             coll.pos.y = *y;
@@ -377,7 +377,7 @@ impl GameState {
 
                             // Update Position and Velocity of collider body
                             coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
-                            coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(vel.x, vel.y));
+                            coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(nvx, nvy));
                         }
                         
                     }

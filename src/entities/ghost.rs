@@ -34,13 +34,13 @@ impl GhostBuilder {
         collision.vel.x = vx;
         collision.vel.y = vy;
         collision.enable_warp = true;
-        collision.collision_category = CollisionCategory::Ghost;
+        collision.collision_category = CollisionCategory::Etherial;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         //collision.collision_mask.push(CollisionCategory::Player);
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Portal);
-        collision.collision_mask.push(CollisionCategory::Meow);
+        collision.collision_mask.push(CollisionCategory::Sound);
         collision.create_dynamic_body_circle_fixed(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
@@ -48,7 +48,7 @@ impl GhostBuilder {
         let entity = world.create_entity()
         .with(npc)
         .with(Position { x: x, y: y })
-        .with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
+        //.with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
         .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
         .with(sprite) // SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)

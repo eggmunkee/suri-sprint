@@ -55,11 +55,11 @@ pub enum CollideType {
 
 #[derive(Copy,Clone,Debug,PartialEq)]
 pub enum CollisionCategory {
-    Level = 1,
-    Player = 2,
-    Ghost = 4,
-    Meow = 8,
-    Portal = 16,
+    Level = 1, // Physical level objects
+    Player = 2, // Player collision type
+    Etherial = 4, // ghosts plane of existence
+    Sound = 8, // sound plane
+    Portal = 16, // portal & exit colliders
     Unused = 128,
 }
 
@@ -420,7 +420,7 @@ fn pre_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delt
     for (mut collision, mut character, mut npc, ent) in (&mut phys_writer, (&mut char_writer).maybe(),(&mut npc_writer).maybe(), &entities).join() {
         
         // update collision body from character
-        collision.pre_physics_hook(physics_world, character, npc, level_bounds);
+        collision.pre_physics_hook(physics_world, delta_seconds, character, npc, level_bounds);
 
     }
 }
@@ -432,17 +432,33 @@ pub fn handle_contact(coll_type_1: &CollisionCategory, coll_type_2: &CollisionCa
     }
     match coll_type_1 {
         CollisionCategory::Player => match coll_type_2 {
-            CollisionCategory::Portal => Some(CollideType::Player_Portal),
+            CollisionCategory::Portal => Some(CollideType::Collider_Portal),
             CollisionCategory::Level => Some(CollideType::Player_Level),
             _ => None
         },
-        CollisionCategory::Ghost => match coll_type_2 {
+        CollisionCategory::Etherial => match coll_type_2 {
             CollisionCategory::Portal => Some(CollideType::Collider_Portal),
-            CollisionCategory::Meow => Some(CollideType::Ghost_Meow),
+            CollisionCategory::Sound => Some(CollideType::Ghost_Meow),
             _ => None,
         },
-        CollisionCategory::Meow => match coll_type_2 {
-            CollisionCategory::Ghost => Some(CollideType::Ghost_Meow),
+        CollisionCategory::Level => match coll_type_2 {
+            CollisionCategory::Portal => {
+                //println!("Got level-portal collide");
+                Some(CollideType::Collider_Portal)
+            },
+            _ => None,
+        },
+        CollisionCategory::Portal => match coll_type_2 {
+            CollisionCategory::Player => Some(CollideType::Collider_Portal),
+            CollisionCategory::Etherial => Some(CollideType::Collider_Portal),
+            CollisionCategory::Level => {
+                //println!("Got level-portal collide");
+                Some(CollideType::Collider_Portal)
+            },
+            _ => None,
+        },
+        CollisionCategory::Sound => match coll_type_2 {
+            CollisionCategory::Etherial => Some(CollideType::Ghost_Meow),
             _ => None,
         }
         _ => None
@@ -468,6 +484,8 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
         // get physics body type
         let body_type = body.body_type();
 
+        if body_type == PhysicsBodyType::Static { continue; }
+
         // get body metadata
         let body_data = &*body.user_data();
         // get game collider type
@@ -484,276 +502,366 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
         let mut npc_comp_res = world.write_storage::<NpcComponent>();
 
         // extract body 1 position from collision component
+        let mut existing_portal = -1;
         let mut body_1_pos : na::Point2::<f32> = na::Point2::new(0.0,0.0);
         if let Some(collision) = coll_res.get_mut(entity_1) {
             body_1_pos.x = collision.pos.x;
             body_1_pos.y = collision.pos.y;
+            existing_portal = collision.portal_id;
         }
         
-        // handle character body =====================================================
-        if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
-            //println!("Character 1 {:?}", &entity_1);
+        let mut any_stand_contact = false;
 
-            let mut any_stand_contact = false;
+        for (other_body_handle, contact) in body.contacts() {
 
-            for (other_body_handle, contact) in body.contacts() {
+            if contact.is_touching() == false { continue; }
 
-                if contact.is_touching() == false { continue; }
+            let dot = get_contact_floor_dot(&contact);
 
-                let dot = get_contact_floor_dot(&contact);
+            let other_body = physics_world.body(other_body_handle);
+            let other_body_data = &*other_body.user_data();
+                
+            //let b = other_meta_body.body;
+            //let other_body_data = (21,); //other_meta_body.();
+            //let otherbody = &mut *other_meta_body;
+            let other_id = other_body_data.entity_id;
+            let other_collider_type = other_body_data.collider_type;
 
-                let other_body = physics_world.body(other_body_handle);
-                let other_body_data = &*other_body.user_data();
-                    
-                //let b = other_meta_body.body;
-                //let other_body_data = (21,); //other_meta_body.();
-                //let otherbody = &mut *other_meta_body;
-                let other_id = other_body_data.entity_id;
-                let other_collider_type = other_body_data.collider_type;
+            // Handle entity 
+            let entity_2 = world.entities().entity(other_id);
 
+            let collide_type = handle_contact(&primary_collider_type, &other_collider_type);
 
-                let collide_type = handle_contact(&primary_collider_type, &other_collider_type);
+            // Handle contact collide type info
+            match &collide_type {
+                Some(collide_t) => {
 
-                if let Some(collision) = coll_res.get_mut(entity_1) {
+                    // HANDLE SPECIAL COLLIDE TYPES HERE IF NEEDED
+                    // Handle ghost meow collide
+                    if collide_t == &CollideType::Ghost_Meow {
+                        if primary_collider_type == CollisionCategory::Etherial {
+                            delete_entity_list.push(primary_id);
+                        }
+                        else {
+                            delete_entity_list.push(other_id);
+                        }
+                    }                        
+                    else if collide_t == &CollideType::Collider_Portal {
+                        match primary_collider_type {
+                            CollisionCategory::Etherial | CollisionCategory::Player 
+                            | CollisionCategory::Level => {
+                                //let portal_res = world.read_storage::<PortalComponent>();
+                                if let Some(collision) = coll_res.get_mut(entity_1) {
+                                    if primary_collider_type == CollisionCategory::Level {
+                                        println!("Level collider portal collision update");
+                                    }
+                                    
+                                    //if let Some(portal) = portal_res.get(entity_2) {
+                                    let portal_id = other_id as i32;
+                                    //if let Some(collision) = coll_res.get_mut(entity_1) {
+                                    collision.in_portal = true;
+                                    collision.portal_id = portal_id;
+                                    //}
+                                }
+                            },
+                            _ => {}
+                        }
 
-                    match &collide_type {
-                        Some(collide_t) => {
-                            //println!("PLAYER PORTAL !");
-                            collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
-                        },
-                        // Some(CollideType::Player_Level) => {
-                        //     //println!("... player level contact ...");
-    
-    
-                        // },
-                        // Some(x) => {
-                        //     println!("Player collide type: {:?}", &x);
-                        // },
-                        _ => {}
-                    }
-    
-                }
-
-
-                // let manifold = contact.world_manifold();
-                // let contact_normal = manifold.normal;
-                // let down_normal = b2::Vec2{  x:0.0, y:1.0 };
-                // let dot = self::dot_product(&contact_normal,&down_normal);
-
-                //println!("contact normal: {:?} dot: {}", &contact_normal, &dot);
-
-                //if other_body.body_type() == b2::BodyType::Static ||  other_body.body_type() == b2::BodyType::Dynamic {
-                    //println!("Contact with static body {:?} by {:?}", &other_body, &body_handle); 
-
-                let entity_2 = world.entities().entity(other_id);
-                let mut other_body_pos = na::Point2::new(0.0, 0.0);
-                let mut has_portal = false;
-
-                if let Some(other_coll) = coll_res.get_mut(entity_2) {
-
-                    if other_collider_type == CollisionCategory::Portal {
-                        //println!("Body 1 collider type: {:?} -- Body 2 collider type: {:?}", primary_collider_type, other_collider_type);
-                        //println!("Player hit portal");
-                        //println!("Collision points: {:?} - {:?}", &body_1_pos, &other_coll.pos);
+                        match other_collider_type {
+                            CollisionCategory::Etherial | CollisionCategory::Player
+                            | CollisionCategory::Level => {
+                                // let portal_res = world.read_storage::<PortalComponent>();
                         
-                        other_body_pos.x = other_coll.pos.x;
-                        other_body_pos.y = other_coll.pos.y;
-                        has_portal = true;
-                    }
-                }
+                                if let Some(collision) = coll_res.get_mut(entity_2) {
+                                    if other_collider_type == CollisionCategory::Level {
+                                        println!("Level collider portal collision update");
+                                    }
+                                    // if let Some(portal) = portal_res.get(entity_1) {
+                                    let portal_id = primary_id as i32;
+                                    //if let Some(collision) = coll_res.get_mut(entity_2) {
+                                    collision.in_portal = true;
+                                    collision.portal_id = portal_id;
+                                    //}
+                                }
+                            },
+                            _ => {}
+                        }
 
-                let mut exit_res = world.read_storage::<ExitComponent>();
-                let mut portal_res = world.read_storage::<PortalComponent>();
-                let mut exit_id = -1;
-                let mut portal_id = -1;
+                        // if primary_collider_type == CollisionCategory::Etherial 
+                        //     || primary_collider_type == CollisionCategory::Level {
+
+                        //     let mut portal_res = world.read_storage::<PortalComponent>();
+                        //     let mut portal_id = -1;
+                    
+                        //     if let Some(portal) = portal_res.get(entity_2) {
+                        //         portal_id = other_id as i32;
+                        //         //if let Some(collision) = coll_res.get_mut(entity_1) {
+                        //         collision.in_portal = true;
+                        //         collision.portal_id = portal_id;
+                        //         //}
+                        //     }
+
+                            
+                        // }
+                        // else if other_collider_type == CollisionCategory::Etherial 
+                        // || other_collider_type == CollisionCategory::Level  {
+
+                        //     let mut portal_res = world.read_storage::<PortalComponent>();
+                        //     let mut portal_id = -1;
+                    
+                        //     if let Some(portal) = portal_res.get(entity_1) {
+                        //         portal_id = other_id as i32;
+                        //         //if let Some(collision) = coll_res.get_mut(entity_2) {
+                        //         collision.in_portal = true;
+                        //         collision.portal_id = portal_id;
+                        //         //}
+                        //     }
+
+                            
+                        // }
+                    }
+
+                    // Add generic body contact to collider
+                    if let Some(collision) = coll_res.get_mut(entity_1) {
+                        collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
+                    }
         
 
+                    //println!("PLAYER PORTAL !");
+                },
+                // Some(CollideType::Player_Level) => {
+                //     //println!("... player level contact ...");
+
+
+                // },
+                // Some(x) => {
+                //     println!("Player collide type: {:?}", &x);
+                // },
+                _ => {}
+            }
+
+            //}
+
+
+            //let mut other_body_pos = na::Point2::new(0.0, 0.0);
+            //let mut has_portal = false;
+
+            // // Get Other item collision component
+            // if let Some(other_coll) = coll_res.get_mut(entity_2) {
+
+            //     if other_collider_type == CollisionCategory::Portal {
+            //         //println!("Body 1 collider type: {:?} -- Body 2 collider type: {:?}", primary_collider_type, other_collider_type);
+            //         //println!("Player hit portal");
+            //         //println!("Collision points: {:?} - {:?}", &body_1_pos, &other_coll.pos);
+                    
+            //         other_body_pos.x = other_coll.pos.x;
+            //         other_body_pos.y = other_coll.pos.y;
+            //         has_portal = true;
+            //     }
+            // }
+
+            let mut exit_res = world.read_storage::<ExitComponent>();
+            let mut portal_res = world.read_storage::<PortalComponent>();
+            let mut exit_id = -1;
+            let mut portal_id = -1;
+    
+            // handle character exit =====================================================
+            if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
+                //println!("Character 1 {:?}", &entity_1);
                 if let Some(exit) = exit_res.get(entity_2) {
                     exit_id = other_id as i32;
                     character.in_exit = true;
                     character.exit_id = exit_id;
                 }
-                if let Some(portal) = portal_res.get(entity_2) {
-                    println!("Chararcter touched portal: {}", &other_id);
-                    portal_id = other_id as i32;
-                    character.in_portal = true;
-                    character.portal_id = portal_id;
 
-                    if let Some(collider) = coll_res.get_mut(entity_1) {
-                        println!("Chararcter collider get_mut...");
-                        collider.in_portal = true;
-                        collider.portal_id = portal_id;
-                    }
-                }
-
-
-                // if primary_collider_type == CollisionCategory::Meow && other_collider_type == CollisionCategory::Ghost {
-                //     delete_entity_list.push(other_id);
-                // }
-
-                //println!("Character {:?} {:?} - Body 2 {:?} ", &entity_1, &character, &entity_2);
-
-                if dot > 0.2 && !character.going_up  {
-                    //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
-                    any_stand_contact = true;
-                }
-                    
-                //}
             }
+            // handle portal contact
+            // if let Some(portal) = portal_res.get(entity_2) {
+            //     println!("Collider touched portal: {}", &other_id);
+            //     portal_id = other_id as i32;
+            //     //character.in_portal = true;
+            //     //character.portal_id = portal_id;
 
-            //println!("Update character body status.");
-            //character.update_body_status(any_stand_contact);
+            //     if let Some(collider) = coll_res.get_mut(entity_1) {
+            //         println!("Collider collider get_mut...");
+            //         collider.in_portal = true;
+            //         collider.portal_id = portal_id;
+            //     }
+            // }
+
+
+            // if primary_collider_type == CollisionCategory::Sound && other_collider_type == CollisionCategory::Etherial {
+            //     delete_entity_list.push(other_id);
+            // }
+
+            //println!("Character {:?} {:?} - Body 2 {:?} ", &entity_1, &character, &entity_2);
+
+            if dot > 0.2 {
+                //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
+                any_stand_contact = true;
+            }
+                
+            //}
+        }
+
+        //println!("Update character body status.");
+        //character.update_body_status(any_stand_contact);
+        if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
             character.set_standing(any_stand_contact);
-
-
         }
-        // Handle Non-Character Bodies ===========================================================================
-        else {
-
-            let mut any_stand_contact = false;
-
-            if body_type == b2::BodyType::Static ||  body_type == b2::BodyType::Dynamic
-                || body_type == b2::BodyType::Kinematic {
+        else if let Some(npc) = npc_comp_res.get_mut(entity_1) {
+            npc.set_standing(any_stand_contact);
+        }
 
 
-                for (other_body_handle, contact) in body.contacts() {
-                    // Skip non-touching contacts
-                    if contact.is_touching() == false { continue; }
+        // }
+        // // Handle Non-Character Bodies ===========================================================================
+        // else {
 
-                    let dot = get_contact_floor_dot(&contact);
+            // let mut any_stand_contact = false;
 
-                    // Get body data for collider type
-                    let other_body = physics_world.body(other_body_handle);
-                    let other_body_data = &*other_body.user_data();
-                    let other_collider_type = other_body_data.collider_type;
-                    // Get contact type
-                    let collide_type = handle_contact(&primary_collider_type, &other_collider_type);
+            // if body_type == b2::BodyType::Static ||  body_type == b2::BodyType::Dynamic
+            //     || body_type == b2::BodyType::Kinematic {
 
-                    // Get other entity id and world entity
-                    let other_id = other_body_data.entity_id;
-                    let entity_2 = world.entities().entity(other_id);
 
-                    if let Some(collision) = coll_res.get_mut(entity_1) {
+            //     for (other_body_handle, contact) in body.contacts() {
+            //         // Skip non-touching contacts
+            //         if contact.is_touching() == false { continue; }
 
-                        match &collide_type {
-                            Some(collide_t) => {
-                                // HANDLE SPECIAL COLLIDE TYPES HERE IF NEEDED
-                                // Handle ghost meow collide
-                                if collide_t == &CollideType::Ghost_Meow {
-                                    if primary_collider_type == CollisionCategory::Ghost {
-                                        delete_entity_list.push(primary_id);
-                                    }
-                                    else {
-                                        delete_entity_list.push(other_id);
-                                    }
-                                }
-                                else if collide_t == &CollideType::Collider_Portal {
-                                    if primary_collider_type == CollisionCategory::Ghost {
+            //         let dot = get_contact_floor_dot(&contact);
 
-                                        let mut portal_res = world.read_storage::<PortalComponent>();
-                                        let mut portal_id = -1;
+            //         // Get body data for collider type
+            //         let other_body = physics_world.body(other_body_handle);
+            //         let other_body_data = &*other_body.user_data();
+            //         let other_collider_type = other_body_data.collider_type;
+            //         // Get contact type
+            //         let collide_type = handle_contact(&primary_collider_type, &other_collider_type);
+
+            //         // Get other entity id and world entity
+            //         let other_id = other_body_data.entity_id;
+            //         let entity_2 = world.entities().entity(other_id);
+
+            //         if let Some(collision) = coll_res.get_mut(entity_1) {
+
+            //             match &collide_type {
+            //                 Some(collide_t) => {
+            //                     // HANDLE SPECIAL COLLIDE TYPES HERE IF NEEDED
+            //                     // Handle ghost meow collide
+            //                     if collide_t == &CollideType::Ghost_Meow {
+            //                         if primary_collider_type == CollisionCategory::Etherial {
+            //                             delete_entity_list.push(primary_id);
+            //                         }
+            //                         else {
+            //                             delete_entity_list.push(other_id);
+            //                         }
+            //                     }
+            //                     else if collide_t == &CollideType::Collider_Portal {
+            //                         if primary_collider_type == CollisionCategory::Etherial {
+
+            //                             let mut portal_res = world.read_storage::<PortalComponent>();
+            //                             let mut portal_id = -1;
                                 
-                                        if let Some(portal) = portal_res.get(entity_2) {
-                                            portal_id = other_id as i32;
-                                            //if let Some(collision) = coll_res.get_mut(entity_1) {
-                                            collision.in_portal = true;
-                                            collision.portal_id = portal_id;
-                                            //}
-                                        }
+            //                             if let Some(portal) = portal_res.get(entity_2) {
+            //                                 portal_id = other_id as i32;
+            //                                 //if let Some(collision) = coll_res.get_mut(entity_1) {
+            //                                 collision.in_portal = true;
+            //                                 collision.portal_id = portal_id;
+            //                                 //}
+            //                             }
         
                                         
-                                    }
-                                    else if other_collider_type == CollisionCategory::Ghost {
+            //                         }
+            //                         else if other_collider_type == CollisionCategory::Etherial {
         
-                                        let mut portal_res = world.read_storage::<PortalComponent>();
-                                        let mut portal_id = -1;
+            //                             let mut portal_res = world.read_storage::<PortalComponent>();
+            //                             let mut portal_id = -1;
                                 
-                                        if let Some(portal) = portal_res.get(entity_1) {
-                                            portal_id = other_id as i32;
-                                            //if let Some(collision) = coll_res.get_mut(entity_2) {
-                                            collision.in_portal = true;
-                                            collision.portal_id = portal_id;
-                                            //}
-                                        }
+            //                             if let Some(portal) = portal_res.get(entity_1) {
+            //                                 portal_id = other_id as i32;
+            //                                 //if let Some(collision) = coll_res.get_mut(entity_2) {
+            //                                 collision.in_portal = true;
+            //                                 collision.portal_id = portal_id;
+            //                                 //}
+            //                             }
         
                                         
-                                    }
-                                }
-                                // push all body contacts to collision component
-                                collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
-                            },
-                            _ => {}
-                        }
+            //                         }
+            //                     }
+            //                     // push all body contacts to collision component
+            //                     collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
+            //                 },
+            //                 _ => {}
+            //             }
         
-                    }
+            //         }
 
-                    if dot > 0.2 {
-                        //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
-                        any_stand_contact = true;
-                    }
+            //         if dot > 0.2 {
+            //             //println!("Character {:?} stood on Body 2 {:?}, contact normal: {:?}", &entity_1, &entity_2, &contact_normal);
+            //             any_stand_contact = true;
+            //         }
 
-                    // match &collide_type {
-                    //     Some(CollideType::Ghost_Meow) => {
-                    //         if primary_collider_type == CollisionCategory::Ghost {
-                    //             delete_entity_list.push(primary_id);
-                    //         }
-                    //         else {
-                    //             delete_entity_list.push(other_id);
-                    //         }
-                    //         println!("GHOST MEOW !");
-                    //     },
-                    //     Some(CollideType::Collider_Portal) => {
-                    //         println!("GHOST PORTAL !");
+            //         // match &collide_type {
+            //         //     Some(CollideType::Ghost_Meow) => {
+            //         //         if primary_collider_type == CollisionCategory::Etherial {
+            //         //             delete_entity_list.push(primary_id);
+            //         //         }
+            //         //         else {
+            //         //             delete_entity_list.push(other_id);
+            //         //         }
+            //         //         println!("GHOST MEOW !");
+            //         //     },
+            //         //     Some(CollideType::Collider_Portal) => {
+            //         //         println!("GHOST PORTAL !");
 
-                    //         if primary_collider_type == CollisionCategory::Ghost {
+            //         //         if primary_collider_type == CollisionCategory::Etherial {
 
-                    //             let mut portal_res = world.read_storage::<PortalComponent>();
-                    //             let mut portal_id = -1;
+            //         //             let mut portal_res = world.read_storage::<PortalComponent>();
+            //         //             let mut portal_id = -1;
                         
-                    //             if let Some(portal) = portal_res.get(entity_2) {
-                    //                 portal_id = other_id as i32;
-                    //                 if let Some(collision) = coll_res.get_mut(entity_1) {
-                    //                     collision.in_portal = true;
-                    //                     collision.portal_id = portal_id;
-                    //                 }
-                    //             }
+            //         //             if let Some(portal) = portal_res.get(entity_2) {
+            //         //                 portal_id = other_id as i32;
+            //         //                 if let Some(collision) = coll_res.get_mut(entity_1) {
+            //         //                     collision.in_portal = true;
+            //         //                     collision.portal_id = portal_id;
+            //         //                 }
+            //         //             }
 
                                 
-                    //         }
-                    //         else if other_collider_type == CollisionCategory::Ghost {
+            //         //         }
+            //         //         else if other_collider_type == CollisionCategory::Etherial {
 
-                    //             let mut portal_res = world.read_storage::<PortalComponent>();
-                    //             let mut portal_id = -1;
+            //         //             let mut portal_res = world.read_storage::<PortalComponent>();
+            //         //             let mut portal_id = -1;
                         
-                    //             if let Some(portal) = portal_res.get(entity_1) {
-                    //                 portal_id = other_id as i32;
-                    //                 if let Some(collision) = coll_res.get_mut(entity_2) {
-                    //                     collision.in_portal = true;
-                    //                     collision.portal_id = portal_id;
-                    //                 }
-                    //             }
+            //         //             if let Some(portal) = portal_res.get(entity_1) {
+            //         //                 portal_id = other_id as i32;
+            //         //                 if let Some(collision) = coll_res.get_mut(entity_2) {
+            //         //                     collision.in_portal = true;
+            //         //                     collision.portal_id = portal_id;
+            //         //                 }
+            //         //             }
 
                                 
-                    //         }
+            //         //         }
 
-                    //     },
-                    //     Some(CollideType::Other) => {
-                    //         collision.body_contacts.push((other_id as i32, collide_t.clone()));    
-                    //     },
-                    //     _ => {}
-                    // }
-                }
+            //         //     },
+            //         //     Some(CollideType::Other) => {
+            //         //         collision.body_contacts.push((other_id as i32, collide_t.clone()));    
+            //         //     },
+            //         //     _ => {}
+            //         // }
+            //     }
 
-            }
+            // }
 
-            if let Some(npc) = npc_comp_res.get_mut(entity_1) {
-                if !npc.going_up {
-                    npc.set_standing(any_stand_contact);
-                }
+            // if let Some(npc) = npc_comp_res.get_mut(entity_1) {
+            //     if !npc.going_up {
+            //         npc.set_standing(any_stand_contact);
+            //     }
 
-            }
+            // }
 
-        }
+        //}
     }
 
     // Delete any entities on the list

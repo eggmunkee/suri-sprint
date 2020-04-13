@@ -37,9 +37,9 @@ impl InputSystem {
     //     }
     // }
 
-    fn handle_npc_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &mut NpcComponent, Entity), input: &InputResource,
+    fn handle_npc_input<'a>(&mut self, v: &mut (&mut Collision, &mut NpcComponent, Entity), input: &InputResource,
         ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
-        let (vel, coll, display, _e) = v;
+        let (coll, display, _e) = v;
 
         let body_movement = coll.get_movement();
 
@@ -48,9 +48,9 @@ impl InputSystem {
     }
 
     // handle input updates from an entity
-    fn handle_player_input<'a>(&mut self, v: &mut (&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
+    fn handle_player_input<'a>(&mut self, v: &mut (&mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
         ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
-        let (vel, coll, display, _e) = v;
+        let (coll, display, _e) = v;
 
         let body_movement = coll.get_movement();
 
@@ -128,8 +128,7 @@ impl InputSystem {
 
 
 impl<'a> System<'a> for InputSystem {
-    type SystemData = (WriteStorage<'a, Velocity>,
-                        WriteStorage<'a, Collision>,
+    type SystemData = (WriteStorage<'a, Collision>,
                         WriteStorage<'a, CharacterDisplayComponent>,
                         WriteStorage<'a, NpcComponent>,
                         Read<'a, GameStateResource>,
@@ -137,12 +136,12 @@ impl<'a> System<'a> for InputSystem {
                         Entities<'a>,
                         Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (mut vel, mut coll, mut char_display, mut npc, game_state, mut input, mut ent, lazy): Self::SystemData) {
+    fn run(&mut self, (mut coll, mut char_display, mut npc, game_state, mut input, mut ent, lazy): Self::SystemData) {
 
         let time_delta = game_state.delta_seconds;
 
         // tests collecting storage into vector
-        let mut list = (&mut vel, &mut coll, &mut char_display, &ent).join().collect::<Vec<_>>();
+        let mut list = (&mut coll, &mut char_display, &ent).join().collect::<Vec<_>>();
 
         if list.len() > 1 {
             println!("More than one player!");
@@ -162,7 +161,7 @@ impl<'a> System<'a> for InputSystem {
         drop(list);
 
         // call npc input step
-        let mut list = (&mut vel, &mut coll, &mut npc, &ent).join().collect::<Vec<_>>();
+        let mut list = (&mut coll, &mut npc, &ent).join().collect::<Vec<_>>();
         for inn_v in list.iter_mut() { 
             //let (vel, coll, _display, _e) = inn_v;      
             self.handle_npc_input(inn_v, &*input, &ent, &lazy, time_delta);

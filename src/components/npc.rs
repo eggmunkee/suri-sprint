@@ -60,6 +60,8 @@ impl NpcComponent {
     pub fn update(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
         let mut rng = rand::thread_rng();
 
+        self.since_stand += time_delta;
+
         //if body_movement.x < 1.0 && body_movement.x > -1.0 {
             self.dec_timer += time_delta;
             if self.dec_timer > 0.25 {
@@ -70,7 +72,7 @@ impl NpcComponent {
                 else if dec < 0.3 {
                     self.going_right = true;
                 }
-                else if dec < 0.4 {
+                else if dec < 0.4 && (!self.in_jump && !self.in_fall) {
                     self.going_up = true;
                     let dec2 = rng.gen::<f32>();
                     if dec2 < 0.3 {
@@ -153,11 +155,13 @@ impl super::CharLevelInteractor for NpcComponent {
     fn set_standing(&mut self, is_standing: bool) {
         match is_standing {
             true => {
+                //println!("Npc set is standing");
                 if self.in_jump || self.in_fall {
                     self.start_walk();
                 }
             },
             false => {
+                //println!("Npc set is not standing");
                 if !self.in_jump && !self.in_fall {
                     self.start_fall();
                 }

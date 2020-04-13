@@ -37,6 +37,7 @@ pub struct Collision {
     pub in_portal: bool,
     pub exit_id: i32,
     pub portal_id: i32,
+    pub last_portal_id: i32,
     pub since_warp: f32,
     // collision status
     // body contacts list  (entity_id, collide_type)
@@ -61,11 +62,12 @@ impl Collision {
             vel: Vector2::new(0.0,0.0),
             angle: 0.0,
             collision_category: CollisionCategory::Level,
-            collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
+            collision_mask: vec![CollisionCategory::Level,CollisionCategory::Etherial],
             in_exit: false,
             in_portal: false,
             exit_id: -1,
             portal_id: -1,
+            last_portal_id: -1,
             since_warp: 0.2,
             enable_warp: false,            
             body_contacts: vec![],
@@ -86,11 +88,12 @@ impl Collision {
             vel: Vector2::new(0.0,0.0),
             angle: 0.0,
             collision_category: CollisionCategory::Level,
-            collision_mask: vec![CollisionCategory::Level,CollisionCategory::Ghost],
+            collision_mask: vec![CollisionCategory::Level,CollisionCategory::Etherial],
             in_exit: false,
             in_portal: false,
             exit_id: -1,
             portal_id: -1,
+            last_portal_id: -1,
             since_warp: 0.2,
             enable_warp: false,
             body_contacts: vec![],
@@ -122,6 +125,15 @@ impl Collision {
     pub fn get_movement(&self) -> Vector2::<f32> {
         Vector2::new(self.vel.x, self.vel.y)
     }
+
+    pub fn clear_pre_physics_state(&mut self) {
+        self.last_portal_id = self.portal_id;
+        self.in_portal = false;
+        self.in_exit = false;
+        self.exit_id = -1;
+        self.portal_id = -1;
+    }
+
 
 
     // Create the physics body as a static body
@@ -196,7 +208,16 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
-    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld,
+    pub fn can_use_portal(&self) -> bool {
+        if self.since_warp < 0.5 {
+            false
+        }
+        else {
+            true
+        }
+    }
+
+    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, time_delta: f32, 
         opt_character: Option<&mut CharacterDisplayComponent>,
         opt_npc: Option<&mut NpcComponent>,
         level_bounds: &LevelBounds) {
@@ -205,13 +226,12 @@ impl Collision {
 
         self.body_contacts.clear();
 
+        self.since_warp += time_delta;
+
         if let Some(body_handle) = self.body_handle {
             let mut body = physics_world.body_mut(body_handle);
 
-            self.in_portal = false;
-            self.in_exit = false;
-            self.exit_id = -1;
-            self.portal_id = -1;
+            self.clear_pre_physics_state();
 
             if let Some(character) = opt_character {
                 // have character handle applying inputs to collision body
@@ -308,6 +328,8 @@ impl Collision {
             self.vel.y = curr_vel.y;
 
             self.angle = body.angle();
+
+            //if self.in_portal && self.last_portal_id == self.portal_id 
     
             for (entity_id, collide_type) in &self.body_contacts {
                 //println!("Body contact: {} {:?}", &entity_id, &collide_type);

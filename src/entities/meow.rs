@@ -45,9 +45,9 @@ impl MeowBuilder {
         collision.vel.x = vx;
         collision.vel.y = vy;
         collision.is_sensor = true;
-        collision.collision_category = CollisionCategory::Meow;
+        collision.collision_category = CollisionCategory::Sound;
         collision.collision_mask.clear();
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Etherial);
         collision.create_kinematic_body_circle(physics_world);
 
         let body_handle_clone = collision.body_handle.clone();
@@ -80,9 +80,9 @@ impl MeowBuilder {
     //     // collision.dim_2 = height;
     //     collision.pos.x = x;
     //     collision.pos.y = y;
-    //     collision.collision_category = CollisionCategory::Meow;
+    //     collision.collision_category = CollisionCategory::Sound;
     //     collision.collision_mask.clear();
-    //     collision.collision_mask.push(CollisionCategory::Ghost);
+    //     collision.collision_mask.push(CollisionCategory::Etherial);
 
     //     collision.create_dynamic_body_circle(physics_world);
 

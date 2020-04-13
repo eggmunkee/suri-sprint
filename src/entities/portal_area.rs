@@ -37,7 +37,7 @@ impl PortalBuilder {
         collision.collision_category = CollisionCategory::Portal;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
-        collision.collision_mask.push(CollisionCategory::Ghost);
+        collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Player);
         //collision.create_kinematic_body_circle(physics_world, true);
         collision.create_static_body_circle(physics_world);
