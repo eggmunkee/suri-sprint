@@ -11,7 +11,7 @@ LevelConfig(
 
         Portal ( x: 1000.0, y: -50.0, w: 40.0, h: 40.0, name: "portal_fun", destination: "portal_b"),
 
-        //Portal ( x: 700.0, y: 800.0, w: 50.0, h: 50.0, name: "portal_c", destination: ""),
+        Portal ( x: 700.0, y: 800.0, w: 50.0, h: 50.0, name: "portal_c", destination: "portal_b"),
         //Portal ( x: 1800.0, y: 300.0, w: 50.0, h: 50.0, name: "portal_d", destination: "exit_portal"),
 
         Portal ( x: 350.0, y: 800.0, w: 50.0, h: 50.0, name: "portal_a", destination: "portal_b"),
@@ -33,7 +33,7 @@ LevelConfig(
 
         DynPlatform ( x: 1450.0, y: 320.0, w: 120.0, h: 15.0, ang: 0.0),
 
-        Portal ( x: 1600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
+        Portal ( x: 1600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: "portal_c"),
 
         Platform ( x: 1650.0, y: 950.0, w: 150.0, h: 20.0, ang: -0.2),
         Platform ( x: 1755.0, y: 950.0, w: 150.0, h: 20.0, ang: 0.07),
