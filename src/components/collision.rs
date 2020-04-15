@@ -140,16 +140,16 @@ impl Collision {
     pub fn create_static_body_box(&mut self, physics_world: &mut PhysicsWorld) {
         
         let body_handle = physics::add_static_body_box(physics_world, &Point2::<f32>::new(self.pos.x,self.pos.y), self.angle,
-            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, self.is_sensor);
+            self.dim_1, self.dim_2, self.density, self.restitution, self.collision_category, &self.collision_mask, self.is_sensor, true);
 
         self.body_handle = Some(body_handle);
     }
 
     // Create the physics body as a static body
-    pub fn create_static_body_circle(&mut self, physics_world: &mut PhysicsWorld) {
+    pub fn create_static_body_circle(&mut self, physics_world: &mut PhysicsWorld, fixed_rot: bool) {
         
         let body_handle = physics::add_static_body_circle(physics_world, &self.pos, 
-            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, self.is_sensor);
+            self.dim_1, self.density, self.restitution, self.collision_category, &self.collision_mask, self.is_sensor, fixed_rot);
 
         self.body_handle = Some(body_handle);
     }
@@ -289,6 +289,29 @@ impl Collision {
     
         }
 
+    }
+
+    pub fn get_body_angle(&mut self, physics_world: &mut PhysicsWorld) -> f32 {
+        if let Some(body_handle) = self.body_handle {
+            let mut body = physics_world.body_mut(body_handle);
+
+            let curr_ang = body.angle();
+            curr_ang
+        }
+        else {
+            self.angle
+        }
+    }
+
+    pub fn update_body_angle(&mut self, physics_world: &mut PhysicsWorld, angle: f32) {
+        if let Some(body_handle) = self.body_handle {
+            let mut body = physics_world.body_mut(body_handle);
+
+            let curr_pos = body.position().clone();
+
+            let curr_ang = body.angle();
+            body.set_transform(&curr_pos, curr_ang);
+        }
     }
 
     pub fn update_body_transform(&mut self, physics_world: &mut PhysicsWorld, position: &Point2::<f32>) {

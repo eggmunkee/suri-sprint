@@ -33,6 +33,7 @@ use crate::entities::level_builder::{LevelConfig,LevelBounds};
 use crate::entities::ghost::{GhostBuilder};
 use crate::entities::meow::{MeowBuilder};
 use crate::entities::platform::{PlatformBuilder};
+use crate::entities::empty_box::{BoxBuilder};
 use crate::physics;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
 use crate::render;
@@ -272,8 +273,22 @@ impl GameState {
                     entities.delete(ent);
                 }
             }
-
         }
+
+        // Portal "system"
+        {
+            // Operator on meows, collisions and sprite components
+            let mut portal_writer = world.write_storage::<PortalComponent>();
+            let mut collision_writer = world.write_storage::<Collision>();
+            let mut sprite_writer = world.write_storage::<SpriteComponent>();
+            let entities = world.entities();                
+
+            for (portal, coll, sprite, _ent) in (&mut portal_writer, &mut collision_writer, &mut sprite_writer, &entities).join() {
+                // update meow components
+                portal.update(time_delta, coll, sprite, &mut self.phys_world);
+            }
+        }
+
     }
 
 
@@ -338,13 +353,13 @@ impl GameState {
                 if coll.in_portal && coll.since_warp > 0.2 {
                     // get
                     portal_id = coll.portal_id as i32;
-                    println!("Collider since warp: {}", &coll.since_warp);
+                    //println!("Collider since warp: {}", &coll.since_warp);
 
                     //exit_id = character.exit_id as i32;
 
                     //let exit_res = world
 
-                    println!("Collider exiting..., {}", &portal_id);
+                    //println!("Collider exiting..., {}", &portal_id);
                     
                     let portal_ent = self.world.entities().entity(portal_id as u32);
                     let portal_res = self.world.read_storage::<PortalComponent>();
@@ -354,7 +369,7 @@ impl GameState {
 
                         if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
 
-                            println!("Portal at {}, {}", &x, &y);
+                            //println!("Portal at {}, {}", &x, &y);
                             pos.x = *x;
                             pos.y = *y;
                             let nvx = -coll.vel.x * 1.0;
@@ -631,6 +646,11 @@ impl event::EventHandler for GameState {
                 let h = 10.0 + 0.00025 * test as f32;
                 crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
                     w, h, 0.0, SpriteLayer::Entities.to_z());
+            }
+            else if test % 4 == 0 {
+                let w = 10.0 + 0.001 * test as f32;
+                crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+                    w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
             }
             else {
                 crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,

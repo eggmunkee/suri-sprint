@@ -88,12 +88,12 @@ pub trait CharLevelInteractor {
 }
 
 pub trait RenderTrait {    
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>);
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32);
 }
 
 
 impl RenderTrait for &dyn RenderTrait {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
 
     }
 }

@@ -17,16 +17,16 @@ pub struct PortalBuilder;
 
 impl PortalBuilder {
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32, name: String, destination: String) -> Entity {
+        width: f32, name: String, destination: String) -> Entity {
 
         let portal = PortalComponent::new(name, destination);
 
-        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/meow".to_string());
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/portal".to_string());
         sprite.scale.x = width / 24.0;
-        sprite.scale.y = height / 24.0;
+        sprite.scale.y = width / 24.0;
         sprite.z_order = SpriteLayer::PlayerBehind.to_z();
 
-        let mut collision = Collision::new_specs(0.1,0.72, width * 0.5, height * 0.5);
+        let mut collision = Collision::new_specs(0.1,0.72, width * 0.5, width * 0.5);
         // collision.dim_1 = width;
         // collision.dim_2 = height;
         collision.pos.x = x;
@@ -40,7 +40,7 @@ impl PortalBuilder {
         collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Player);
         //collision.create_kinematic_body_circle(physics_world, true);
-        collision.create_static_body_circle(physics_world);
+        collision.create_static_body_circle(physics_world, false);
 
         let body_handle_clone = collision.body_handle.clone();
 

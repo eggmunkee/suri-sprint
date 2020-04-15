@@ -40,7 +40,7 @@ impl ExitBuilder {
         collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Player);
         //collision.create_kinematic_body_circle(physics_world);
-        collision.create_static_body_circle(physics_world);
+        collision.create_static_body_circle(physics_world, true);
 
         let body_handle_clone = collision.body_handle.clone();
 

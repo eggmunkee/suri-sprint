@@ -9,6 +9,7 @@ use crate::conf::*;
 use crate::components::sprite::*;
 use crate::components::{Position};
 use crate::entities::platform::{PlatformBuilder};
+use crate::entities::empty_box::{BoxBuilder};
 use crate::entities::portal_area::{PortalBuilder};
 use crate::entities::exit::{ExitBuilder};
 use crate::entities::suri::{SuriBuilder};
@@ -59,6 +60,12 @@ pub enum LevelItem {
     DynPlatform {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
     },
+    EmptyBox {
+        x: f32, y: f32, w: f32, h: f32, ang: f32,
+    },
+    DynEmptyBox {
+        x: f32, y: f32, w: f32, h: f32, ang: f32,
+    },
     Ghost {
         x: f32, y: f32,
     },
@@ -66,7 +73,7 @@ pub enum LevelItem {
         x: f32, y: f32, sprite: String, angle: f32,
     },
     Portal {
-        x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
+        x: f32, y: f32, w: f32, name: String, destination: String,
     },
     Exit {
         x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
@@ -117,6 +124,12 @@ impl LevelConfig {
                 LevelItem::DynPlatform{ x, y, w, h, ang} => {
                     PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
                 },
+                LevelItem::EmptyBox{ x, y, w, h, ang} => {
+                    BoxBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang);
+                },
+                LevelItem::DynEmptyBox{ x, y, w, h, ang} => {
+                    BoxBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
+                },
                 LevelItem::Ghost{ x, y } => {
                     GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
@@ -128,8 +141,8 @@ impl LevelConfig {
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
                     //GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
-                LevelItem::Portal { x, y, w, h, name, destination } => {
-                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());
+                LevelItem::Portal { x, y, w, name, destination } => {
+                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string());
                 },
                 LevelItem::Exit { x, y, w, h, name, destination } => {
                     ExitBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());

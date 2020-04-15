@@ -1,5 +1,6 @@
 
 pub mod platform;
+pub mod empty_box;
 pub mod portal_area;
 pub mod exit;
 pub mod ghost;

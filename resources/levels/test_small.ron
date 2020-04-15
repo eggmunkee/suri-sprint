@@ -9,7 +9,7 @@ LevelConfig(
 
         Sprite ( x: 1000.0, y: 1000.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
 
-        Portal ( x: 1000.0, y: 900.0, w: 50.0, h: 50.0, name: "to_top", destination: "over_exit"),
+        Portal ( x: 1000.0, y: 900.0, w: 50.0, name: "to_top", destination: "over_exit"),
         
         Platform ( x: 200.0, y: 500.0, w: 400.0, h: 20.0, ang: 0.0),
         Platform ( x: 1400.0, y: 1500.0, w: 400.0, h: 20.0, ang: 0.0),
@@ -18,7 +18,7 @@ LevelConfig(
 
         Bowl ( x: 500.0, y: 500.0 ),
 
-        Portal ( x: 1900.0, y: -50.0, w: 50.0, h: 50.0, name: "over_exit", destination: ""),
+        Portal ( x: 1900.0, y: -50.0, w: 50.0, name: "over_exit", destination: ""),
 
         Exit ( x: 1950.0, y: 50.0, w: 40.0, h: 40.0, name: "exit", destination: "test_old"),
 

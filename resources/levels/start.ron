@@ -1,18 +1,20 @@
 LevelConfig(
     name: "start",
     bounds: (
-        min_x: 0.0, min_y: 0.0, max_x: 500.0, max_y: 1000.0,
+        min_x: 0.0, min_y: 0.0, max_x: 700.0, max_y: 800.0,
         solid_sides: (false, true, false, true),
     ),
     items: [
         Player ( x: 250.0, y: -200.0 ),
         
-        Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.0, ),
+        Sprite ( x: 500.0, y: 700.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, ),
 
-        Platform ( x: 250.0, y: 999.0, w: 170.0, h: 15.0, ang: 0.0),
+        Platform ( x: 200.0, y: 799.0, w: 100.0, h: 15.0, ang: 0.0),
+        Platform ( x: 655.0, y: 799.0, w: 50.0, h: 15.0, ang: 0.0),
 
+        DynEmptyBox ( x: 100.0, y: 400.0, w: 50.0, h: 50.0, ang: 0.0),
 
-        Exit ( x: 250.0, y: 900.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
+        Exit ( x: 500.0, y: 700.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
 
         Ghost ( x: 200.0, y: 100.0 ),
 

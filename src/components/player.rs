@@ -618,7 +618,7 @@ impl super::CharLevelInteractor for CharacterDisplayComponent {
 
 
 impl super::RenderTrait for CharacterDisplayComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
         //println!("PlayerRenderTrait drawing...");
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;

@@ -12,7 +12,7 @@ use rand::prelude::*;
 
 use crate::resources::{GameStateResource};
 use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
-use crate::components::sprite::{SpriteComponent,SpriteLayer};
+use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::game_state::{GameState,State,GameMode};
 use crate::entities::level_builder::{LevelItem};
@@ -30,7 +30,7 @@ impl Renderer {
 
     pub fn render_frame(&mut self, game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
         
-        let mut render_objects : Vec<(u32,na::Point2<f32>,f32)> = vec![];
+        let mut render_objects : Vec<(u32,na::Point2<f32>,f32,u32)> = vec![];
         //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
 
         let mut char_in_warp = false;
@@ -45,9 +45,10 @@ impl Renderer {
 
             // Get read storage for all display components
             let sprite_disp = game_state.world.read_storage::<SpriteComponent>();
+            let multi_sprite_disp = game_state.world.read_storage::<MultiSpriteComponent>();
             let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
-            for (opt_sprite_disp,opt_char_disp,pos,ent) in 
-                ((&sprite_disp).maybe(), (&char_disp).maybe(),&pos,&entities).join() {
+            for (opt_sprite_disp,opt_char_disp,opt_multi_sprite,pos,ent) in 
+                ((&sprite_disp).maybe(), (&char_disp).maybe(), (&multi_sprite_disp).maybe(),  &pos,&entities).join() {
                 // Check for any of the display components
                 let mut z_order = 1.0;
                 let has_display_comp = match opt_char_disp {
@@ -56,24 +57,47 @@ impl Renderer {
                         self.display_offset.y = -pos.y;
                         z_order = SpriteLayer::Player.to_z();
                         char_in_portal = character.in_exit || character.in_portal;
+
+                        render_objects.push(
+                            (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
+                        );
                         true
                     },
                     _ => match opt_sprite_disp {
                         Some(sprite) => {
                             z_order = sprite.z_order;
+
+                            render_objects.push(
+                                (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
+                            );
                             true
                         },
-                        _ => false
+                        _ => match opt_multi_sprite {
+                            Some(multi_sprite) => {
+                                let mut index : u32 = 0;
+                                for sprite in &multi_sprite.sprites {
+                                    z_order = sprite.z_order;
+    
+                                    render_objects.push(
+                                        (ent.id(),na::Point2::new(pos.x, pos.y), z_order, index)
+                                    );
+                                    index += 1;
+                                }
+
+                                true
+                            },
+                            _ => false
+                        }
                     }
                 };
 
-                // If any display component found, add to render objs list
-                if has_display_comp {
-                    render_objects.push(
-                        (ent.id(),na::Point2::new(pos.x, pos.y), z_order)
-                    )
+                // // If any display component found, add to render objs list
+                // if has_display_comp {
+                //     render_objects.push(
+                //         (ent.id(),na::Point2::new(pos.x, pos.y), z_order)
+                //     )
     
-                }
+                // }
 
             }
 
@@ -97,6 +121,7 @@ impl Renderer {
         // add player render object to end - drawn very last
         //render_objects.push(r0);
 
+        // sort by Z order
         render_objects.sort_by(|a,b| {
             let by = &b.2;
             let ay = &a.2;
@@ -140,13 +165,13 @@ impl Renderer {
         }
 
         // RENDER OBJECT LIST -----------------------------------------------------------------
-        for (ent, pt, _) in render_objects.iter() {
+        for (ent, pt, _, item_index) in render_objects.iter() {
             // Get entity by id
             let entity = game_state.world.entities().entity(ent.clone());
             // If entity is still alive, render it
             if entity.gen().is_alive() {
                 // Call generic renderer, which calls on render component to draw
-                Self::call_renderer(ctx, world, entity, pt);
+                Self::call_renderer(ctx, world, entity, pt, *item_index);
             }
         }
 
@@ -360,7 +385,7 @@ impl Renderer {
         Ok(())
     }
 
-    fn call_renderer(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>) {
+    fn call_renderer(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>, item_index: u32) {
         
         {
             // Try reading CharacterDisplayComponent to render
@@ -368,14 +393,22 @@ impl Renderer {
             let ch_disp_comp_res = ch_disp_comp.get(entity);
             if let Some(res) = ch_disp_comp_res {
                 // Call component render method
-                res.draw(ctx, &world, Some(entity.id()), pt.clone());
+                res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
             }
             else {
                 let sprite_disp_comp = world.read_storage::<SpriteComponent>();
                 let sprite_disp_comp_res = sprite_disp_comp.get(entity);
                 if let Some(res) = sprite_disp_comp_res {
                     // Call component render method
-                    res.draw(ctx, &world, Some(entity.id()), pt.clone());
+                    res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                }
+                else {
+                    let sprite_disp_comp = world.read_storage::<MultiSpriteComponent>();
+                    let sprite_disp_comp_res = sprite_disp_comp.get(entity);
+                    if let Some(res) = sprite_disp_comp_res {
+                        // Call component render method
+                        res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                    }
                 }
             }
         }

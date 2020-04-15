@@ -152,6 +152,27 @@ pub fn update_body_entity_data(entity: &Entity, physics_world: &mut PhysicsWorld
 }
 
 
+pub fn create_body(world: &mut PhysicsWorld, body_type: PhysicsBodyType, pos: &Point2<f32>, angle: f32,
+    collision_category: CollisionCategory, fixed_rot: bool) -> PhysicsBodyHandle {
+
+    let def = b2::BodyDef {
+        body_type: body_type,
+        position: self::create_pos(pos),
+        angle: angle,
+        linear_velocity: b2::Vec2 { x: 0.0, y: 0.0 },
+        linear_damping: 0.8,
+        fixed_rotation: fixed_rot,
+        .. b2::BodyDef::new()
+    };
+
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+
+    // create body - getting handle
+    let b_handle = world.create_body_with(&def, body_data);
+
+    b_handle
+}
+
 pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, 
     body_radius: f32,     
     density: f32, restitution: f32,
@@ -242,18 +263,20 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
     density: f32, restitution: f32,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
         -> b2::BodyHandle {
-    let def = b2::BodyDef {
-        body_type: PhysicsBodyType::Dynamic,
-        position: self::create_pos(pos),
-        linear_damping: 0.8,
-        fixed_rotation: fixed_rot,
-        .. b2::BodyDef::new()
-    };
+    // let def = b2::BodyDef {
+    //     body_type: PhysicsBodyType::Dynamic,
+    //     position: self::create_pos(pos),
+    //     linear_damping: 0.8,
+    //     fixed_rotation: fixed_rot,
+    //     .. b2::BodyDef::new()
+    // };
 
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
     // create body - getting handle
-    let b_handle = world.create_body_with(&def, body_data);
+    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, collision_category, fixed_rot);
+
+    //world.create_body_with(&def, body_data);
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
     
@@ -280,18 +303,20 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
         density: f32, restitution: f32,
         collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool)  
         -> b2::BodyHandle {
-    let def = b2::BodyDef {
-        body_type: PhysicsBodyType::Dynamic,
-        position: self::create_pos(pos),
-        fixed_rotation: fixed_rot,
-        linear_damping: 0.8,
-        .. b2::BodyDef::new()
-    };
+    // let def = b2::BodyDef {
+    //     body_type: PhysicsBodyType::Dynamic,
+    //     position: self::create_pos(pos),
+    //     fixed_rotation: fixed_rot,
+    //     linear_damping: 0.8,
+    //     .. b2::BodyDef::new()
+    // };
     
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
     
+    // // create body - getting handle
+    // let b_handle = world.create_body_with(&def, body_data);
     // create body - getting handle
-    let b_handle = world.create_body_with(&def, body_data);
+    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, collision_category, fixed_rot);
     
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
@@ -318,19 +343,22 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
 
 pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f32, body_width: f32, body_height: f32,
         density: f32, restitution: f32,
-        collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, is_sensor: bool) 
+        collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, is_sensor: bool, fixed_rot: bool) 
         -> b2::BodyHandle {
-    let def = b2::BodyDef {
-        body_type: b2::BodyType::Static,
-        position: self::create_pos(pos),
-        angle: angle,
-        fixed_rotation: true,
-        .. b2::BodyDef::new()
-    };
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    // let def = b2::BodyDef {
+    //     body_type: b2::BodyType::Static,
+    //     position: self::create_pos(pos),
+    //     angle: angle,
+    //     fixed_rotation: true,
+    //     .. b2::BodyDef::new()
+    // };
+    // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
     
+    // // create body - getting handle
+    // let b_handle = world.create_body_with(&def, body_data);
     // create body - getting handle
-    let b_handle = world.create_body_with(&def, body_data);
+    let b_handle = create_body(world, PhysicsBodyType::Static, pos, angle, collision_category, fixed_rot);
+    
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
     
@@ -356,18 +384,19 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f
 
 pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_radius: f32,
     density: f32, restitution: f32,
-    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, is_sensor: bool) 
+    collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, is_sensor: bool, fixed_rot: bool) 
     -> b2::BodyHandle {
-    let mut def = b2::BodyDef {
-        body_type: b2::BodyType::Static,
-        position: self::create_pos(pos),
-        fixed_rotation: true,
-        .. b2::BodyDef::new()
-    };
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    // let mut def = b2::BodyDef {
+    //     body_type: b2::BodyType::Static,
+    //     position: self::create_pos(pos),
+    //     fixed_rotation: true,
+    //     .. b2::BodyDef::new()
+    // };
+    // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
-    // create body - getting handle
-    let b_handle = world.create_body_with(&def, body_data);
+    // // create body - getting handle
+    // let b_handle = world.create_body_with(&def, body_data);
+    let b_handle = create_body(world, PhysicsBodyType::Static, pos, 0.0, collision_category, fixed_rot);
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
 
