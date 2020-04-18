@@ -7,7 +7,7 @@ use wrapped2d::user_data::*;
 
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource};
-use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
+use crate::components::{Position};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::meow::{MeowComponent};
@@ -48,7 +48,7 @@ impl MeowBuilder {
         collision.collision_category = CollisionCategory::Sound;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Etherial);
-        collision.create_kinematic_body_circle(physics_world);
+        collision.create_kinematic_body_circle(physics_world, true);
 
         let body_handle_clone = collision.body_handle.clone();
 

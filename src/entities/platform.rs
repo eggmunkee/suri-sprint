@@ -8,7 +8,7 @@ use wrapped2d::user_data::*;
 use crate::conf::*;
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
+use crate::components::{Position};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
@@ -52,7 +52,7 @@ impl PlatformBuilder {
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
         .build();
@@ -101,7 +101,7 @@ impl PlatformBuilder {
         .with(npc)
         .with(Position { x: x, y: y })
         //.with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false  })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
         .build();

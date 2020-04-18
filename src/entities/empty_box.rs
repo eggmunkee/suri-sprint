@@ -9,7 +9,7 @@ use wrapped2d::b2;
 use crate::conf::*;
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
+use crate::components::{Position};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer,MultiSpriteComponent};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
@@ -44,7 +44,7 @@ impl BoxBuilder {
         sprite.scale.y *= height / 24.0;
         multi_sprite.sprites.push(sprite);
 
-        let mut collision = Collision::new_specs(5.0,0.02, width, height);
+        let mut collision = Collision::new_specs(8.0,0.02, width, height);
         // collision.dim_1 = width;
         // collision.dim_2 = height;
         collision.pos.x = x;
@@ -61,7 +61,7 @@ impl BoxBuilder {
 
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(multi_sprite)
         .with(collision)
         .build();
@@ -112,7 +112,7 @@ impl BoxBuilder {
         collision.collision_mask.push(CollisionCategory::Portal);
         collision.collision_mask.push(CollisionCategory::Etherial);
         
-        collision.body_handle = Some(Self::build_box_body(physics_world, &collision.pos, width, height, 0.25, 0.4,
+        collision.body_handle = Some(Self::build_box_body(physics_world, &collision.pos, angle, width, height, 0.25, 0.4,
             collision.collision_category.clone(),
             &collision.collision_mask, false));
 
@@ -123,7 +123,7 @@ impl BoxBuilder {
         let entity = world.create_entity()
         .with(Position { x: x, y: y })
         //.with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false  })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(multi_sprite)
         .with(collision)
         .build();
@@ -140,7 +140,7 @@ impl BoxBuilder {
     }
 
 
-    pub fn build_box_body(world: &mut PhysicsWorld, pos: &na::Point2<f32>, body_width: f32, body_height: f32,
+    pub fn build_box_body(world: &mut PhysicsWorld, pos: &na::Point2<f32>, angle: f32, body_width: f32, body_height: f32,
         density: f32, restitution: f32,
         collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
             -> b2::BodyHandle {
@@ -155,7 +155,7 @@ impl BoxBuilder {
         // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
         // create body - getting handle
-        let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, collision_category, fixed_rot);
+        let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, angle, EntityType::EmptyBox, collision_category, fixed_rot);
 
         //world.create_body_with(&def, body_data);
         // get mut ref to body
@@ -173,22 +173,22 @@ impl BoxBuilder {
             .. b2::FixtureDef::new()
         };
 
-        let left_side_offset = na::Point2::new(-0.8 * body_width, 0.0);
-        let right_side_offset = na::Point2::new(0.8 * body_width, 0.0);
-        let bottom_offset = na::Point2::new(0.0, 0.9 * body_height);
+        let left_side_offset = na::Point2::new(-0.8 * body_width, -0.1);
+        let right_side_offset = na::Point2::new(0.8 * body_width, -0.1);
+        let bottom_offset = na::Point2::new(0.0, 0.8 * body_height);
 
         // Left Side shape and fixture
-        let left_side_shape = b2::PolygonShape::new_oriented_box(create_size(body_width * 0.15), create_size(body_height),
+        let left_side_shape = b2::PolygonShape::new_oriented_box(create_size(body_width * 0.10), create_size(body_height * 0.9),
             &create_pos(&left_side_offset), 0.0); // offset and angle
         body.create_fixture(&left_side_shape, &mut fixture_def);
 
         // Right Side shape and fixture
-        let right_side_shape = b2::PolygonShape::new_oriented_box(create_size(body_width * 0.15), create_size(body_height),
+        let right_side_shape = b2::PolygonShape::new_oriented_box(create_size(body_width * 0.10), create_size(body_height * 0.9),
             &create_pos(&right_side_offset), 0.0); // offset and angle
         body.create_fixture(&right_side_shape, &mut fixture_def);
 
         // Bottom of box shape and fixture
-        let bottom_shape = b2::PolygonShape::new_oriented_box(create_size(body_width * 0.8), create_size(body_height * 0.15),
+        let bottom_shape = b2::PolygonShape::new_oriented_box(create_size(body_width * 0.9), create_size(body_height * 0.10),
             &create_pos(&bottom_offset), 0.0); // offset and angle
         body.create_fixture(&bottom_shape, &mut fixture_def);
 

@@ -1,7 +1,7 @@
 
 use ggez::{Context};
 use ggez::graphics;
-use ggez::graphics::{Image,Color,DrawParam,WrapMode};
+use ggez::graphics::{Rect,Image,Color,DrawParam,WrapMode};
 use ggez::nalgebra as na;
 use specs::{Component, DenseVecStorage, World, WorldExt};
 //use specs::shred::{Dispatcher};
@@ -44,6 +44,7 @@ pub struct SpriteConfig {
     pub scale: (f32, f32),
     pub z_order: f32,
     pub alpha: f32,
+    pub src: (f32, f32, f32, f32),
 }
 
 impl SpriteConfig {
@@ -86,7 +87,7 @@ pub struct SpriteComponent {
     pub z_order: f32,
     pub alpha: f32,
     pub angle: f32,
-    //pub debug_font: graphics::Font,
+    pub src: Rect,
 }
 
 impl SpriteComponent {
@@ -99,6 +100,7 @@ impl SpriteComponent {
             z_order: z_order,
             alpha: 1.0,
             angle: 0.0,
+            src: Rect::new(0.0, 0.0, 1.0, 1.0),
         }
     }
 }
@@ -133,12 +135,13 @@ impl super::RenderTrait for SpriteComponent {
             let w = texture.width();
             let h = texture.height();
             texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
-            if let Err(_) = ggez::graphics::draw(ctx, texture, (
-                        draw_pos.clone(),
-                        angle, //rotation
-                        na::Point2::new(0.5f32,0.5f32),
-                        self.scale,
-                        Color::new(1.0,1.0,1.0,self.alpha))) { 
+            if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
+                    .src(self.src)
+                    .dest(draw_pos.clone())
+                    .rotation(angle) //rotation
+                    .offset(na::Point2::new(0.5f32,0.5f32))
+                    .scale(self.scale)
+                    .color(Color::new(1.0,1.0,1.0,self.alpha))) { 
                 _draw_ok = false;
                 println!("Failed to render sprite image");
             }
@@ -178,43 +181,44 @@ impl super::RenderTrait for MultiSpriteComponent {
         if item_index >= 0 && (item_index as usize) < self.sprites.len() {
 
             if let Some(sprite) = self.sprites.get(item_index as usize) {
-                // get sprite base angle
-                let mut angle = sprite.angle;
-                // Override angle with collision angle
-                if let Some(ent_id) = ent {
-                    let collision_reader = world.read_storage::<Collision>();
-                    let entity = world.entities().entity(ent_id);
-                    if let Some(coll) = collision_reader.get(entity) {
-                        angle = coll.angle;
-                    }
+                sprite.draw(ctx, world, ent, pos, 0);
+                // // get sprite base angle
+                // let mut angle = sprite.angle;
+                // // Override angle with collision angle
+                // if let Some(ent_id) = ent {
+                //     let collision_reader = world.read_storage::<Collision>();
+                //     let entity = world.entities().entity(ent_id);
+                //     if let Some(coll) = collision_reader.get(entity) {
+                //         angle = coll.angle;
+                //     }
 
-                }
+                // }
 
-                let mut images = world.fetch_mut::<ImageResources>();
-                let texture_ref = images.image_ref(sprite.path.clone());
+                // let mut images = world.fetch_mut::<ImageResources>();
+                // let texture_ref = images.image_ref(sprite.path.clone());
 
-                let mut _draw_ok = true;
-                // get centered draw position based on image dimensions
-                //let draw_pos = na::Point2::<f32>::new(pos.x - (w as f32 / 2.0), pos.y - (h as f32 / 2.0));
-                let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
-                // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-                if let Ok(mut texture) = texture_ref {
-                    let w = texture.width();
-                    let h = texture.height();
-                    texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
-                    if let Err(_) = ggez::graphics::draw(ctx, texture, (
-                                draw_pos.clone(),
-                                angle, //rotation
-                                na::Point2::new(0.5f32,0.5f32),
-                                sprite.scale,
-                                Color::new(1.0,1.0,1.0,sprite.alpha))) { 
-                        _draw_ok = false;
-                        println!("Failed to render sprite image");
-                    }
-                }
-                else {
-                    println!("Couldn't get sprite texture: {}", &sprite.path);
-                }
+                // let mut _draw_ok = true;
+                // // get centered draw position based on image dimensions
+                // //let draw_pos = na::Point2::<f32>::new(pos.x - (w as f32 / 2.0), pos.y - (h as f32 / 2.0));
+                // let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
+                // // color part:  ,Color::new(1.0,0.7,0.7,1.0)
+                // if let Ok(mut texture) = texture_ref {
+                //     let w = texture.width();
+                //     let h = texture.height();
+                //     texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
+                //     if let Err(_) = ggez::graphics::draw(ctx, texture, (
+                //                 draw_pos.clone(),
+                //                 angle, //rotation
+                //                 na::Point2::new(0.5f32,0.5f32),
+                //                 sprite.scale,
+                //                 Color::new(1.0,1.0,1.0,sprite.alpha))) { 
+                //         _draw_ok = false;
+                //         println!("Failed to render sprite image");
+                //     }
+                // }
+                // else {
+                //     println!("Couldn't get sprite texture: {}", &sprite.path);
+                // }
             }
 
             

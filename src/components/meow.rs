@@ -45,7 +45,7 @@ impl MeowComponent {
 
         let new_radius = self.calc_radius();
         let new_physics_radius = physics::create_size(new_radius);
-        println!("Meow radius: {:?}", &new_radius);
+        //println!("Meow radius: {:?}", &new_radius);
 
         sprite.scale.x = new_radius / 20.0;
         sprite.scale.y = new_radius / 20.0;
@@ -57,14 +57,14 @@ impl MeowComponent {
             let mut first_fixture : Option<b2::FixtureHandle> = None;
 
             for (fixture, meta) in body.fixtures() {
-                println!("Meow collision has body handle with a fixture");
+                //println!("Meow collision has body handle with a fixture");
                 first_fixture = Some(fixture);
                 break;
             }
 
             // Operate on the first fixture/shape
             if let Some(fixture_handle) = first_fixture {
-                println!("Meow collision has body handle with a fixture PART 2");
+                //println!("Meow collision has body handle with a fixture PART 2");
                 // Get mutable ref to fixture
                 let mut fixture = body.fixture_mut(fixture_handle);
 
@@ -73,15 +73,15 @@ impl MeowComponent {
                 // if matches circle - update radius of circle
                 match shape {
                     b2::UnknownShape::Circle(ref mut circle) => {
-                        println!("Setting radius of meow circle shape to {}", &new_physics_radius);
+                        //println!("Setting radius of meow circle shape to {}", &new_physics_radius);
                         circle.set_radius(new_physics_radius);
                     },
                     b2::UnknownShape::Polygon(_polygon) => {
                         //circle.set_radius(new_radius);
-                        println!("Meow collision fixture had a polygon");
+                        //println!("Meow collision fixture had a polygon");
                     },
                     _ => {
-                        println!("Meow collision fixture had another shape");
+                        //println!("Meow collision fixture had another shape");
                     }
                 }
             }

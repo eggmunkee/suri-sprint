@@ -9,17 +9,26 @@ LevelConfig(
         
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
 
+        Sprite ( x: 1200.0, y: 400.0, sprite: "entities/tile-bg", z: 10.0, angle: 0.0, ),
+
         //Portal ( x: 600.0, y: 700.0, w: 50.0, name: "portal_b", destination: ""),
+
+        DynEmptyBox ( x: 500.0, y: 900.0, w: 50.0, h: 50.0, ang: 0.0),
+
+        DynEmptyBox ( x: 1500.0, y: 900.0, w: 50.0, h: 50.0, ang: 0.0),
 
         // lower blockers
         Platform ( x: 1.0, y: 825.0, w: 150.0, h: 15.0, ang: -1.57),
         Platform ( x: 1999.0, y: 825.0, w: 150.0, h: 15.0, ang: -1.57),
 
         // lower left-right portals
-        Portal ( x: 930.0, y: 950, w: 30.0, name: "lower_left", destination: "lower_right_out"),
-        Portal ( x: 1070.0, y: 950, w: 30.0, name: "lower_right", destination: "lower_left_out"),
-        Portal ( x: 500.0, y: 600, w: 30.0, name: "lower_left_out", destination: ""),
-        Portal ( x: 1500.0, y: 600, w: 30.0, name: "lower_right_out", destination: ""),
+        Portal ( x: 500.0, y: 450.0, w: 30.0, name: "lower_left", destination: "lower_right_out", enabled: false ),
+        // platform preventing jump from left boundary, and to jump onto lower_left portal
+        Platform ( x: 300.0, y: 250.0, w: 100.0, h: 20.0, ang: 0.0),        
+        Portal ( x: 930.0 , y: 100.0, w: 30.0, name: "top_left_out", destination: "", enabled: true),
+
+        Portal ( x: 1070.0, y: 950, w: 30.0, name: "lower_right", destination: "top_left_out", enabled: true),
+        Portal ( x: 1500.0, y: 600, w: 30.0, name: "lower_right_out", destination: "", enabled: true),
 
         Platform ( x: 1000.0, y: 500.0, w: 400.0, h: 20.0, ang: 0.0),
         Platform ( x: 1000.0, y: 500.0, w: 500.0, h: 20.0, ang: -1.57),

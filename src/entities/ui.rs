@@ -3,7 +3,7 @@
 use ggez::{Context};
 use specs::{Builder,Entity,World,WorldExt};
 
-use crate::components::{Position, Velocity, DisplayComp, DisplayCompType};
+use crate::components::{Position};
 //use crate::components::ball::*;
 use crate::components::sprite::*;
 use crate::components::collision::{Collision};
@@ -38,21 +38,21 @@ impl UIBuilder {
 
         world.create_entity()
         .with(Position { x: 50.0, y: 50.0 })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(SpriteComponent::new(ctx, &"/icon.png".to_string(), 1000.0))
         //.with(Collision::new_circle(20.0))
         .build();
 
         world.create_entity()
         .with(Position { x: 100.0, y: 50.0 })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(SpriteComponent::new(ctx, &"/icon.png".to_string(), 1000.0))
         //.with(Collision::new_circle(20.0))
         .build();
 
         world.create_entity()
         .with(Position { x: 150.0, y: 50.0 })
-        .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
+        //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(SpriteComponent::new(ctx, &"/icon.png".to_string(), 1000.0))
         //.with(Collision::new_circle(20.0))
         .build();

@@ -7,7 +7,7 @@ use wrapped2d::user_data::*;
 
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource};
-use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
+use crate::components::{Position};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::portal::{PortalComponent};
@@ -17,9 +17,10 @@ pub struct PortalBuilder;
 
 impl PortalBuilder {
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, name: String, destination: String) -> Entity {
+        width: f32, name: String, destination: String, enabled: bool) -> Entity {
 
-        let portal = PortalComponent::new(name, destination);
+        let mut portal = PortalComponent::new(name, destination);
+        portal.is_enabled = enabled;
 
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/portal".to_string());
         sprite.scale.x = width / 24.0;
@@ -40,7 +41,7 @@ impl PortalBuilder {
         collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Player);
         //collision.create_kinematic_body_circle(physics_world, true);
-        collision.create_static_body_circle(physics_world, false);
+        collision.create_kinematic_body_circle(physics_world, false);
 
         let body_handle_clone = collision.body_handle.clone();
 

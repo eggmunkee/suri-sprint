@@ -1,20 +1,32 @@
 LevelConfig(
     name: "start",
     bounds: (
-        min_x: 0.0, min_y: 0.0, max_x: 700.0, max_y: 800.0,
+        min_x: 0.0, min_y: 0.0, max_x: 700.0, max_y: 600.0,
         solid_sides: (false, true, false, true),
     ),
     items: [
         Player ( x: 250.0, y: -200.0 ),
+
         
-        Sprite ( x: 500.0, y: 700.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, ),
+        Sprite ( x: 500.0, y: 500.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, ),
+        Sprite ( x: 500.0, y: 245.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, ),
+        Sprite ( x: 500.0, y: 90.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, ),
 
-        Platform ( x: 200.0, y: 799.0, w: 100.0, h: 15.0, ang: 0.0),
-        Platform ( x: 655.0, y: 799.0, w: 50.0, h: 15.0, ang: 0.0),
+        Button ( x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "ghost",),
+        Platform ( x: 60.0, y: 400.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        DynEmptyBox ( x: 100.0, y: 400.0, w: 50.0, h: 50.0, ang: 0.0),
+        Button ( x: 450.0, y: 229.0, w: 50.0, h: 10.0, ang: 0.0, name: "box",),
+        Platform ( x: 450.0, y: 250.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        Exit ( x: 500.0, y: 700.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
+        Button ( x: 290.0, y: 581.0, w: 30.0, h: 6.0, ang: 0.0, name: "mouse",),
+
+        Platform ( x: 275.0, y: 599.0, w: 125.0, h: 15.0, ang: 0.0),
+
+        Platform ( x: 655.0, y: 599.0, w: 50.0, h: 15.0, ang: 0.0),
+
+        //DynEmptyBox ( x: 200.0, y: 300.0, w: 50.0, h: 50.0, ang: 0.0),
+
+        Exit ( x: 500.0, y: 500.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
 
         Ghost ( x: 200.0, y: 100.0 ),
 

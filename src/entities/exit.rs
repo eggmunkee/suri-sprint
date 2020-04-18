@@ -7,7 +7,7 @@ use wrapped2d::user_data::*;
 
 use crate::game_state::{GameState};
 use crate::resources::{GameStateResource};
-use crate::components::{Position, Velocity,DisplayComp,DisplayCompType};
+use crate::components::{Position};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::exit::{ExitComponent};
@@ -26,7 +26,7 @@ impl ExitBuilder {
         sprite.scale.y = height / 24.0;
         sprite.z_order = SpriteLayer::BGNear.to_z();
 
-        let mut collision = Collision::new_specs(0.1,0.72, width * 0.5, height * 0.5);
+        let mut collision = Collision::new_specs(0.1,0.72, width * 0.7, height * 0.7);
         // collision.dim_1 = width;
         // collision.dim_2 = height;
         collision.pos.x = x;

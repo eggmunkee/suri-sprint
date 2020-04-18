@@ -11,11 +11,20 @@ use rand::prelude::*;
 
 
 use crate::resources::{GameStateResource};
-use crate::components::{Position,Velocity,DisplayComp,DisplayCompType,RenderTrait};
+use crate::components::{Position,Velocity,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent};
 use crate::components::player::{CharacterDisplayComponent};
-use crate::game_state::{GameState,State,GameMode};
+use crate::game_state::{GameState,State,GameMode,RunningState};
 use crate::entities::level_builder::{LevelItem};
+
+
+// Render object type for an entity
+pub enum RenderObjectType {
+    Character, // complex suri animation display
+    Sprite, // generic single texture display
+    MultiSprite, // generic multi texture display for an entity
+    Button,
+}
 
 pub struct Renderer {
     pub display_offset: na::Point2::<f32>,
@@ -50,54 +59,41 @@ impl Renderer {
             for (opt_sprite_disp,opt_char_disp,opt_multi_sprite,pos,ent) in 
                 ((&sprite_disp).maybe(), (&char_disp).maybe(), (&multi_sprite_disp).maybe(),  &pos,&entities).join() {
                 // Check for any of the display components
-                let mut z_order = 1.0;
-                let has_display_comp = match opt_char_disp {
+                match opt_char_disp {
                     Some(character) => {
                         self.display_offset.x = -pos.x;
                         self.display_offset.y = -pos.y;
-                        z_order = SpriteLayer::Player.to_z();
+                        let z_order = SpriteLayer::Player.to_z();
                         char_in_portal = character.in_exit || character.in_portal;
 
                         render_objects.push(
                             (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
                         );
-                        true
                     },
                     _ => match opt_sprite_disp {
                         Some(sprite) => {
-                            z_order = sprite.z_order;
+                            let z_order = sprite.z_order;
 
                             render_objects.push(
                                 (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
                             );
-                            true
                         },
                         _ => match opt_multi_sprite {
                             Some(multi_sprite) => {
                                 let mut index : u32 = 0;
                                 for sprite in &multi_sprite.sprites {
-                                    z_order = sprite.z_order;
+                                    let z_order = sprite.z_order;
     
                                     render_objects.push(
                                         (ent.id(),na::Point2::new(pos.x, pos.y), z_order, index)
                                     );
                                     index += 1;
                                 }
-
-                                true
                             },
-                            _ => false
+                            _ => {}
                         }
                     }
                 };
-
-                // // If any display component found, add to render objs list
-                // if has_display_comp {
-                //     render_objects.push(
-                //         (ent.id(),na::Point2::new(pos.x, pos.y), z_order)
-                //     )
-    
-                // }
 
             }
 
@@ -295,32 +291,56 @@ impl Renderer {
 
         self.post_render_list(ctx, world);
 
-        if game_state.level_warping {
-            let mut draw_ok = true;
-            let (w, h) = (game_state.window_w, game_state.window_h);
-            let cent_x = w as f32 / 2.0;
-            let cent_y = h as f32 / 5.0;
+        match &game_state.running_state {
+            // DISPLAY DIALOG TEXT
+            RunningState::Dialog(msg) => {
+                let mut draw_ok = true;
+                let (w, h) = (game_state.window_w, game_state.window_h);
+                let cent_x = w as f32 / 2.0;
+                let cent_y = h as f32 / 4.0;
 
-            //let text_w = game_state.paused_text.width(ctx);
-            //let text_h = game_state.paused_text.height(ctx);
+                let border_color = ggez::graphics::Color::new(0.7, 0.2, 0.7, 1.0);
+                let bg_color = ggez::graphics::Color::new(0.3, 0.1, 0.3, 0.5);
+                let mut stroke_options = ggez::graphics::StrokeOptions::DEFAULT;
+                stroke_options.line_width = 5.0;
 
+                if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                    ggez::graphics::DrawMode::Fill(ggez::graphics::FillOptions::DEFAULT),
+                    ggez::graphics::Rect::new(0.0, 0.0, w * 0.75, h * 0.75),
+                    bg_color
+                ) {
+                    ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                        .dest(na::Point2::new(w * 0.25 * 0.5, h * 0.25 * 0.5)) );
+                }
 
-            // // Render paused graphis
-            // if let Err(_) = graphics::draw(ctx, &game_state.paused_text, 
-            //         DrawParam::new()
-            //         .dest(na::Point2::new(cent_x-2.0-(text_w as f32 / 2.0),cent_y+2.0-(text_h as f32 / 2.0)))
-            //         .color(Color::new(0.0,0.0,0.0,1.0))
-            //         ) {
-            //     draw_ok = false;
-            // };
-            // if let Err(_) = graphics::draw(ctx, &game_state.paused_text, //(na::Point2::new(cent_x,cent_y),
-            //         //Color::new(0.8,0.85,1.0,1.0)) ) 
-            //         DrawParam::new()
-            //         .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),cent_y-(text_h as f32 / 2.0)))
-            //         .color(Color::new(0.8,0.85,1.0,1.0))
-            //         ) {
-            //     draw_ok = false;
-            // };
+                if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                    ggez::graphics::DrawMode::Stroke(stroke_options),
+                    ggez::graphics::Rect::new(0.0, 0.0, w * 0.75, h * 0.75),
+                    border_color
+                ) {
+                    ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                        .dest(na::Point2::new(w * 0.25 * 0.5, h * 0.25 * 0.5)) );
+                }
+
+                let dialog_content = msg.clone();
+                //level_name_content.pusgame_state.level.name.clone();
+                let mut dialog_text = ggez::graphics::Text::new(dialog_content);
+                dialog_text.set_font(game_state.font, Scale { x: 20.0, y: 20.0 });
+                let text_w = dialog_text.width(ctx);
+                let text_h = dialog_text.height(ctx);
+                if let Err(_) = graphics::draw(ctx, &dialog_text,
+                    DrawParam::new()
+                    .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),cent_y-(text_h as f32 / 2.0)))
+                    //.scale(na::Vector2::new(2.0,2.0))
+                ) {
+                    draw_ok = false;
+                }
+                if !draw_ok {
+                    println!("Draw error occurred");
+                }
+
+            },
+            _ => {}
         }
 
         // RENDER UI --------------------------------------------------------------------------
@@ -393,26 +413,33 @@ impl Renderer {
             let ch_disp_comp_res = ch_disp_comp.get(entity);
             if let Some(res) = ch_disp_comp_res {
                 // Call component render method
-                res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                Self::render_item(ctx, &world, entity, pt, item_index, res);
+                //res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
             }
             else {
                 let sprite_disp_comp = world.read_storage::<SpriteComponent>();
                 let sprite_disp_comp_res = sprite_disp_comp.get(entity);
                 if let Some(res) = sprite_disp_comp_res {
                     // Call component render method
-                    res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                    Self::render_item(ctx, &world, entity, pt, item_index, res);
+                    //res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
                 }
                 else {
                     let sprite_disp_comp = world.read_storage::<MultiSpriteComponent>();
                     let sprite_disp_comp_res = sprite_disp_comp.get(entity);
                     if let Some(res) = sprite_disp_comp_res {
                         // Call component render method
-                        res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                        Self::render_item(ctx, &world, entity, pt, item_index, res);
+                        //res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
                     }
                 }
             }
         }
         
+    }
+
+    fn render_item(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>, item_index: u32, render_item: &RenderTrait) {
+        render_item.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
     }
 
     // pub fn get_draw_offset(ctx: &mut Context) -> na::Point2<f32> {

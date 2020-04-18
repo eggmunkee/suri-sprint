@@ -4,7 +4,7 @@ use specs::shred::{Dispatcher, DispatcherBuilder};
 use rand::prelude::*;
 
 use crate::resources::{add_resources,GameStateResource};
-use crate::components::{Position, Velocity,register_components, DisplayComp, DisplayCompType}; // 
+use crate::components::{Position, Velocity,register_components};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::suri::{SuriBuilder};

@@ -10,6 +10,7 @@ use crate::components::sprite::*;
 use crate::components::{Position};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::empty_box::{BoxBuilder};
+use crate::entities::button::{ButtonBuilder};
 use crate::entities::portal_area::{PortalBuilder};
 use crate::entities::exit::{ExitBuilder};
 use crate::entities::suri::{SuriBuilder};
@@ -66,6 +67,9 @@ pub enum LevelItem {
     DynEmptyBox {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
     },
+    Button {
+        x: f32, y: f32, w: f32, h: f32, ang: f32, name: String,
+    },
     Ghost {
         x: f32, y: f32,
     },
@@ -73,7 +77,7 @@ pub enum LevelItem {
         x: f32, y: f32, sprite: String, angle: f32,
     },
     Portal {
-        x: f32, y: f32, w: f32, name: String, destination: String,
+        x: f32, y: f32, w: f32, name: String, destination: String, enabled: bool,
     },
     Exit {
         x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
@@ -130,6 +134,9 @@ impl LevelConfig {
                 LevelItem::DynEmptyBox{ x, y, w, h, ang} => {
                     BoxBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
                 },
+                LevelItem::Button{ x, y, w, h, ang, name } => {
+                    ButtonBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, (*name).to_string());
+                },
                 LevelItem::Ghost{ x, y } => {
                     GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
@@ -141,8 +148,8 @@ impl LevelConfig {
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
                     //GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
-                LevelItem::Portal { x, y, w, name, destination } => {
-                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string());
+                LevelItem::Portal { x, y, w, name, destination, enabled } => {
+                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string(), *enabled);
                 },
                 LevelItem::Exit { x, y, w, h, name, destination } => {
                     ExitBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());
@@ -154,25 +161,27 @@ impl LevelConfig {
             }
         }
 
+        let border_thickness : f32 = 25.0;
+        let dim_over = border_thickness * 0.7;
         if self.bounds.solid_sides[0] { // top
             let width = self.bounds.max_x - self.bounds.min_x;
             PlatformBuilder::build(world, ctx, physics_world, self.bounds.min_x + 0.5 * width, self.bounds.min_y + 1.0,
-                width / 2.0, 20.0, 0.0, SpriteLayer::BGNear.to_z());
+                width / 2.0 + dim_over, border_thickness, 0.0, SpriteLayer::BGNear.to_z());
         }
         if self.bounds.solid_sides[1] { // right
             let height = self.bounds.max_y - self.bounds.min_y;
             PlatformBuilder::build(world, ctx, physics_world, self.bounds.max_x - 1.0, self.bounds.min_y + 0.5 * height,
-                20.0, height / 2.0, 0.0, SpriteLayer::BGNear.to_z());
+                border_thickness, height / 2.0 + dim_over, 0.0, SpriteLayer::BGNear.to_z());
         }
         if self.bounds.solid_sides[2] { // bottom
             let width = self.bounds.max_x - self.bounds.min_x;
             PlatformBuilder::build(world, ctx, physics_world, self.bounds.min_x + 0.5 * width, self.bounds.max_y - 1.0,
-                width / 2.0, 20.0, 0.0, SpriteLayer::BGNear.to_z());
+                width / 2.0 + dim_over, border_thickness, 0.0, SpriteLayer::BGNear.to_z());
         }
         if self.bounds.solid_sides[3] { // left
             let height = self.bounds.max_y - self.bounds.min_y;
             PlatformBuilder::build(world, ctx, physics_world, self.bounds.min_x + 1.0, self.bounds.min_y + 0.5 * height,
-                20.0, height / 2.0, 0.0, SpriteLayer::BGNear.to_z());
+                border_thickness, height / 2.0 + dim_over, 0.0, SpriteLayer::BGNear.to_z());
         }
 
     }

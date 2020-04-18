@@ -4,4 +4,5 @@ SpriteConfig(
     scale: (2.0, 2.0),
     z_order: 1.0,
     alpha: 1.0,
+    src: (0.0, 0.0, 1.0, 1.0),
 )

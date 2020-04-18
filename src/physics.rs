@@ -22,6 +22,7 @@ use crate::components::npc::{NpcComponent};
 pub struct GameStateBodyData {
     pub entity_id: u32,
     pub collider_type: CollisionCategory,
+    pub entity_type: EntityType,
 }
 
 #[derive(Default)]
@@ -51,6 +52,25 @@ pub enum CollideType {
     Collider_Portal,
     Ghost_Meow,
     Other,
+}
+
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum EntityType {
+    Player,
+    Platform,
+    EmptyBox,
+    Ghost,
+    Meow,
+    Portal,
+    Exit,
+    Button,
+    None
+}
+
+impl Default for EntityType {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
 #[derive(Copy,Clone,Debug,PartialEq)]
@@ -152,7 +172,7 @@ pub fn update_body_entity_data(entity: &Entity, physics_world: &mut PhysicsWorld
 }
 
 
-pub fn create_body(world: &mut PhysicsWorld, body_type: PhysicsBodyType, pos: &Point2<f32>, angle: f32,
+pub fn create_body(world: &mut PhysicsWorld, body_type: PhysicsBodyType, pos: &Point2<f32>, angle: f32, entity_type: EntityType,
     collision_category: CollisionCategory, fixed_rot: bool) -> PhysicsBodyHandle {
 
     let def = b2::BodyDef {
@@ -165,7 +185,7 @@ pub fn create_body(world: &mut PhysicsWorld, body_type: PhysicsBodyType, pos: &P
         .. b2::BodyDef::new()
     };
 
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category, entity_type: entity_type };
 
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
@@ -175,7 +195,7 @@ pub fn create_body(world: &mut PhysicsWorld, body_type: PhysicsBodyType, pos: &P
 
 pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, 
     body_radius: f32,     
-    density: f32, restitution: f32,
+    density: f32, restitution: f32, entity_type: EntityType,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool, is_sensor: bool) 
         -> b2::BodyHandle {
     let def = b2::BodyDef {
@@ -187,7 +207,7 @@ pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, ve
         .. b2::BodyDef::new()
     };
 
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category, entity_type: entity_type };
 
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
@@ -218,7 +238,7 @@ pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, ve
 
 pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, 
     body_width: f32, body_height: f32,    
-    density: f32, restitution: f32,
+    density: f32, restitution: f32, entity_type: EntityType,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool, is_sensor: bool) 
         -> b2::BodyHandle {
     let def = b2::BodyDef {
@@ -230,7 +250,7 @@ pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: 
         .. b2::BodyDef::new()
     };
 
-    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
+    let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category, entity_type: entity_type };
 
     // create body - getting handle
     let b_handle = world.create_body_with(&def, body_data);
@@ -260,7 +280,7 @@ pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: 
 
 
 pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
-    density: f32, restitution: f32,
+    density: f32, restitution: f32, entity_type: EntityType,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
         -> b2::BodyHandle {
     // let def = b2::BodyDef {
@@ -274,7 +294,7 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
     // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
     // create body - getting handle
-    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, collision_category, fixed_rot);
+    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, entity_type, collision_category, fixed_rot);
 
     //world.create_body_with(&def, body_data);
     // get mut ref to body
@@ -300,7 +320,7 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
 
 
 pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_radius: f32,
-        density: f32, restitution: f32,
+        density: f32, restitution: f32, entity_type: EntityType,
         collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool)  
         -> b2::BodyHandle {
     // let def = b2::BodyDef {
@@ -316,7 +336,7 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
     // // create body - getting handle
     // let b_handle = world.create_body_with(&def, body_data);
     // create body - getting handle
-    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, collision_category, fixed_rot);
+    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, entity_type, collision_category, fixed_rot);
     
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
@@ -342,7 +362,7 @@ pub fn add_dynamic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body
 
 
 pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f32, body_width: f32, body_height: f32,
-        density: f32, restitution: f32,
+        density: f32, restitution: f32, entity_type: EntityType,
         collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, is_sensor: bool, fixed_rot: bool) 
         -> b2::BodyHandle {
     // let def = b2::BodyDef {
@@ -357,7 +377,7 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f
     // // create body - getting handle
     // let b_handle = world.create_body_with(&def, body_data);
     // create body - getting handle
-    let b_handle = create_body(world, PhysicsBodyType::Static, pos, angle, collision_category, fixed_rot);
+    let b_handle = create_body(world, PhysicsBodyType::Static, pos, angle, entity_type, collision_category, fixed_rot);
     
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
@@ -383,7 +403,7 @@ pub fn add_static_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f
 
 
 pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_radius: f32,
-    density: f32, restitution: f32,
+    density: f32, restitution: f32, entity_type: EntityType,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, is_sensor: bool, fixed_rot: bool) 
     -> b2::BodyHandle {
     // let mut def = b2::BodyDef {
@@ -396,7 +416,7 @@ pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_
 
     // // create body - getting handle
     // let b_handle = world.create_body_with(&def, body_data);
-    let b_handle = create_body(world, PhysicsBodyType::Static, pos, 0.0, collision_category, fixed_rot);
+    let b_handle = create_body(world, PhysicsBodyType::Static, pos, 0.0, entity_type, collision_category, fixed_rot);
     // get mut ref to body
     let mut body = world.body_mut(b_handle);
 
@@ -494,6 +514,10 @@ pub fn handle_contact(coll_type_1: &CollisionCategory, coll_type_2: &CollisionCa
     }
 }
 
+pub fn set_standing_status(interactor: &mut CharLevelInteractor, is_standing: bool) {
+    interactor.set_standing(is_standing);
+}
+
 pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
 
     // update the physics world
@@ -579,18 +603,18 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                         match primary_collider_type {
                             CollisionCategory::Etherial | CollisionCategory::Player 
                             | CollisionCategory::Level => {
-                                //let portal_res = world.read_storage::<PortalComponent>();
                                 if let Some(collision) = coll_res.get_mut(entity_1) {
-                                    if primary_collider_type == CollisionCategory::Level {
-                                        println!("Level collider portal collision update");
+                                   
+                                    let mut portal_enabled = false;
+                                    let portal_res = world.read_storage::<PortalComponent>();
+                                    if let Some(portal) = portal_res.get(entity_2) {
+                                        portal_enabled = portal.is_enabled;
                                     }
-                                    
-                                    //if let Some(portal) = portal_res.get(entity_2) {
-                                    let portal_id = other_id as i32;
-                                    //if let Some(collision) = coll_res.get_mut(entity_1) {
-                                    collision.in_portal = true;
-                                    collision.portal_id = portal_id;
-                                    //}
+                                    if portal_enabled {
+                                        let portal_id = other_id as i32;
+                                        collision.in_portal = true;
+                                        collision.portal_id = portal_id;
+                                    }
                                 }
                             },
                             _ => {}
@@ -599,73 +623,30 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                         match other_collider_type {
                             CollisionCategory::Etherial | CollisionCategory::Player
                             | CollisionCategory::Level => {
-                                // let portal_res = world.read_storage::<PortalComponent>();
-                        
                                 if let Some(collision) = coll_res.get_mut(entity_2) {
-                                    if other_collider_type == CollisionCategory::Level {
-                                        println!("Level collider portal collision update");
+                                    let mut portal_enabled = false;
+                                    let portal_res = world.read_storage::<PortalComponent>();
+                                    if let Some(portal) = portal_res.get(entity_1) {
+                                        portal_enabled = portal.is_enabled;
                                     }
-                                    // if let Some(portal) = portal_res.get(entity_1) {
-                                    let portal_id = primary_id as i32;
-                                    //if let Some(collision) = coll_res.get_mut(entity_2) {
-                                    collision.in_portal = true;
-                                    collision.portal_id = portal_id;
-                                    //}
+                                    if portal_enabled {
+                                        let portal_id = primary_id as i32;
+                                        collision.in_portal = true;
+                                        collision.portal_id = portal_id;
+                                    }
                                 }
                             },
                             _ => {}
                         }
 
-                        // if primary_collider_type == CollisionCategory::Etherial 
-                        //     || primary_collider_type == CollisionCategory::Level {
-
-                        //     let mut portal_res = world.read_storage::<PortalComponent>();
-                        //     let mut portal_id = -1;
-                    
-                        //     if let Some(portal) = portal_res.get(entity_2) {
-                        //         portal_id = other_id as i32;
-                        //         //if let Some(collision) = coll_res.get_mut(entity_1) {
-                        //         collision.in_portal = true;
-                        //         collision.portal_id = portal_id;
-                        //         //}
-                        //     }
-
-                            
-                        // }
-                        // else if other_collider_type == CollisionCategory::Etherial 
-                        // || other_collider_type == CollisionCategory::Level  {
-
-                        //     let mut portal_res = world.read_storage::<PortalComponent>();
-                        //     let mut portal_id = -1;
-                    
-                        //     if let Some(portal) = portal_res.get(entity_1) {
-                        //         portal_id = other_id as i32;
-                        //         //if let Some(collision) = coll_res.get_mut(entity_2) {
-                        //         collision.in_portal = true;
-                        //         collision.portal_id = portal_id;
-                        //         //}
-                        //     }
-
-                            
-                        // }
                     }
 
                     // Add generic body contact to collider
                     if let Some(collision) = coll_res.get_mut(entity_1) {
                         collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
                     }
-        
 
-                    //println!("PLAYER PORTAL !");
                 },
-                // Some(CollideType::Player_Level) => {
-                //     //println!("... player level contact ...");
-
-
-                // },
-                // Some(x) => {
-                //     println!("Player collide type: {:?}", &x);
-                // },
                 _ => {}
             }
 
@@ -689,18 +670,18 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
             //     }
             // }
 
-            let mut exit_res = world.read_storage::<ExitComponent>();
-            let mut portal_res = world.read_storage::<PortalComponent>();
-            let mut exit_id = -1;
-            let mut portal_id = -1;
+            let exit_res = world.read_storage::<ExitComponent>();
+            //let mut portal_res = world.read_storage::<PortalComponent>();
+            //let mut exit_id = -1;
+            //let mut portal_id = -1;
     
             // handle character exit =====================================================
             if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
                 //println!("Character 1 {:?}", &entity_1);
-                if let Some(exit) = exit_res.get(entity_2) {
-                    exit_id = other_id as i32;
+                if let Some(_) = exit_res.get(entity_2) {
+                    //exit_id = other_id as i32;
                     character.in_exit = true;
-                    character.exit_id = exit_id;
+                    character.exit_id = other_id as i32;
                 }
 
             }
@@ -736,10 +717,12 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
         //println!("Update character body status.");
         //character.update_body_status(any_stand_contact);
         if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
-            character.set_standing(any_stand_contact);
+            //character.set_standing(any_stand_contact);
+            set_standing_status(character, any_stand_contact);
         }
         else if let Some(npc) = npc_comp_res.get_mut(entity_1) {
-            npc.set_standing(any_stand_contact);
+            //npc.set_standing(any_stand_contact);
+            set_standing_status(npc, any_stand_contact);
         }
 
 

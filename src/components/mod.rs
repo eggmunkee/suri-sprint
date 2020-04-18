@@ -9,7 +9,7 @@ use specs_derive::*;
 use crate::game_state::{GameState};
 
 pub mod sprite;
-//pub mod ball;
+pub mod button;
 pub mod player;
 pub mod collision;
 pub mod meow;
@@ -69,23 +69,25 @@ impl fmt::Debug for DisplayCompType {
     }
 }
 
-#[derive(Debug,Component)]
-#[storage(VecStorage)]
-pub struct DisplayComp {
-    pub circle: bool,
-    pub display_type: DisplayCompType,
-}
-impl DisplayComp {
-    #[allow(dead_code)]
-    fn draw_self(_game_state: &mut GameState, _entity: &Entity, _ctx: &mut Context) -> GameResult<()> {
-        Ok(())
-    }
+// #[derive(Debug,Component)]
+// #[storage(VecStorage)]
+// pub struct DisplayComp {
+//     pub circle: bool,
+//     pub display_type: DisplayCompType,
+// }
+// impl DisplayComp {
+//     #[allow(dead_code)]
+//     fn draw_self(_game_state: &mut GameState, _entity: &Entity, _ctx: &mut Context) -> GameResult<()> {
+//         Ok(())
+//     }
 
-}
+// }
 
 pub trait CharLevelInteractor {
     fn set_standing(&mut self, is_standing: bool);
 }
+
+
 
 pub trait RenderTrait {    
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32);
@@ -103,7 +105,7 @@ pub fn register_components(world: &mut World) {
     // register components
     world.register::<Position>();
     world.register::<Velocity>();
-    world.register::<DisplayComp>();
+    //world.register::<DisplayComp>();
     
     // sub-module components
     self::sprite::register_components(world);
@@ -112,5 +114,6 @@ pub fn register_components(world: &mut World) {
     self::meow::register_components(world);
     self::npc::register_components(world);
     self::portal::register_components(world);
+    self::button::register_components(world);
     self::exit::register_components(world);
 }

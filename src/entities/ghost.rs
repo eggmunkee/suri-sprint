@@ -3,7 +3,7 @@ use specs::{Builder,Entity,World,WorldExt};
 use wrapped2d::user_data::*;
 
 use crate::components::sprite::*;
-use crate::components::{Position, Velocity, DisplayComp, DisplayCompType};
+use crate::components::{Position};
 //use crate::components::ball::*;
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
@@ -49,7 +49,7 @@ impl GhostBuilder {
         .with(npc)
         .with(Position { x: x, y: y })
         //.with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
-        .with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
+        //.with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
         .with(sprite) // SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)
         .build();

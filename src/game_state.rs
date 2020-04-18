@@ -25,6 +25,7 @@ use crate::components::sprite::{SpriteLayer,SpriteComponent};
 use crate::components::meow::{MeowComponent};
 use crate::components::exit::{ExitComponent};
 use crate::components::portal::{PortalComponent};
+use crate::components::button::{ButtonComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
 use crate::systems::{InterActorSys,InputSystem};
@@ -38,6 +39,12 @@ use crate::physics;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
 use crate::render;
 use crate::input::{InputMap,MouseInput};
+
+#[derive(Clone,Debug)]
+pub enum RunningState {
+    Playing, // normal playing state - world & physics running
+    Dialog(String),  // dialog being shown state - world paused
+}
 
 #[derive(Copy,Clone,Debug)]
 pub enum State {
@@ -57,6 +64,7 @@ const WARP_TIME_SCALE : f32  = 0.025f32;
 pub struct GameState {
     pub window_title: String,
     pub current_state: State,
+    pub running_state: RunningState,
     pub mode: GameMode,
     pub level: LevelConfig,
     pub window_w: f32,
@@ -107,6 +115,8 @@ impl GameState {
         let s = GameState { 
             window_title: title,
             current_state: State::Running,
+            running_state: RunningState::Playing, 
+            //running_state: RunningState::Dialog("Loading game".to_string()),
             mode: GameMode::Play,
             level: LevelConfig::new(),
             window_w: win_w,
@@ -254,6 +264,7 @@ impl GameState {
 
         // Meow "system" - updates meow state and components
         //  This could be moved into a system as long as the physics data was accessible & writable from the system class
+
         {
             // Operator on meows, collisions and sprite components
             let mut meow_writer = world.write_storage::<MeowComponent>();
@@ -284,11 +295,79 @@ impl GameState {
             let entities = world.entities();                
 
             for (portal, coll, sprite, _ent) in (&mut portal_writer, &mut collision_writer, &mut sprite_writer, &entities).join() {
-                // update meow components
+                // update portal components
                 portal.update(time_delta, coll, sprite, &mut self.phys_world);
             }
         }
 
+        // Button "system"
+        let mut spawn_ghost = false;
+        let mut spawn_box = false;
+        let mut spawn_platform = false;
+        let mut spawn_mouse = false;
+        {
+            // Operator on meows, collisions and sprite components
+            let mut button_reader = world.write_storage::<ButtonComponent>();
+            let mut collision_writer = world.write_storage::<Collision>();
+            let entities = world.entities();                
+
+            for (button, coll, _ent) in (&mut button_reader, &mut collision_writer, &entities).join() {
+                // update button components
+                button.update(time_delta, coll, &mut self.phys_world);
+                if button.triggered {
+                    println!("Button {} triggered", &button.name);
+                    if button.name == "ghost" {
+                        spawn_ghost = true;
+                    //     let test : u16 = rng.gen::<u16>();
+                    //     crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
+                    //         30.0, 0.15, 25.0, 25.0);
+                    }
+                    else if button.name == "box" {
+                        spawn_box = true;
+                    //     let test : u16 = rng.gen::<u16>();
+                    //     let w = 10.0 + 0.001 * test as f32;
+                    //     crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+                    //         w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
+                    }
+                    else if button.name == "platform" {
+                        spawn_platform = true;
+                    //     let test : u16 = rng.gen::<u16>();
+                    //     let w = 50.0 + 0.001 * test as f32;
+                    //     let h = 10.0 + 0.00025 * test as f32;
+                    //     crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+                    //         w, h, 0.0, SpriteLayer::Entities.to_z());                            
+                    }
+                    else if button.name == "mouse" {
+                        spawn_mouse = true;
+                    }
+                }
+            }
+        }
+
+        if spawn_mouse {
+            crate::entities::mouse::MouseBuilder::build(&mut self.world, ctx, &mut self.phys_world, 150.0, -50.0, 12.0, 6.0, 0.0, SpriteLayer::Entities.to_z() );
+        }
+        if spawn_ghost {
+            let mut rng = rand::thread_rng();
+            let test : u16 = rng.gen::<u16>();
+            crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
+                30.0, 0.15, 25.0, 25.0);
+        }
+        if spawn_box {
+            let mut rng = rand::thread_rng();
+            let test : u16 = rng.gen::<u16>();
+            let w = 10.0 + 0.001 * test as f32;
+            crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+                w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
+        }
+        if spawn_platform {
+            let mut rng = rand::thread_rng();
+            let test : u16 = rng.gen::<u16>();
+            let w = 50.0 + 0.001 * test as f32;
+            let h = 10.0 + 0.00025 * test as f32;
+            crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+                w, h, 0.0, SpriteLayer::Entities.to_z());   
+        }
     }
 
 
@@ -350,7 +429,7 @@ impl GameState {
                 }
 
                 // Handle Collider entered portal - generic portal behavior
-                if coll.in_portal && coll.since_warp > 0.2 {
+                if coll.in_portal && coll.since_warp > 0.75 {
                     // get
                     portal_id = coll.portal_id as i32;
                     //println!("Collider since warp: {}", &coll.since_warp);
@@ -415,29 +494,43 @@ impl GameState {
 
     }
 
-    pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
-
+    pub fn process_time_delta(&mut self, time_delta: f32) -> f32 {
         let mut time_delta = time_delta;
         if self.level_warping {
             self.level_warp_timer += time_delta;
             time_delta *= WARP_TIME_SCALE;
         }
-        
+        time_delta
+    }
+
+    pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
+
+        // Pre-process frame time
+        let time_delta = self.process_time_delta(time_delta);
+
         // Save frame time
         self.set_frame_time(time_delta);
 
-        // Update components
-        self.run_update_systems(ctx, time_delta);
+        match &self.running_state { 
+            RunningState::Playing => {
+                // Update components
+                self.run_update_systems(ctx, time_delta);
 
-        // Cleanup the world state after changes
-        self.world.maintain();
+                // Cleanup the world state after changes
+                self.world.maintain();
 
 
-        // Run physics update frame
-        physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);
+                // Run physics update frame
+                physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);
 
-        // Update components after physics
-        self.run_post_physics_update(ctx, time_delta);
+                // Update components after physics
+                self.run_post_physics_update(ctx, time_delta);
+            },
+            RunningState::Dialog(_message) => {
+                
+            }
+        }
+        
     }
 
     pub fn clear_world(&mut self) {
