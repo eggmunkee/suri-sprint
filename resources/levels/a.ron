@@ -7,7 +7,7 @@ LevelConfig(
     items: [
         Player ( x: 30.0, y: 700.0 ),
         
-        Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 

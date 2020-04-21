@@ -10,12 +10,20 @@ use specs::join::Join;
 use rand::prelude::*;
 
 
+
+pub mod level;
+pub mod dialog;
+pub mod paused;
+
 use crate::resources::{GameStateResource};
 use crate::components::{Position,Velocity,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::game_state::{GameState,State,GameMode,RunningState};
 use crate::entities::level_builder::{LevelItem};
+use self::dialog::{DialogRenderer};
+use self::level::{LevelRenderer};
+use self::paused::{PausedRenderer};
 
 
 // Render object type for an entity
@@ -28,12 +36,16 @@ pub enum RenderObjectType {
 
 pub struct Renderer {
     pub display_offset: na::Point2::<f32>,
+    pub paused_renderer: PausedRenderer,
 }
 
 impl Renderer {
-    pub fn new() -> Renderer {
+    pub fn new(paused_anim: f32) -> Renderer {
         Renderer {
             display_offset: na::Point2::new(0.0,0.0),
+            paused_renderer: PausedRenderer {
+                anim_position: paused_anim,
+            },
         }
     }
 
@@ -139,27 +151,6 @@ impl Renderer {
 
         self.pre_render_list(game_state, ctx, world);
 
-        {
-            // draw level bounds
-            let game_res = game_state.world.fetch::<GameStateResource>();
-            let level_bounds = game_res.level_bounds.clone();
-            let width = level_bounds.max_x - level_bounds.min_x;
-            let height = level_bounds.max_y - level_bounds.min_y;
-
-            let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-            stroke_opt.line_width = 5.0;
-
-            if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                ggez::graphics::DrawMode::Stroke(stroke_opt),
-                ggez::graphics::Rect::new(0.0, 0.0, width, height),
-                ggez::graphics::Color::new(1.0, 0.0, 0.0, 1.0)
-            ) {
-                ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                    .dest(na::Point2::new(level_bounds.min_x, level_bounds.min_y)) );
-            }
-
-        }
-
         // RENDER OBJECT LIST -----------------------------------------------------------------
         for (ent, pt, _, item_index) in render_objects.iter() {
             // Get entity by id
@@ -172,224 +163,62 @@ impl Renderer {
         }
 
         if game_state.mode == GameMode::Edit {
+            // Render Edit mode level setup            
+            LevelRenderer::render(&game_state, ctx);
+        }
+
+        {
             // draw level bounds
-            //let level_items = &game_state.level.items;
-            
-            
+            let game_res = game_state.world.fetch::<GameStateResource>();
+            let level_bounds = game_res.level_bounds.clone();
+            let width = level_bounds.max_x - level_bounds.min_x;
+            let height = level_bounds.max_y - level_bounds.min_y;
 
-            for item in &game_state.level.items {
+            let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+            stroke_opt.line_width = 4.0;
 
-                match &item {
-                    LevelItem::Player{x, y} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
-                            ggez::graphics::Color::new(1.0, 0.0, 0.0, 1.0)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::new(x - 5.0, y - 5.0)) );
-                        }
-                    },
-                    LevelItem::Ghost{x, y, ..} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
-                            ggez::graphics::Color::new(1.0, 0.0, 1.0, 0.5)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::new(x - 5.0, y - 5.0)) );
-                        }
-                    },
-                    LevelItem::Portal{x, y, w, ..} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_circle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            na::Point2::<f32>::new(*x, *y),
-                            *w, 0.5,
-                            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::new(*x-*w, *y-*w))
-                                .offset(na::Point2::new(*w, *w))
-                                
-                            );
-                        }
-                    },
-                    LevelItem::Exit{x, y, w, ..} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_circle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            na::Point2::<f32>::new(*x, *y),
-                            *w, 0.5,
-                            ggez::graphics::Color::new(0.0, 0.0, 1.0, 0.5)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::<f32>::new(*x, *y)) );
-                        }
-                    },
-                    LevelItem::Sprite{x, y, angle, ..} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
-                            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                //.dest(na::Point2::new(x - 5.0, y - 5.0)) );
-                                .dest(na::Point2::new(*x-5.0, *y-5.0))
-                                .rotation(*angle));
-                        }
-                    },
-                    LevelItem::Platform{x, y, w, h, ang, ..} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            ggez::graphics::Rect::new(0.0, 0.0, w*2.0, h*2.0),
-                            ggez::graphics::Color::new(1.0, 0.0, 0.0, 0.5)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()                                
-                                .dest(na::Point2::new(*x-*w, *y-*h))
-                                .offset(na::Point2::new(*w, *h))
-                                .rotation(*ang)
-                                 );
-                        }
-                    },
-                    LevelItem::DynPlatform{x, y, w, h, ang, ..} => {
-                        let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-                        stroke_opt.line_width = 4.0;
-                        if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                            ggez::graphics::DrawMode::Stroke(stroke_opt),
-                            ggez::graphics::Rect::new(0.0, 0.0, w*2.0, h*2.0),
-                            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
-                        ) {
-                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                                .dest(na::Point2::new(*x-*w, *y-*h))
-                                .offset(na::Point2::new(*w, *h))
-                                .rotation(*ang)
-                                 );
-                        }
-                    },
-                    _ => {
-
-                    }
-                }
-
-                
-    
+            if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                ggez::graphics::DrawMode::Stroke(stroke_opt),
+                ggez::graphics::Rect::new(0.0, 0.0, width, height),
+                ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.5)
+            ) {
+                ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                    .dest(na::Point2::new(level_bounds.min_x, level_bounds.min_y)) );
             }
 
+            stroke_opt.line_width = 2.0;
+            if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                ggez::graphics::DrawMode::Stroke(stroke_opt),
+                ggez::graphics::Rect::new(0.0, 0.0, width, height),
+                ggez::graphics::Color::new(1.0, 0.0, 0.0, 0.5)
+            ) {
+                ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                    .dest(na::Point2::new(level_bounds.min_x, level_bounds.min_y)) );
+            }
 
         }
+
 
         self.post_render_list(ctx, world);
 
-        match &game_state.running_state {
-            // DISPLAY DIALOG TEXT
-            RunningState::Dialog(msg) => {
-                let mut draw_ok = true;
-                let (w, h) = (game_state.window_w, game_state.window_h);
-                let cent_x = w as f32 / 2.0;
-                let cent_y = h as f32 / 4.0;
-
-                let border_color = ggez::graphics::Color::new(0.7, 0.2, 0.7, 1.0);
-                let bg_color = ggez::graphics::Color::new(0.3, 0.1, 0.3, 0.5);
-                let mut stroke_options = ggez::graphics::StrokeOptions::DEFAULT;
-                stroke_options.line_width = 5.0;
-
-                if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                    ggez::graphics::DrawMode::Fill(ggez::graphics::FillOptions::DEFAULT),
-                    ggez::graphics::Rect::new(0.0, 0.0, w * 0.75, h * 0.75),
-                    bg_color
-                ) {
-                    ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                        .dest(na::Point2::new(w * 0.25 * 0.5, h * 0.25 * 0.5)) );
-                }
-
-                if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                    ggez::graphics::DrawMode::Stroke(stroke_options),
-                    ggez::graphics::Rect::new(0.0, 0.0, w * 0.75, h * 0.75),
-                    border_color
-                ) {
-                    ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                        .dest(na::Point2::new(w * 0.25 * 0.5, h * 0.25 * 0.5)) );
-                }
-
-                let dialog_content = msg.clone();
-                //level_name_content.pusgame_state.level.name.clone();
-                let mut dialog_text = ggez::graphics::Text::new(dialog_content);
-                dialog_text.set_font(game_state.font, Scale { x: 20.0, y: 20.0 });
-                let text_w = dialog_text.width(ctx);
-                let text_h = dialog_text.height(ctx);
-                if let Err(_) = graphics::draw(ctx, &dialog_text,
-                    DrawParam::new()
-                    .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),cent_y-(text_h as f32 / 2.0)))
-                    //.scale(na::Vector2::new(2.0,2.0))
-                ) {
-                    draw_ok = false;
-                }
-                if !draw_ok {
-                    println!("Draw error occurred");
-                }
-
-            },
-            _ => {}
-        }
-
-        // RENDER UI --------------------------------------------------------------------------
+        // RENDER UI STATE --------------------------------------------------------------------------
         match &game_state.current_state {
+            // RUNNING - check for dialog
+            State::Running => {
+                match &game_state.running_state {
+                    // DISPLAY DIALOG TEXT
+                    RunningState::Dialog(msg) => {
+                        DialogRenderer::render(&game_state, ctx, msg.clone());
+                    },
+                    _ => {}
+                }
+            },
 
-            // DRAW PAUSED MESSAGE IN PAUSED STATE -----------------------------------------------------------------
+            // PAUSED STATE -----------------------------------------------------------------
             State::Paused => {
-                let mut draw_ok = true;
-
-                let (w, h) = (game_state.window_w, game_state.window_h);
-                let cent_x = w as f32 / 2.0;
-                let cent_y = h as f32 / 5.0;
-                let text_w = game_state.paused_text.width(ctx);
-                let text_h = game_state.paused_text.height(ctx);
-
-                // Render paused graphis
-                if let Err(_) = graphics::draw(ctx, &game_state.paused_text, 
-                        DrawParam::new()
-                        .dest(na::Point2::new(cent_x-2.0-(text_w as f32 / 2.0),cent_y+2.0-(text_h as f32 / 2.0)))
-                        .color(Color::new(0.0,0.0,0.0,1.0))
-                        ) {
-                    draw_ok = false;
-                }
-                if let Err(_) = graphics::draw(ctx, &game_state.paused_text, //(na::Point2::new(cent_x,cent_y),
-                        //Color::new(0.8,0.85,1.0,1.0)) ) 
-                        DrawParam::new()
-                        .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),cent_y-(text_h as f32 / 2.0)))
-                        .color(Color::new(0.8,0.85,1.0,1.0))
-                        ) {
-                    draw_ok = false;
-                }
-
-                let level_name_y = 4.0 * h as f32 / 5.0;
-                let level_name_content = String::from(format!("Level \"{}\"", &game_state.level.name));
-                //level_name_content.pusgame_state.level.name.clone();
-                let mut level_name_text = ggez::graphics::Text::new(level_name_content);
-                level_name_text.set_font(game_state.font, Scale { x: 20.0, y: 20.0 });
-                let text_w = level_name_text.width(ctx);
-                let text_h = level_name_text.height(ctx);
-                if let Err(_) = graphics::draw(ctx, &level_name_text,
-                    DrawParam::new()
-                    .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),level_name_y-(text_h as f32 / 2.0)))
-                    //.scale(na::Vector2::new(2.0,2.0))
-                ) {
-                    draw_ok = false;
-                }
-                if !draw_ok {
-                    println!("Draw error occurred");
-                }
+                // DRAW PAUSED DISPLAY
+                self.paused_renderer.render(&game_state, ctx);
+                
             },
             _ => {}
         }

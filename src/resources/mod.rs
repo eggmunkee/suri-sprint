@@ -13,9 +13,10 @@ use crate::physics::{PhysicsWorld};
 use crate::entities::level_builder::{LevelBounds};
 
 mod image;
+mod connection;
 
 pub use crate::resources::image::*;
-
+pub use crate::resources::connection::*;
 
 #[derive(Default,Debug)]
 pub struct GameStateResource {
@@ -133,5 +134,8 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
         image_lookup: HashMap::new(),
         images: Vec::<Image>::new(),
         font: font,
-    })
+    });
+
+    world.insert(ConnectionResource::new());
+
 }

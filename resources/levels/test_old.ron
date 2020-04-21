@@ -7,16 +7,17 @@ LevelConfig(
     items: [
         Player ( x: 1000.0, y: 2000.0 ),
         //
-        Sprite ( x: 3000.0, y: 2000.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
+        Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-50,-50,100,100), ),
+        Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-18,-28,38,56), ),
         
         Platform ( x: 150.0, y: 2000.0, w: 1200.0, h: 100.0, ang: -1.57),
         Platform ( x: 4000.0, y: 2000.0, w: 1200.0, h: 100.0, ang: 1.57),
 
         DynEmptyBox ( x: 400.0, y: 50.0, w: 40.0, h: 40.0, ang: 0.0),
 
-        Portal ( x: 250.0, y: 1900.0, w: 200.0, name: "b", destination: "", enabled: true ),
+        Portal ( x: 300.0, y: 1900.0, w: 30.0, name: "b", destination: "", enabled: true ),
 
-        Portal ( x: 2000.0, y: -500.0, w: 300.0, name: "a", destination: "b", enabled: true ),
+        Portal ( x: 2000.0, y: -500.0, w: 30.0, name: "a", destination: "b", enabled: true ),
 
         Bowl ( x: 500.0, y: 500.0 ),
 
@@ -28,7 +29,7 @@ LevelConfig(
         Platform ( x: 3500.0, y: 2900.0, w: 600.0, h: 20.0, ang: -0.15),
         Ghost ( x: 300.0, y: 2900.0 ),
 
-        Sprite ( x: 3500.0, y: 2450.0, sprite: "entities/tile-bg", z: 1.0, angle: 1.57, ),
+        Sprite ( x: 3500.0, y: 2450.0, sprite: "entities/tile-bg", z: 1.0, angle: 1.57, src: (-2,-2,2,2), ),
 
         Exit (x: 3500.0, y: 2450.0, w: 20.0, h: 20.0, name: "exit", destination: "start" ) ,
     ],

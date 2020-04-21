@@ -125,6 +125,8 @@ pub struct CharacterDisplayComponent {
     pub exit_id: i32,
     pub portal_id: i32,
     pub since_warp: f32,
+    // input
+    pub input_enabled: bool,
 }
 impl Component for CharacterDisplayComponent {
     type Storage = DenseVecStorage<Self>;
@@ -163,6 +165,7 @@ impl CharacterDisplayComponent {
             exit_id: -1,
             portal_id: -1,
             since_warp: 0.2,
+            input_enabled: true,
         }
     }
 

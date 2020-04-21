@@ -41,7 +41,7 @@ impl PortalComponent {
             return; 
         }
 
-        if sprite.alpha != 0.6 { sprite.alpha = 0.6; }
+        if sprite.alpha != 1.0 { sprite.alpha = 1.0; }
 
         // get sprite angle and rotate over time
         let mut sprite_angle = collision.get_body_angle(physics_world);

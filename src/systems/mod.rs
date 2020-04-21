@@ -17,6 +17,7 @@ pub mod input;
 // InterActor system - handles all actor to actor interactions
 //   including actor physics, damage, effects, etc.
 pub mod interactor;
+pub mod logic;
 
 // Re-export the input and interactor system items into this module
 pub use crate::systems::input::*;

@@ -3,6 +3,7 @@ use ggez::{Context};
 use specs::prelude::*;
 use wrapped2d::b2;
 
+use crate::game_state::{GameState,RunningState};
 use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::*;
 use crate::components::collision::{Collision};
@@ -27,30 +28,20 @@ impl InputSystem {
         }
     }
 
-    // fn handle_player_list<'a>(&mut self, mut v: Vec<(&mut Velocity, &mut Collision, &mut CharacterDisplayComponent, Entity)>, input: &InputResource,
-    //     ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
-
-    //     // handle each input applicable entity
-    //     for inn_v in v.iter_mut() { 
-    //         //let (vel, coll, _display, _e) = inn_v;      
-    //         self.handle_player_input(inn_v, input, ent, lazy, time_delta);
-    //     }
-    // }
-
     fn handle_npc_input<'a>(&mut self, v: &mut (&mut Collision, &mut NpcComponent, Entity), input: &InputResource,
         ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
-        let (coll, display, _e) = v;
+        let (coll, npc, _e) = v;
 
         let body_movement = coll.get_movement();
-
-        display.update(body_movement, time_delta);
+        // Call npc update handler with current status
+        npc.update(body_movement, time_delta);
         
     }
 
     // handle input updates from an entity
     fn handle_player_input<'a>(&mut self, v: &mut (&mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
         ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
-        let (coll, display, _e) = v;
+        let (coll, character, _e) = v;
 
         let body_movement = coll.get_movement();
 
@@ -75,15 +66,17 @@ impl InputSystem {
         }
 
         //if let Some(display) = _display {
-        display.going_up = up_pressed;
-        display.going_left = left_pressed;
-        display.going_right = right_pressed;
-        display.going_down = down_pressed;
-        display.meowing = input.fire_pressed;
+        if character.input_enabled {
+            character.going_up = up_pressed;
+            character.going_left = left_pressed;
+            character.going_right = right_pressed;
+            character.going_down = down_pressed;
+            character.meowing = input.fire_pressed;
+        }
 
-        display.update(body_movement, time_delta);
+        character.update(body_movement, time_delta);
 
-        if display.meowing {
+        if character.meowing {
             let mut x = coll.pos.x;
             let mut y = coll.pos.y;
             let mut vx = coll.vel.x;
@@ -99,7 +92,7 @@ impl InputSystem {
                 vx = vx.min(0.0) - meow_spd; //.min(vx * 1.1);
                 x -= 20.0;
             }
-            else if display.facing_right {
+            else if character.facing_right {
                 vx = meow_spd;
                 x += 20.0;
             }
@@ -115,12 +108,48 @@ impl InputSystem {
             }
 
             self.meows.push((na::Point2::new(x, y),na::Vector2::new(vx, vy)));
-            display.since_meow = 0.0;
+            character.since_meow = 0.0;
 
         }
 
         if input.mouse_down[0] {
             self.click_info.push(na::Point2::new(input.mouse_x, input.mouse_y));
+        }
+
+    }
+
+
+    // handle input updates from an entity
+    pub fn handle_dialog_input(input: &InputResource, game_state: &GameState, time_delta: f32) -> RunningState {
+
+        let mut up_pressed = false;
+        let mut left_pressed = false;
+        let mut right_pressed = false;
+        let mut down_pressed = false;
+        let mut fire_pressed = false;
+
+        // apply input status to player
+        if input.dirs_pressed[0] {
+            left_pressed = true;
+        }
+        else if input.dirs_pressed[1] {
+            right_pressed = true;
+        }
+        // Apply vector length to velocity Y
+        if input.dirs_pressed[2] || input.jump_pressed {
+            up_pressed = true;
+        }
+        else if input.dirs_pressed[3] {
+            down_pressed = true;
+        }
+        if input.fire_pressed {
+            fire_pressed = true;
+
+            RunningState::Playing
+
+        }
+        else {
+            game_state.running_state.clone()
         }
 
     }
@@ -140,18 +169,31 @@ impl<'a> System<'a> for InputSystem {
 
         let time_delta = game_state.delta_seconds;
 
-        // tests collecting storage into vector
+        // Get vec of npc input components to handle       
+        let mut list = (&mut coll, &mut npc, &ent).join().collect::<Vec<_>>();
+        for inn_v in list.iter_mut() { 
+            // call npc input step
+            self.handle_npc_input(inn_v, &*input, &ent, &lazy, time_delta);
+        }  
+        drop(list);
+
+        let mut list = (&npc, &mut char_display).join().collect::<Vec::<_>>();
+        for inn_v in list.iter_mut() { 
+            let (npc_comp, char_comp) = inn_v;      
+            char_comp.facing_right = npc_comp.facing_right;
+            char_comp.going_left = npc_comp.going_left;
+            char_comp.going_right = npc_comp.going_right;
+            char_comp.going_up = npc_comp.going_up;
+            char_comp.going_down = npc_comp.going_down;
+            //char_comp.meowing = npc_comp.fire_pressed;
+        }        
+
+        drop(list);
+
+        // get vec of character components
         let mut list = (&mut coll, &mut char_display, &ent).join().collect::<Vec<_>>();
 
-        if list.len() > 1 {
-            println!("More than one player!");
-        }
-        else if list.len() == 0 {
-            println!("No players found!");
-        }
-
-        //let new_ent = ent.create();
-
+        // Pass vec of player input components to handler
         // handle each input applicable entity
         for inn_v in list.iter_mut() { 
             //let (vel, coll, _display, _e) = inn_v;      
@@ -159,24 +201,7 @@ impl<'a> System<'a> for InputSystem {
         }        
 
         drop(list);
+        
 
-        // call npc input step
-        let mut list = (&mut coll, &mut npc, &ent).join().collect::<Vec<_>>();
-        for inn_v in list.iter_mut() { 
-            //let (vel, coll, _display, _e) = inn_v;      
-            self.handle_npc_input(inn_v, &*input, &ent, &lazy, time_delta);
-        }  
-
-        //self.handle_player_list(list, &*input, &ent, &lazy, time_delta);
-
-        // iterator over velocities with player components and input
-        //for (vel, _player, _e) in list.iter_mut() {        
-            //println!("Input proc for player {}", &player.player_name);    
-
-            
-        //}
     }
 }
-
-// handle ai sim input state to control Npcs
-pub struct NpcInputSystem;

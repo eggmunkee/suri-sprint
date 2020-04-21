@@ -72,6 +72,7 @@ impl SpriteConfig {
         sprite.scale.x = config.scale.0;
         sprite.scale.y = config.scale.1;
         sprite.alpha = config.alpha;
+        sprite.src = Rect::new(config.src.0, config.src.1, config.src.2, config.src.3);
         //sprite.an
 
         sprite
@@ -102,6 +103,10 @@ impl SpriteComponent {
             angle: 0.0,
             src: Rect::new(0.0, 0.0, 1.0, 1.0),
         }
+    }
+
+    pub fn set_src(&mut self, src: &(f32, f32, f32, f32)) {
+        self.src = Rect::new(src.0, src.1, src.2, src.3);
     }
 }
 
@@ -134,6 +139,9 @@ impl super::RenderTrait for SpriteComponent {
         if let Ok(mut texture) = texture_ref {
             let w = texture.width();
             let h = texture.height();
+            if self.src.x + self.src.h > 1.0 || self.src.y + self.src.h > 1.0 {
+                //println!("Rendering source outside image: {:?}", &self.src);
+            }
             texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
             if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
                     .src(self.src)

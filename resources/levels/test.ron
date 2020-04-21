@@ -7,7 +7,14 @@ LevelConfig(
     items: [
         Player ( x: 30.0, y: 30.0 ),
         
-        Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, ),
+        Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
+
+        Sprite ( x: 2645.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-2.75,-3.9,5.5,7.8), ),
+
+        Sprite ( x: 2265.0, y: 222.0, sprite: "entities/white-tile-bg", z: 5.0, angle: 0.1, src: (0,-1.95,1.0,3.9), ),
+        Sprite ( x: 2265.0, y: 775.0, sprite: "entities/white-tile-bg", z: 5.0, angle: 0.0, src: (0,-1.75,1.0,3.5), ),
+
+        Sprite ( x: 2420.0, y: 585.0, sprite: "entities/white-tile-bg", z: 6.0, angle: 1.52, src: (0,-1.6,0.3,3.2), ),
 
         Portal ( x: 1000.0, y: -50.0, w: 30.0, name: "portal_fun", destination: "portal_a", enabled: true),
 

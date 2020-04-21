@@ -1,9 +1,9 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/button-trigger-red.png",
+    path: "/button.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 1.0,
     angle: 0.0,
-    src: (0.0, 0.0, 1.0, 1.0),
+    src: (0.138, 0.125, 0.72, 0.35),
 )

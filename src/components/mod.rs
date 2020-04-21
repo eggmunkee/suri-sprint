@@ -8,6 +8,7 @@ use specs_derive::*;
 
 use crate::game_state::{GameState};
 
+pub mod logic;
 pub mod sprite;
 pub mod button;
 pub mod player;
@@ -50,24 +51,24 @@ pub struct Velocity {
 
 //pub type draw_fn = fn(game_state: &mut GameState, entity: &Entity, ctx: &mut Context) -> GameResult<()>;
 
-pub enum DisplayCompType {
-    DrawCircle,
-    DrawSelf
-}
-impl fmt::Debug for DisplayCompType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        //let ds = f.debug_struct("DisplayCompType");
-        match self {
-            DisplayCompType::DrawCircle => {
-                f.write_str("DrawCircle")?;
-            },
-            DisplayCompType::DrawSelf => {
-                f.write_str("DrawSelf")?;
-            }
-        }
-        Ok(())
-    }
-}
+// pub enum DisplayCompType {
+//     DrawCircle,
+//     DrawSelf
+// }
+// impl fmt::Debug for DisplayCompType {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         //let ds = f.debug_struct("DisplayCompType");
+//         match self {
+//             DisplayCompType::DrawCircle => {
+//                 f.write_str("DrawCircle")?;
+//             },
+//             DisplayCompType::DrawSelf => {
+//                 f.write_str("DrawSelf")?;
+//             }
+//         }
+//         Ok(())
+//     }
+// }
 
 // #[derive(Debug,Component)]
 // #[storage(VecStorage)]
@@ -105,9 +106,9 @@ pub fn register_components(world: &mut World) {
     // register components
     world.register::<Position>();
     world.register::<Velocity>();
-    //world.register::<DisplayComp>();
     
     // sub-module components
+    self::logic::register_components(world);
     self::sprite::register_components(world);
     self::collision::register_components(world);
     self::player::register_components(world);

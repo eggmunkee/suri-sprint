@@ -34,12 +34,21 @@ impl ButtonComponent {
             is_pressed: false,
             name: name,
             repeat_trigger: true,
-            trigger_cooldown: 0.5,
+            trigger_cooldown: 1.0,
             timer: 1.0,
             triggered: false,
         };
 
         button
+    }
+
+    pub fn is_active(&self) -> bool {
+        if self.is_pressed && self.timer == DOWN_TO_TRIGGER {
+            true
+        }
+        else {
+            false
+        }
     }
 
     pub fn set_trigger(&mut self, trigger_id: i32) {

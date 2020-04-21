@@ -66,6 +66,7 @@ pub struct GameState {
     pub current_state: State,
     pub running_state: RunningState,
     pub mode: GameMode,
+    pub current_level_name: String,
     pub level: LevelConfig,
     pub window_w: f32,
     pub window_h: f32,
@@ -86,6 +87,8 @@ pub struct GameState {
     pub level_warping: bool,
     pub level_warp_timer: f32,
     pub warp_level_name: String,
+    // paused anim
+    pub paused_anim: f32,
 }
 
 impl GameState {
@@ -115,9 +118,10 @@ impl GameState {
         let s = GameState { 
             window_title: title,
             current_state: State::Running,
-            running_state: RunningState::Playing, 
-            //running_state: RunningState::Dialog("Loading game".to_string()),
+            //running_state: RunningState::Playing, 
+            running_state: RunningState::Dialog("Loading game".to_string()),
             mode: GameMode::Play,
+            current_level_name: "start".to_string(),
             level: LevelConfig::new(),
             window_w: win_w,
             window_h: win_h,
@@ -134,6 +138,7 @@ impl GameState {
             level_warping: false,
             level_warp_timer: 0.0,
             warp_level_name: String::from(""),
+            paused_anim: 0.0,
         };
 
         Ok(s)
@@ -146,7 +151,7 @@ impl GameState {
     pub fn pause(&mut self) {
         let curr_st = self.current_state;
         match curr_st {
-            State::Running => { self.current_state = State::Paused; }
+            State::Running => { self.current_state = State::Paused; self.paused_anim = 0.0; }
             _ => {}
         }        
     }
@@ -169,19 +174,6 @@ impl GameState {
   
 
     pub fn run_update_systems(&mut self, ctx: &mut Context, time_delta: f32) {
-
-        let mut time_delta = time_delta;
-        if self.level_warping {
-            self.level_warp_timer += time_delta;
-            //time_delta *= 0.25;
-
-            if self.level_warp_timer > WARP_TIME_LIMIT {
-                let level_name = self.warp_level_name.clone();
-                self.load_level(ctx, level_name);
-                self.level_warp_timer = 0.0;
-                self.level_warping = false;
-            }
-        }
 
         let world = &mut self.world;
 
@@ -370,6 +362,15 @@ impl GameState {
         }
     }
 
+    pub fn run_dialog_update(&mut self, ctx: &mut Context, time_delta: f32) {
+        
+        {
+            let mut world = &mut self.world;
+            let mut input_sys = InputSystem::new();
+            input_sys.run_now(&world);
+        }
+    }
+
 
     pub fn run_post_physics_update(&mut self, ctx: &mut Context, time_delta: f32) {
         //let world = &mut self.world;
@@ -494,11 +495,19 @@ impl GameState {
 
     }
 
-    pub fn process_time_delta(&mut self, time_delta: f32) -> f32 {
+    pub fn process_time_delta(&mut self, ctx: &mut Context, time_delta: f32) -> f32 {
         let mut time_delta = time_delta;
         if self.level_warping {
             self.level_warp_timer += time_delta;
             time_delta *= WARP_TIME_SCALE;
+
+            if self.level_warp_timer > WARP_TIME_LIMIT {
+                let level_name = self.warp_level_name.clone();
+                self.load_level(ctx, level_name);
+                self.level_warp_timer = 0.0;
+                self.level_warping = false;
+            }
+    
         }
         time_delta
     }
@@ -506,11 +515,12 @@ impl GameState {
     pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
 
         // Pre-process frame time
-        let time_delta = self.process_time_delta(time_delta);
+        let time_delta = self.process_time_delta(ctx, time_delta);
 
         // Save frame time
         self.set_frame_time(time_delta);
 
+        let mut new_state = self.running_state.clone();
         match &self.running_state { 
             RunningState::Playing => {
                 // Update components
@@ -527,10 +537,11 @@ impl GameState {
                 self.run_post_physics_update(ctx, time_delta);
             },
             RunningState::Dialog(_message) => {
-                
+                let input_res = self.world.fetch::<InputResource>();
+                new_state = InputSystem::handle_dialog_input(&input_res, &self, time_delta);
             }
         }
-        
+        self.running_state = new_state;
     }
 
     pub fn clear_world(&mut self) {
@@ -574,6 +585,8 @@ impl GameState {
     }
 
     pub fn load_level(&mut self, ctx: &mut Context, level_name: String) {
+        self.current_level_name = level_name.clone();
+        self.running_state = RunningState::Dialog(format!("Level {}", &level_name));
 
         self.clear_world();
         self.clear_physics();
@@ -615,8 +628,11 @@ impl event::EventHandler for GameState {
                 self.run_update_step(ctx, delta_s);
 
             },
-            _ => {
-                
+            State::Paused => {
+                self.paused_anim += delta_s;
+                if self.paused_anim > 1.0 {
+                    self.paused_anim = 1.0;
+                }
             }
         }
 
@@ -627,7 +643,7 @@ impl event::EventHandler for GameState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         // Call rendering module        
 
-        let mut renderer = render::Renderer::new();
+        let mut renderer = render::Renderer::new(self.paused_anim);
 
         let gr = renderer.render_frame(self, &self.world, ctx);
 
@@ -724,7 +740,12 @@ impl event::EventHandler for GameState {
                     self.play();
                 },
                 State::Running => {
-                    self.pause();
+                    match self.running_state {
+                        RunningState::Playing => {
+                            self.pause();
+                        },
+                        _ => {} // don't pause on dialogs
+                    }
                 }
             }
         }
@@ -760,6 +781,7 @@ impl event::EventHandler for GameState {
                 self.display_scale += 0.05;
             }            
         }
+        // toggle edit mode - showing original level layout
         else if keycode == KeyCode::F1 {
             if self.mode == GameMode::Play {
                 self.mode = GameMode::Edit;
@@ -768,8 +790,9 @@ impl event::EventHandler for GameState {
                 self.mode = GameMode::Play;
             }
         }
+        // reload current level
         else if keycode == KeyCode::R {
-            self.load_level(ctx, "test_small".to_string());
+            self.load_level(ctx, self.current_level_name.clone());
         }
 
         InputMap::key_up(&mut self.world, ctx, keycode, keymod);

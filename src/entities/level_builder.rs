@@ -74,7 +74,7 @@ pub enum LevelItem {
         x: f32, y: f32,
     },
     Sprite {
-        x: f32, y: f32, sprite: String, angle: f32,
+        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32),
     },
     Portal {
         x: f32, y: f32, w: f32, name: String, destination: String, enabled: bool,
@@ -121,6 +121,7 @@ impl LevelConfig {
             match item {
                 LevelItem::Player{ x, y } => {
                     SuriBuilder::build(world, ctx, physics_world, *x, *y);
+                    //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
                 },
                 LevelItem::Platform{ x, y, w, h, ang} => {
                     PlatformBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
@@ -140,10 +141,12 @@ impl LevelConfig {
                 LevelItem::Ghost{ x, y } => {
                     GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
-                LevelItem::Sprite{ x, y, sprite, angle } => {
+                LevelItem::Sprite{ x, y, z, sprite, angle, src } => {
                     let sprite_path = &*sprite;
                     let mut sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
                     sprite.angle = *angle;
+                    sprite.z_order = *z;
+                    sprite.set_src(&src); 
 
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
                     //GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
