@@ -1,8 +1,9 @@
 use ggez::{ContextBuilder};
 use ggez::conf::{WindowSetup,WindowMode,FullscreenType,NumSamples};
-use serde::{Deserialize,de::DeserializeOwned};
-use std::{ fs::File};
+use serde::{Serialize,Deserialize,de::DeserializeOwned};
+use std::{fs,fs::File};
 use ron::de::from_reader;
+use ron::ser::{to_string_pretty, PrettyConfig};
 
 
 #[derive(Debug,Deserialize)]
@@ -28,6 +29,22 @@ pub fn get_ron_config<'a,T>(config_path: String) -> Option<T>
     }
 
     None
+}
+
+pub fn save_ron_config<'a,T>(config_path: String, config: &T) -> bool
+    where T: Serialize
+{
+    let input_path = format!("{}/resources/{}.ron", env!("CARGO_MANIFEST_DIR"), &config_path);
+
+    //if let Ok(mut f) = File::create(&input_path) {
+        if let Ok(source) = to_string_pretty(config, PrettyConfig::default()) {
+            //let buf = &source;
+            fs::write(&input_path, source);
+        }
+    //}
+   
+    true
+    //None
 }
 
 

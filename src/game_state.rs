@@ -29,6 +29,7 @@ use crate::components::button::{ButtonComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
 use crate::systems::{InterActorSys,InputSystem};
+use crate::systems::logic::{LogicSystem};
 use crate::world::{create_world,create_dispatcher};
 use crate::entities::level_builder::{LevelConfig,LevelBounds};
 use crate::entities::ghost::{GhostBuilder};
@@ -176,6 +177,12 @@ impl GameState {
     pub fn run_update_systems(&mut self, ctx: &mut Context, time_delta: f32) {
 
         let world = &mut self.world;
+
+        {
+            //let mut world = &mut self.world;
+            let mut logic_sys = LogicSystem {};
+            logic_sys.run_now(&world);
+        }
 
         // Run Input System - Mainly handle meow creation right now
         {
@@ -569,6 +576,13 @@ impl GameState {
         self.warp_level_name = level_name;
         self.level_warping = true;
         self.level_warp_timer = 0.0;
+    }
+
+    pub fn save_level(&self, save_name: String) {
+        // TEST CODE TO SAVE LEVEL CONFIG
+        let mut save_path = String::from("levels/");
+        save_path.push_str(&save_name);
+        crate::conf::save_ron_config(save_path, &self.level);
     }
 
     pub fn actual_load_level(&mut self, ctx: &mut Context, level_name: String) {

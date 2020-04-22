@@ -10,23 +10,29 @@ LevelConfig(
         Sprite ( x: 350.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
         Sprite ( x: 350.0, y: 300.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-2.95,-2.5,5.9,5), ),
 
-        Button ( x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "mouse",),
+        Button ( x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "btna",),
         Platform ( x: 60.0, y: 400.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        Button ( x: 450.0, y: 231.0, w: 60.0, h: 15.0, ang: 0.0, name: "mouse",),
+        Button ( x: 450.0, y: 231.0, w: 60.0, h: 15.0, ang: 0.0, name: "btnb",),
         Platform ( x: 450.0, y: 250.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        Button ( x: 290.0, y: 581.0, w: 30.0, h: 6.0, ang: 0.0, name: "mouse",),
+        Button ( x: 290.0, y: 581.0, w: 30.0, h: 6.0, ang: 0.0, name: "btnc",),
 
         Platform ( x: 275.0, y: 599.0, w: 125.0, h: 15.0, ang: 0.0),
 
-        Platform ( x: 655.0, y: 599.0, w: 50.0, h: 15.0, ang: 0.0),
+        Platform ( x: 600.0, y: 599.0, w: 100.0, h: 15.0, ang: 0.0),
 
         //DynEmptyBox ( x: 200.0, y: 300.0, w: 50.0, h: 50.0, ang: 0.0),
 
         Exit ( x: 500.0, y: 500.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
 
         Ghost ( x: 200.0, y: 100.0 ),
+
+        Portal ( x: 100.0, y: 100.0, w: 20, name: "portA", destination: "", enabled: true ),
+
+        Connection ( from: "btna", to: "mouse", conn_type: Switch ),
+        //Connection ( from: "btnb", to: "btnc", conn_type: Switch ),
+        Connection ( from: "btnc", to: "portA", conn_type: Switch ),
 
     ],
 )

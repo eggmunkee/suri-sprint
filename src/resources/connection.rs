@@ -28,13 +28,40 @@ impl ConnectionResource {
             value_register: HashMap::new(),
         }
     }
-    pub fn set_value(&mut self, input_key: &str, value: bool) {
+    pub fn set_value(&mut self, input_key: &str, value: bool, flagged: bool) {
         if let Some( (ref mut val, ref mut flag)) = self.value_register.get_mut(input_key) {
             *val = value;
-            *flag = false;
+            *flag = flagged;
         }
         else {
-            self.value_register.insert(input_key.to_string(), (value, false));
+            self.value_register.insert(input_key.to_string(), (value, flagged));
+        }
+    }
+
+    pub fn get_value(&mut self, input_key: &str) -> bool {
+        if let Some( (ref val, ref flag)) = self.value_register.get(input_key) {
+            *val
+        }
+        else {
+            println!("Value not found {}", input_key );
+            false
+        }
+    }
+
+    pub fn set_flagged(&mut self, input_key: &str, flagged: bool) {
+        if let Some( (ref mut val, ref mut flag)) = self.value_register.get_mut(input_key) {
+            *flag = flagged;
+        }
+        else {
+            self.value_register.insert(input_key.to_string(), (false, flagged));
+        }
+    }
+    pub fn get_flagged(&mut self, input_key: &str) -> bool {
+        if let Some( (ref val, ref flag)) = self.value_register.get(input_key) {
+            *flag
+        }
+        else {
+            false
         }
     }
 
@@ -64,9 +91,13 @@ impl ConnectionResource {
             in_value = *val;
             println!("Applying {} input value {}", &input_key, &in_value);
         }
+        else {
+            println!("No value to apply for {}", &input_key);
+            return;
+        }
         for out_key in output_vars {
             println!("Applying {} output value {}", &out_key, &in_value);
-            self.set_value(&out_key, in_value);
+            self.set_value(&out_key, in_value, true);
         }
     }
 

@@ -2,11 +2,12 @@
 
 use ggez::{Context};
 use specs::{World,WorldExt,Builder};
-use serde::{Deserialize};
+use serde::{Deserialize,Serialize};
 
 
 use crate::conf::*;
 use crate::components::sprite::*;
+use crate::components::logic::*;
 use crate::components::{Position};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::empty_box::{BoxBuilder};
@@ -18,11 +19,12 @@ use crate::entities::ghost::{GhostBuilder};
 use crate::entities::bowl::{BowlBuilder};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
+use crate::resources::{ConnectionResource};
 use crate::physics::{PhysicsWorld,CollisionCategory};
 
 
 #[allow(dead_code)]
-#[derive(Clone,Debug,Deserialize)]
+#[derive(Clone,Debug,Deserialize,Serialize)]
 pub struct LevelBounds {
     pub min_x: f32,
     pub min_y: f32,
@@ -50,7 +52,7 @@ impl LevelBounds {
 }
 
 #[allow(dead_code)]
-#[derive(Clone,Debug,Deserialize)]
+#[derive(Clone,Debug,Deserialize,Serialize)]
 pub enum LevelItem {
     Player {
         x: f32, y: f32,
@@ -84,11 +86,14 @@ pub enum LevelItem {
     },
     Bowl {
         x: f32, y: f32,
+    },
+    Connection {
+        from: String, to: String, conn_type: ConnectionType,
     }
 }
 
 
-#[derive(Clone,Debug,Deserialize)]
+#[derive(Clone,Debug,Deserialize,Serialize)]
 pub struct LevelConfig {
     pub name: String,
     pub bounds: LevelBounds,
@@ -159,6 +164,12 @@ impl LevelConfig {
                 },
                 LevelItem::Bowl { x, y } => {
                     BowlBuilder::build(world, ctx, physics_world, *x, *y);
+                },
+                LevelItem::Connection { from, to, conn_type } => {
+                    let mut connection_res = world.fetch_mut::<ConnectionResource>();
+
+                    let mut connection = &mut *connection_res;
+                    connection.add_connection(from.clone(), to.clone());
                 },
                 _ => {}
             }

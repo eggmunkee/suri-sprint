@@ -9,6 +9,7 @@ use crate::game_state::{GameState};
 use crate::resources::{GameStateResource};
 use crate::components::{Position};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
+use crate::components::logic::{LogicComponent};
 use crate::components::collision::{Collision};
 use crate::components::portal::{PortalComponent};
 use crate::physics::{PhysicsWorld,CollisionCategory};
@@ -19,13 +20,15 @@ impl PortalBuilder {
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
         width: f32, name: String, destination: String, enabled: bool) -> Entity {
 
-        let mut portal = PortalComponent::new(name, destination);
+        let mut portal = PortalComponent::new(name.clone(), destination);
         portal.is_enabled = enabled;
 
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/portal".to_string());
         sprite.scale.x = width / 24.0;
         sprite.scale.y = width / 24.0;
         sprite.z_order = SpriteLayer::PlayerBehind.to_z();
+
+        let logic = LogicComponent::new(name, true);
 
         let mut collision = Collision::new_specs(0.1,0.72, width * 0.5, width * 0.5);
         // collision.dim_1 = width;
@@ -47,6 +50,7 @@ impl PortalBuilder {
 
         let entity = world.create_entity()
         .with(portal)
+        .with(logic)
         .with(Position { x: x, y: y })
         .with(sprite)
         .with(collision)

@@ -4,16 +4,48 @@ use specs::{Component, DenseVecStorage, World, WorldExt};
 use specs_derive::*;
 use wrapped2d::b2;
 use rand::prelude::*;
-
+use serde::{Deserialize,de::DeserializeOwned,Serialize};
 
 use crate::components::sprite::{SpriteComponent};
 use crate::components::collision::{Collision};
 use crate::physics;
 use crate::physics::{PhysicsWorld};
 
+#[derive(Debug,Clone,Deserialize,Serialize)]
+pub enum ConnectionType {
+    SwitchOnce,
+    Switch,
+    NotSwitch,
+}
+
+impl Default for ConnectionType {
+    fn default() -> Self {
+        Self::Switch
+    }
+}
+
+#[derive(Debug,Default,Deserialize,Serialize)]
+pub struct LogicConnection {
+    pub from: String,
+    pub to: String,
+    pub conn_type: ConnectionType,
+}
+
+impl LogicConnection {
+    pub fn new(frm: String, t: String, cntype: ConnectionType) -> Self {
+        LogicConnection {
+            from: frm,
+            to: t,
+            conn_type: cntype,
+        }
+    }
+}
+
+
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
 pub struct LogicComponent {
+    pub id: String,
     pub initial_value: bool, // base value
     pub input_value: bool,
     pub value: bool, // the node's result value
@@ -21,12 +53,13 @@ pub struct LogicComponent {
 }
 
 impl LogicComponent {
-    pub fn new(is_enabled: bool) -> LogicComponent {
+    pub fn new(id: String, is_enabled: bool) -> LogicComponent {
 
         let mut logic = LogicComponent {
-            initial_value: is_enabled,
+            id: id,
+            initial_value: !is_enabled,
             input_value: false,
-            value: is_enabled,
+            value: !is_enabled,
             is_active: false,
         };
 
@@ -38,7 +71,7 @@ impl LogicComponent {
         if self.input_value {
             calc_val = !calc_val;
         }
-        if self.is_active {
+        else if self.is_active {
             calc_val = !calc_val;
         }
         self.value = calc_val;
@@ -59,7 +92,6 @@ impl LogicComponent {
     }
 
 }
-
 
 
 // Register all possible components for world

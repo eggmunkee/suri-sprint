@@ -14,7 +14,7 @@ use crate::components::button::{ButtonComponent,ButtonTriggerComponent};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer,MultiSpriteComponent};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
-use crate::components::player::{CharacterDisplayComponent};
+use crate::components::logic::{LogicComponent};
 use crate::systems::*;
 use crate::physics::*;
 
@@ -30,7 +30,7 @@ impl ButtonBuilder {
         width: f32, height: f32, angle: f32, name: String) -> (Entity, Entity) {
 
         // BUTTON ENTITY
-        let mut button = ButtonComponent::new(name);
+        let mut button = ButtonComponent::new(name.clone());
         
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/button-base".to_string());
@@ -54,8 +54,12 @@ impl ButtonBuilder {
 
         let body_handle_clone = collision.body_handle.clone();
 
+        let logic = LogicComponent::new(name, true);
+        //logic.
+
         let button_entity = world.create_entity()
         .with(button)
+        .with(logic)
         .with(Position { x: x, y: y })
         .with(sprite)
         .with(collision)
@@ -79,10 +83,10 @@ impl ButtonBuilder {
         sprite.z_order = SpriteLayer::World.to_z() - 10.0;
         //sprite.rotation = angle;
         sprite.scale.x *= (width * 0.75) / 18.0;
-        sprite.scale.y *= (height * 0.6) / 3.0;
+        sprite.scale.y *= (height * 0.4) / 3.0;
         
 
-        let mut collision = Collision::new_specs(10.0,0.25, width * 0.75, height * 0.6);
+        let mut collision = Collision::new_specs(10.0,0.25, width * 0.75, height * 0.4);
         collision.pos.x = x;
         collision.pos.y = y + height * 0.25;
         collision.angle = angle;
@@ -155,8 +159,8 @@ impl ButtonBuilder {
                 // b2::Vec2 { x: 0.5 * coll_w, y: -0.5 * coll_h + off_y },
 
                 b2::Vec2 { x: 0.65 * coll_w, y: -0.1 * coll_h },
-                b2::Vec2 { x: 0.1 * coll_w, y: -coll_h },
-                b2::Vec2 { x: -0.1 * coll_w, y: -coll_h },
+                b2::Vec2 { x: 0.2 * coll_w, y: -0.9 * coll_h },
+                b2::Vec2 { x: -0.2 * coll_w, y: -0.9 * coll_h },
                 b2::Vec2 { x: -0.65 * coll_w, y: -0.1 * coll_h },
                 //b2::Vec2 { x: -0.1 * coll_w, y: 0.5 * coll_h },
                 b2::Vec2 { x: -1.0 * coll_w, y: coll_h },
@@ -233,10 +237,10 @@ impl ButtonBuilder {
         let joint_def = b2::PrismaticJointDef {
             enable_limit: true,
             lower_translation: create_size(height* 0.0),
-            upper_translation: create_size(height*1.1),
+            upper_translation: create_size(height*0.8),
             local_axis_a: b2::Vec2 { x: 0.0, y: -1.0 }, 
             enable_motor: true,
-            max_motor_force: 5.0,
+            max_motor_force: 2.5,
             motor_speed: 10.0,
             .. b2::PrismaticJointDef::new(button_body_handle.clone(), trigger_body_handle.clone())
         };

@@ -78,7 +78,7 @@ impl PlatformBuilder {
         sprite.scale.x *= width / 24.0;
         sprite.scale.y *= height / 24.0;
 
-        let npc = NpcComponent::new();
+        //let npc = NpcComponent::new();
 
         let mut collision = Collision::new_specs(3.0,0.25, width, height);
         // collision.dim_1 = width;
@@ -98,7 +98,7 @@ impl PlatformBuilder {
         let body_handle_clone = collision.body_handle.clone();
 
         let entity = world.create_entity()
-        .with(npc)
+        //.with(npc)
         .with(Position { x: x, y: y })
         //.with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false  })
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })

@@ -86,8 +86,6 @@ impl SuriBuilder {
         let sprite_config = maybe_config.unwrap();
         SpriteConfig::init_images(world, ctx, sprite_config.path.clone());
 
-        let npc = NpcComponent::new();
-
         // Create collision component
         let mut collision = Collision::new_specs(3.0,0.001, 18.0, 18.0);
         collision.pos.x = x;
