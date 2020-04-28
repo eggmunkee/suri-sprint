@@ -30,8 +30,10 @@ impl ConnectionResource {
     }
     pub fn set_value(&mut self, input_key: &str, value: bool, flagged: bool) {
         if let Some( (ref mut val, ref mut flag)) = self.value_register.get_mut(input_key) {
+            if flagged && *val != value {
+                *flag = true;
+            }
             *val = value;
-            *flag = flagged;
         }
         else {
             self.value_register.insert(input_key.to_string(), (value, flagged));

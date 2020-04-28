@@ -29,8 +29,12 @@ LevelConfig(
         Platform ( x: 3500.0, y: 2900.0, w: 600.0, h: 20.0, ang: -0.15),
         Ghost ( x: 300.0, y: 2900.0 ),
 
-        Sprite ( x: 3500.0, y: 2450.0, sprite: "entities/tile-bg", z: 1.0, angle: 1.57, src: (-2,-2,2,2), ),
+        Sprite ( x: 3505.0, y: 2455.0, sprite: "entities/white-tile-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
 
+        // platforms are "roof" over exit to avoid exit that way
+        Platform ( x: 3400.0, y: 2380.0, w: 103.0, h: 15.0, ang: -0.16),
+        Platform ( x: 3600.0, y: 2380.0, w: 103.0, h: 15.0, ang: 0.16),
         Exit (x: 3500.0, y: 2450.0, w: 20.0, h: 20.0, name: "exit", destination: "start" ) ,
+        Platform ( x: 3500.0, y: 2520.0, w: 80.0, h: 15.0, ang: 0),
     ],
 )

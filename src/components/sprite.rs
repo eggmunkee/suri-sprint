@@ -89,6 +89,8 @@ pub struct SpriteComponent {
     pub alpha: f32,
     pub angle: f32,
     pub src: Rect,
+    pub visible: bool,
+    pub toggleable: bool,
 }
 
 impl SpriteComponent {
@@ -102,6 +104,8 @@ impl SpriteComponent {
             alpha: 1.0,
             angle: 0.0,
             src: Rect::new(0.0, 0.0, 1.0, 1.0),
+            visible: true,
+            toggleable: false,
         }
     }
 
@@ -113,7 +117,8 @@ impl SpriteComponent {
 
 impl super::RenderTrait for SpriteComponent {
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
-        //println!("BallRender...");
+        if !self.visible { return; }
+
         let mut rng = rand::thread_rng();
 
         // get sprite base angle

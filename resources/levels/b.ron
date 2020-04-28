@@ -12,8 +12,8 @@ LevelConfig(
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 
         Platform ( x: 700.0, y: 600.0, w: 80.0, h: 20.0, ang: 0.0),
-        Platform ( x: 200.0, y: 400.0, w: 140.0, h: 20.0, ang: 0.0),
-        Platform ( x: 450.0, y: 200.0, w: 100.0, h: 20.0, ang: 0.0),
+        Platform ( x: 200.0, y: 400.0, w: 40.0, h: 20.0, ang: 0.0),
+        Platform ( x: 450.0, y: 200.0, w: 50.0, h: 20.0, ang: 0.0),
 
         Exit ( x: 900.0, y: 100.0, w: 28.0, h: 28.0, name: "", destination: "c"),
 

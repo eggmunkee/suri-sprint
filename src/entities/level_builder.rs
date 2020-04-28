@@ -78,6 +78,9 @@ pub enum LevelItem {
     Sprite {
         x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32),
     },
+    DynSprite {
+        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), name: String, is_enabled: bool,
+    },
     Portal {
         x: f32, y: f32, w: f32, name: String, destination: String, enabled: bool,
     },
@@ -146,7 +149,7 @@ impl LevelConfig {
                 LevelItem::Ghost{ x, y } => {
                     GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
                 },
-                LevelItem::Sprite{ x, y, z, sprite, angle, src } => {
+                LevelItem::Sprite{ x, y, z, sprite, angle, src} => {
                     let sprite_path = &*sprite;
                     let mut sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
                     sprite.angle = *angle;
@@ -154,7 +157,17 @@ impl LevelConfig {
                     sprite.set_src(&src); 
 
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
-                    //GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
+                },
+                LevelItem::DynSprite{ x, y, z, sprite, angle, src, name, is_enabled } => {
+                    let sprite_path = &*sprite;
+                    let mut sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
+                    sprite.angle = *angle;
+                    sprite.z_order = *z;
+                    sprite.toggleable = true;
+                    sprite.set_src(&src); 
+
+                    let logic_comp = LogicComponent::new((*name).to_string(), *is_enabled);
+                    world.create_entity().with(sprite).with(logic_comp).with(Position { x: *x, y: *y }).build();
                 },
                 LevelItem::Portal { x, y, w, name, destination, enabled } => {
                     PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string(), *enabled);

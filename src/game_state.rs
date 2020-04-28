@@ -18,6 +18,7 @@ use wrapped2d::b2;
 use wrapped2d::user_data::*;
 // =====================================
 
+use crate::audio::{Audio};
 use crate::resources::{InputResource,WorldAction,GameStateResource};
 use crate::components::{Position,Velocity};
 use crate::components::collision::{Collision};
@@ -41,7 +42,7 @@ use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
 use crate::render;
 use crate::input::{InputMap,MouseInput};
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug,PartialEq)]
 pub enum RunningState {
     Playing, // normal playing state - world & physics running
     Dialog(String),  // dialog being shown state - world paused
@@ -90,6 +91,8 @@ pub struct GameState {
     pub warp_level_name: String,
     // paused anim
     pub paused_anim: f32,
+    // audio
+    pub audio: Audio,
 }
 
 impl GameState {
@@ -140,6 +143,7 @@ impl GameState {
             level_warp_timer: 0.0,
             warp_level_name: String::from(""),
             paused_anim: 0.0,
+            audio: Audio::new(),
         };
 
         Ok(s)
@@ -148,11 +152,26 @@ impl GameState {
 }
 
 impl GameState {
+
+    pub fn play_music(&mut self, ctx: &mut Context) {
+        self.audio.set_dimmed(false);
+        self.audio.play_music(ctx, "/audio/Suri Theme 1.mp3".to_string());
+    }
+
+    pub fn dim_music(&mut self, ctx: &mut Context) {
+        //self.audio.stop_music(ctx);
+        self.audio.set_dimmed(true);
+    }
+
     #[allow(dead_code)]
     pub fn pause(&mut self) {
         let curr_st = self.current_state;
         match curr_st {
-            State::Running => { self.current_state = State::Paused; self.paused_anim = 0.0; }
+            State::Running => { 
+                self.current_state = State::Paused;
+                self.paused_anim = 0.0;
+                self.audio.pause_music();
+            }
             _ => {}
         }        
     }
@@ -160,7 +179,10 @@ impl GameState {
     pub fn play(&mut self) {
         let curr_st = self.current_state;
         match curr_st {
-            State::Paused => { self.current_state = State::Running; }
+            State::Paused => { 
+                self.current_state = State::Running; 
+                self.audio.resume_music();
+            }
             _ => {}
         }        
     }
@@ -173,6 +195,18 @@ impl GameState {
 
     }
   
+    pub fn set_running_state(&mut self, ctx: &mut Context, new_state: RunningState) {
+        match new_state {
+            RunningState::Playing => {
+                self.play_music(ctx);
+            },
+            RunningState::Dialog(_) => {
+                self.dim_music(ctx);
+            }
+        }
+
+        self.running_state = new_state;
+    }
 
     pub fn run_update_systems(&mut self, ctx: &mut Context, time_delta: f32) {
 
@@ -528,6 +562,7 @@ impl GameState {
         self.set_frame_time(time_delta);
 
         let mut new_state = self.running_state.clone();
+        let mut state_change = false;
         match &self.running_state { 
             RunningState::Playing => {
                 // Update components
@@ -546,9 +581,14 @@ impl GameState {
             RunningState::Dialog(_message) => {
                 let input_res = self.world.fetch::<InputResource>();
                 new_state = InputSystem::handle_dialog_input(&input_res, &self, time_delta);
+                if new_state == RunningState::Playing {
+                    state_change = true;
+                }
             }
         }
-        self.running_state = new_state;
+        if state_change {
+            self.set_running_state(ctx, new_state); //running_state = new_state;
+        }
     }
 
     pub fn clear_world(&mut self) {
@@ -601,6 +641,10 @@ impl GameState {
     pub fn load_level(&mut self, ctx: &mut Context, level_name: String) {
         self.current_level_name = level_name.clone();
         self.running_state = RunningState::Dialog(format!("Level {}", &level_name));
+
+        self.audio.set_dimmed(true);
+        self.audio.play_music(ctx, "/audio/Suri Theme 1.mp3".to_string());
+        //self.stop_music(ctx);
 
         self.clear_world();
         self.clear_physics();

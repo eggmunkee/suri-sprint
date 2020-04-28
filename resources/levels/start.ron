@@ -8,7 +8,11 @@ LevelConfig(
         Player ( x: 80.0, y: 150.0 ),
 
         Sprite ( x: 350.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
-        Sprite ( x: 350.0, y: 300.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-2.95,-2.5,5.9,5), ),
+        Sprite ( x: 350.0, y: 300.0, sprite: "entities/dark-tile-bg", z: 5.0, angle: 0.0, src: (-2.95,-2.5,5.9,5),),
+        DynSprite ( x: 350.0, y: 300.0, sprite: "entities/white-tile-bg-overlay", z: 6.0, angle: 0.0, src: (-2.95,-2.5,5.9,5),
+            name:"tileswitch0", is_enabled: false),
+        DynSprite ( x: 350.0, y: 150.0, sprite: "entities/spotlight", z: 25.0, angle: 0.0, src: (0,0,1,1), 
+            name:"tileswitch", is_enabled: true),
 
         Button ( x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "btna",),
         Platform ( x: 60.0, y: 400.0, w: 75.0, h: 15.0, ang: 0.0),
@@ -24,15 +28,20 @@ LevelConfig(
 
         //DynEmptyBox ( x: 200.0, y: 300.0, w: 50.0, h: 50.0, ang: 0.0),
 
-        Exit ( x: 500.0, y: 500.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
+        Exit ( x: 500.0, y: 500.0, w: 25.0, h: 25.0, name: "", destination: "testa"),
 
         Ghost ( x: 200.0, y: 100.0 ),
 
-        Portal ( x: 100.0, y: 100.0, w: 20, name: "portA", destination: "", enabled: true ),
+        Portal ( x: 290.0, y: 540.0, w: 20, name: "portA", destination: "portB", enabled: true ),
+
+        Portal ( x: 450.0, y: 100.0, w: 20, name: "portB", destination: "", enabled: true ),
 
         Connection ( from: "btna", to: "mouse", conn_type: Switch ),
-        //Connection ( from: "btnb", to: "btnc", conn_type: Switch ),
-        Connection ( from: "btnc", to: "portA", conn_type: Switch ),
+        Connection ( from: "btnb", to: "tileswitch0", conn_type: Switch ),
+        Connection ( from: "btnb", to: "tileswitch", conn_type: Switch ),
+        //Connection ( from: "btnc", to: "portA", conn_type: Switch ),
+        Connection ( from: "btnb", to: "portA", conn_type: Switch ),
+        Connection ( from: "portA", to: "portB", conn_type: Switch ),
 
     ],
 )

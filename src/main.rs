@@ -17,6 +17,8 @@ mod physics;
 mod components;
 // Shared world data
 mod resources;
+// Audio module
+mod audio;
 // Systems which process world state updates
 mod systems;
 // Sets up the world
@@ -74,10 +76,9 @@ pub fn main() -> GameResult {
         //let mut phys_world = &mut state.phys_world;
     //level.build_level(&mut state.world, ctx, &mut state.phys_world);
 
-    //}
+    // To play default music at start
+    //state.play_music(ctx);
 
-
-    
     //filesystem::print_all(ctx);
     // run event loop
     event::run(ctx, event_loop, state)

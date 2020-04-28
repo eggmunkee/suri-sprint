@@ -1,0 +1,8 @@
+SpriteConfig(
+    spritesheet: false,
+    path: "/spotlight.png",
+    scale: (3.0, 3.0),
+    z_order: 20.0,
+    alpha: 0.5,
+    src: (0.0, 0.0, 1.0, 1.0),
+)

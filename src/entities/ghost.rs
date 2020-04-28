@@ -25,7 +25,7 @@ impl GhostBuilder {
         let npc = NpcComponent::new();
 
 
-        let mut collision = Collision::new_specs(1.0,0.25, dim_1, dim_2);
+        let mut collision = Collision::new_specs(1.0,0.5, dim_1, dim_2);
         //collision.dim_1 = dim_1;
         //collision.dim_2 = dim_2;
         collision.density = 0.05;

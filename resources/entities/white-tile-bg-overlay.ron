@@ -1,0 +1,8 @@
+SpriteConfig(
+    spritesheet: false,
+    path: "/white_messy_tile.png",
+    scale: (1.0, 1.0),
+    z_order: 1.0,
+    alpha: 0.125,
+    src: (-2.0, -2.0, 4.0, 4.0),
+)
