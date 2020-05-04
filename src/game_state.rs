@@ -155,7 +155,7 @@ impl GameState {
 
     pub fn play_music(&mut self, ctx: &mut Context) {
         self.audio.set_dimmed(false);
-        self.audio.play_music(ctx, "/audio/Suri Theme 1.mp3".to_string());
+        self.audio.play_music(ctx, "/audio/Suri Title theme.mp3".to_string());
     }
 
     pub fn dim_music(&mut self, ctx: &mut Context) {
@@ -487,33 +487,34 @@ impl GameState {
                     if let Some(portal) = portal_res.get(portal_ent) {
                         //println!("Portal info {:?}", &portal);
                         let portal_dest = portal.destination.clone();
+                        if portal_dest.is_empty() == false {
+                            if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
 
-                        if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
-
-                            //println!("Portal at {}, {}", &x, &y);
-                            pos.x = *x;
-                            pos.y = *y;
-                            let nvx = -coll.vel.x * 1.0;
-                            let nvy = -coll.vel.y * 1.0;
-                            //println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
-                            if nvx > 0.0 {
-                                facing_right = true;
+                                //println!("Portal at {}, {}", &x, &y);
+                                pos.x = *x;
+                                pos.y = *y;
+                                let nvx = -coll.vel.x * 1.0;
+                                let nvy = -coll.vel.y * 1.0;
+                                //println!("Vel update from {},{} to {},{}", &vel.x, &vel.y, &nvx, &nvy);
+                                if nvx > 0.0 {
+                                    facing_right = true;
+                                }
+                                else if nvx < 0.0 {
+                                    facing_right = false;
+                                }
+                                //vel.x = nvx;
+                                //vel.y = nvy;
+    
+                                coll.pos.x = *x;
+                                coll.pos.y = *y;
+                                coll.vel.x = nvx;
+                                coll.vel.y = nvy;
+                                coll.since_warp = 0.0;
+    
+                                // Update Position and Velocity of collider body
+                                coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
+                                coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(nvx, nvy));
                             }
-                            else if nvx < 0.0 {
-                                facing_right = false;
-                            }
-                            //vel.x = nvx;
-                            //vel.y = nvy;
-
-                            coll.pos.x = *x;
-                            coll.pos.y = *y;
-                            coll.vel.x = nvx;
-                            coll.vel.y = nvy;
-                            coll.since_warp = 0.0;
-
-                            // Update Position and Velocity of collider body
-                            coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
-                            coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(nvx, nvy));
                         }
                         
                     }
@@ -643,7 +644,7 @@ impl GameState {
         self.running_state = RunningState::Dialog(format!("Level {}", &level_name));
 
         self.audio.set_dimmed(true);
-        self.audio.play_music(ctx, "/audio/Suri Theme 1.mp3".to_string());
+        self.audio.play_music(ctx, "/audio/Suri Title theme.mp3".to_string());
         //self.stop_music(ctx);
 
         self.clear_world();
@@ -778,8 +779,18 @@ impl event::EventHandler for GameState {
                     self.display_scale += 0.05;
                 }            
             }
+            //
+            else if keycode == KeyCode::RBracket {
+                let new_level = (self.audio.base_music_volume + 0.05).min(1.0);
+                self.audio.set_volume(new_level);
+            }
+            else if keycode == KeyCode::LBracket {
+                let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
+                self.audio.set_volume(new_level);
+            }
     
         }
+
 
 
         InputMap::key_down(&mut self.world, ctx, keycode, keymod);
@@ -851,7 +862,17 @@ impl event::EventHandler for GameState {
         // reload current level
         else if keycode == KeyCode::R {
             self.load_level(ctx, self.current_level_name.clone());
+        }        
+        //
+        if keycode == KeyCode::RBracket {
+            let new_level = (self.audio.base_music_volume + 0.05).min(1.0);
+            self.audio.set_volume(new_level);
         }
+        else if keycode == KeyCode::LBracket {
+            let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
+            self.audio.set_volume(new_level);
+        }
+        
 
         InputMap::key_up(&mut self.world, ctx, keycode, keymod);
     }

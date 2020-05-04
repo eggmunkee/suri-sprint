@@ -17,7 +17,7 @@ impl Audio {
         Audio {
             music_source: None,
             song_path: String::new(),
-            base_music_volume: 0.3,
+            base_music_volume: 0.05, // .3
             dimmed_mult: 0.5,
             is_dimmed: false,
         }
@@ -36,6 +36,15 @@ impl Audio {
         match self.is_dimmed {
             true => self.base_music_volume * self.dimmed_mult,
             false => self.base_music_volume,
+        }
+    }
+
+    pub fn set_volume(&mut self, new_level: f32) {
+        if self.base_music_volume == new_level { return; }
+        self.base_music_volume = new_level;
+        let vol = self.curr_volume();
+        if let Some(ref mut source) = &mut self.music_source {
+            source.set_volume(vol);
         }
     }
 
