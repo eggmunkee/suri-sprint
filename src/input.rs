@@ -1,7 +1,7 @@
 
 
 use ggez::{Context};
-use ggez::event::{KeyCode,KeyMods};
+use ggez::event::{KeyCode,KeyMods,Axis,Button,GamepadId};
 use specs::{World, WorldExt};
 
 use crate::resources::{InputResource,WorldAction};
@@ -70,6 +70,34 @@ impl InputMap {
             _ => None
         }
     }
+    pub fn map_gamepadcode(button: &Button) -> Option<InputKey> {
+        //Some(InputKey::Left)
+
+        match button {
+            Button::DPadLeft => {
+                Some(InputKey::Left)
+            },
+            Button::DPadRight => {
+                Some(InputKey::Right)
+            },
+            Button::DPadUp => {
+                Some(InputKey::Up)
+            },
+            Button::DPadDown => {
+                Some(InputKey::Down)
+            },
+            Button::West | Button::South => {
+                Some(InputKey::SpaceAction)
+            },
+            Button::North | Button::East => {
+                Some(InputKey::AddCircle)
+            },
+            Button::Select => {
+                Some(InputKey::Exit)
+            },
+            _ => None
+        }
+    }
 
     pub fn key_down(world: &mut World,
         ctx: &mut Context,
@@ -110,12 +138,88 @@ impl InputMap {
         }
     }
 
+    pub fn gamepad_button_down(world: &mut World,
+        ctx: &mut Context,
+        btn: Button,
+        id: GamepadId) {
+
+        match Self::map_gamepadcode(&btn) {
+            Some(key) => match key {
+                InputKey::Left => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_left(true);
+                },
+                InputKey::Right => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_right(true);
+                },
+                InputKey::Up => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_up(true);
+                },
+                InputKey::Down => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_down(true);
+                },
+                InputKey::SpaceAction => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_fire(true);
+                    drop(input);
+
+                    //MeowBuilder::build(world, ctx, physics_world);
+                },
+                InputKey::Exit => {
+                    ggez::event::quit(ctx);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+
     pub fn key_up(world: &mut World,
         ctx: &mut Context,
         keycode: KeyCode,
         keymod: KeyMods,) {
 
         match Self::map_keycode(&keycode) {
+            Some(key) => match key {
+                InputKey::Left => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_left(false);
+                },
+                InputKey::Right => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_right(false);
+                },
+                InputKey::Up => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_up(false);
+                },
+                InputKey::Down => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_down(false);
+                },
+                InputKey::SpaceAction => {
+                    let mut input = world.fetch_mut::<InputResource>();
+                    input.set_fire(false);
+                },
+                // InputKey::AddCircle => {
+                //     let mut input = world.fetch_mut::<InputResource>();
+                //     input.add_action(WorldAction::AddCircle);
+                // },
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+
+    pub fn gamepad_button_up(world: &mut World,
+        ctx: &mut Context,
+        btn: Button,
+        id: GamepadId) {
+
+        match Self::map_gamepadcode(&btn) {
             Some(key) => match key {
                 InputKey::Left => {
                     let mut input = world.fetch_mut::<InputResource>();

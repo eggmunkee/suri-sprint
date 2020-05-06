@@ -3,6 +3,7 @@
 use ggez;
 use ggez::graphics;
 use ggez::event::{self, KeyCode, KeyMods, MouseButton};
+use ggez::event::{GamepadId, Button, Axis};
 //use winit::dpi::{LogicalPosition};
 //use ggez::graphics;
 use ggez::nalgebra as na;
@@ -879,6 +880,37 @@ impl event::EventHandler for GameState {
         
 
         InputMap::key_up(&mut self.world, ctx, keycode, keymod);
+    }
+
+    fn gamepad_button_down_event(
+        &mut self,
+        ctx: &mut Context,
+        btn: Button,
+        id: GamepadId
+    ) {
+        //println!("gamepad_button_down: {:?}", &_btn);
+        InputMap::gamepad_button_down(&mut self.world, ctx, btn, id);
+    }
+
+    fn gamepad_button_up_event(
+        &mut self,
+        ctx: &mut Context,
+        btn: Button,
+        id: GamepadId
+    ) {
+        //println!("gamepad_button_up: {:?}", &_btn);
+        InputMap::gamepad_button_up(&mut self.world, ctx, btn, id);
+    }
+
+    fn gamepad_axis_event(
+        &mut self,
+        _ctx: &mut Context,
+        _axis: Axis,
+        _value: f32,
+        _id: GamepadId
+    ) {
+        println!("gamepad_axis: {:?} {}", &_axis, &_value);
+
     }
 
     fn text_input_event(&mut self, _ctx: &mut Context, ch: char) {

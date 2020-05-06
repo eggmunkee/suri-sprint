@@ -32,7 +32,7 @@ impl<'a> System<'a> for LogicSystem {
 
         for (mut logic, portal, ent) in (&mut logic_res, &portal_res, &entities).join() {
             let enabled = portal.is_enabled;
-            println!("Portal {} is active: {}", &logic.id, &enabled);
+            //println!("Portal {} is active: {}", &logic.id, &enabled);
             //logic.set_active(active);
             //connection.set_flagged(&logic.id, false);
             connection.set_value(&logic.id, enabled, false);
@@ -42,7 +42,7 @@ impl<'a> System<'a> for LogicSystem {
         // apply button is_active() to logic active status
         for (mut logic, button, ent) in (&mut logic_res, &button_res, &entities).join() {
             let active = button.is_active();
-            println!("Button {} is active: {}", &logic.id, &active);
+            //println!("Button {} is active: {}", &logic.id, &active);
             logic.set_active(active);
             //connection.set_flagged(&logic.id, false);
             connection.set_value(&logic.id, active, false);
@@ -57,20 +57,20 @@ impl<'a> System<'a> for LogicSystem {
         }
 
         for i in 0..3 {
-            println!("Logic apply loop {}", &i);
+            //println!("Logic apply loop {}", &i);
             let mut flagged_ct : i32 = 0;
             for (mut logic, ent) in (&mut logic_res, &entities).join() {
                 //logic.set_active(active);
                 let input_key = &logic.id;
                 let flag = connection.get_flagged(input_key);
                 if flag {
-                    println!("Logic item {} is FLAGGED", &input_key);
+                    //println!("Logic item {} is FLAGGED", &input_key);
                     connection.apply_value(input_key);
                     flagged_ct += 1;
                 }
                 connection.set_flagged(input_key, false); // clear flag
             }
-            println!("Flagged items: {}", &flagged_ct);
+            //println!("Flagged items: {}", &flagged_ct);
             if flagged_ct == 0 { break; }
         }
 
@@ -79,13 +79,13 @@ impl<'a> System<'a> for LogicSystem {
             let input_key = &logic.id;
             let val = connection.get_value(input_key);
             let flag = connection.get_flagged(input_key);
-            println!("Logic {} - Value {} - flag {}", &logic.id, &val, &flag);
+            //println!("Logic {} - Value {} - flag {}", &logic.id, &val, &flag);
 
             logic.set_input_value(val);
-            println!("Logic result value {} - Value {}, input val {}, active {}", &logic.id, &logic.value, &logic.input_value, &logic.is_active);
+            //println!("Logic result value {} - Value {}, input val {}, active {}", &logic.id, &logic.value, &logic.input_value, &logic.is_active);
 
             if let Some(mut portal) = portal_res.get_mut(ent) {
-                println!("Updating portal enabled from logic {}", &val);
+                //println!("Updating portal enabled from logic {}", &val);
                 portal.is_enabled = val;
             }
             else if let Some(mut sprite) = sprite_res.get_mut(ent) {

@@ -45,7 +45,7 @@ impl ConnectionResource {
             *val
         }
         else {
-            println!("Value not found {}", input_key );
+            //println!("Value not found {}", input_key );
             false
         }
     }
@@ -91,14 +91,14 @@ impl ConnectionResource {
         let mut in_value = false;
         if let Some( (ref val, _)) = self.value_register.get(input_key) {
             in_value = *val;
-            println!("Applying {} input value {}", &input_key, &in_value);
+            //println!("Applying {} input value {}", &input_key, &in_value);
         }
         else {
-            println!("No value to apply for {}", &input_key);
+            //println!("No value to apply for {}", &input_key);
             return;
         }
         for out_key in output_vars {
-            println!("Applying {} output value {}", &out_key, &in_value);
+            //println!("Applying {} output value {}", &out_key, &in_value);
             self.set_value(&out_key, in_value, true);
         }
     }
