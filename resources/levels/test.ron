@@ -4,6 +4,7 @@ LevelConfig(
         min_x: 0.0, min_y: 0.0, max_x: 3000.0, max_y: 1000.0,
         solid_sides: (false, false, false, true),
     ),
+    soundtrack: "",
     items: [
         Player ( x: 30.0, y: 30.0 ),
         

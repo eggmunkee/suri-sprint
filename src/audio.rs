@@ -52,7 +52,8 @@ impl Audio {
         println!("Playing music...");
         let vol = self.curr_volume();
         let song_path = music_path.clone();
-        if song_path != self.song_path {
+
+        if song_path != self.song_path && song_path != "" {
             if let Ok(mut source) = Source::new(ctx, music_path) {
                 source.set_volume(vol);
                 println!("Is music playing? {}", &source.playing());

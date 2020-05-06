@@ -4,6 +4,7 @@ LevelConfig(
         min_x: 0.0, min_y: 0.0, max_x: 2000.0, max_y: 1000.0,
         solid_sides: (true, false, true, false),
     ),
+    soundtrack: "Suri Theme 1.mp3",
     items: [
         Player ( x: 500.0, y: 800.0 ),
         

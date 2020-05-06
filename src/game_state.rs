@@ -155,7 +155,7 @@ impl GameState {
 
     pub fn play_music(&mut self, ctx: &mut Context) {
         self.audio.set_dimmed(false);
-        self.audio.play_music(ctx, "/audio/Suri Title theme.mp3".to_string());
+        self.audio.play_music(ctx, "".to_string());
     }
 
     pub fn dim_music(&mut self, ctx: &mut Context) {
@@ -630,6 +630,12 @@ impl GameState {
         // load level from file
         self.level = LevelConfig::load_level(&level_name);
 
+        self.audio.set_dimmed(true);
+        if self.level.soundtrack != "" {
+            self.audio.play_music(ctx, format!("/audio/{}", &self.level.soundtrack));
+        }
+
+
         self.set_level_bounds();
 
         // load level into world        
@@ -643,8 +649,6 @@ impl GameState {
         self.current_level_name = level_name.clone();
         self.running_state = RunningState::Dialog(format!("Level {}", &level_name));
 
-        self.audio.set_dimmed(true);
-        self.audio.play_music(ctx, "/audio/Suri Title theme.mp3".to_string());
         //self.stop_music(ctx);
 
         self.clear_world();

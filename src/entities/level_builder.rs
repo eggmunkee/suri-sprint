@@ -100,6 +100,7 @@ pub enum LevelItem {
 pub struct LevelConfig {
     pub name: String,
     pub bounds: LevelBounds,
+    pub soundtrack: String,
     pub items: Vec::<LevelItem>,
 }
 
@@ -108,6 +109,7 @@ impl LevelConfig {
         LevelConfig {
             name: "".to_string(),
             bounds: LevelBounds::new(0.0, 0.0, 800.0, 600.0),
+            soundtrack: "".to_string(),
             items: vec![LevelItem::Player { x: 50.0, y: 50.0 }],
         }
     }
