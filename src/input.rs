@@ -19,6 +19,7 @@ pub enum InputKey {
     Down,
     SpaceAction,
     AddCircle,
+    Pause,
     Exit
 }
 
@@ -52,11 +53,14 @@ impl InputMap {
             KeyCode::D => {
                 Some(InputKey::Right)
             },
-            KeyCode::W => {
+            KeyCode::W | KeyCode::LShift | KeyCode::LControl => {
                 Some(InputKey::Up)
             },
             KeyCode::S => {
                 Some(InputKey::Down)
+            },
+            KeyCode::P | KeyCode::Return => {
+                Some(InputKey::Pause)
             },
             KeyCode::Space => {
                 Some(InputKey::SpaceAction)
@@ -80,17 +84,20 @@ impl InputMap {
             Button::DPadRight => {
                 Some(InputKey::Right)
             },
-            Button::DPadUp => {
+            Button::DPadUp | Button::South => {
                 Some(InputKey::Up)
             },
             Button::DPadDown => {
                 Some(InputKey::Down)
             },
-            Button::West | Button::South => {
+            Button::West => {
                 Some(InputKey::SpaceAction)
             },
             Button::North | Button::East => {
                 Some(InputKey::AddCircle)
+            },
+            Button::Start => {
+                Some(InputKey::Pause)
             },
             Button::Select => {
                 Some(InputKey::Exit)
@@ -102,152 +109,166 @@ impl InputMap {
     pub fn key_down(world: &mut World,
         ctx: &mut Context,
         keycode: KeyCode,
-        keymod: KeyMods,) {
+        keymod: KeyMods,) -> Option<InputKey> {
 
         match Self::map_keycode(&keycode) {
             Some(key) => match key {
                 InputKey::Left => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_left(true);
+                    Some(InputKey::Left)
                 },
                 InputKey::Right => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_right(true);
+                    Some(InputKey::Right)
                 },
                 InputKey::Up => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_up(true);
+                    Some(InputKey::Up)
                 },
                 InputKey::Down => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_down(true);
+                    Some(InputKey::Down)
                 },
                 InputKey::SpaceAction => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_fire(true);
-                    drop(input);
+                    Some(InputKey::SpaceAction)
 
                     //MeowBuilder::build(world, ctx, physics_world);
                 },
-                InputKey::Exit => {
-                    ggez::event::quit(ctx);
+                other => {
+                    Some(other)
                 }
-                _ => {}
             },
-            _ => {}
+            _ => { None }
         }
     }
 
     pub fn gamepad_button_down(world: &mut World,
         ctx: &mut Context,
         btn: Button,
-        id: GamepadId) {
+        id: GamepadId) -> Option<InputKey> {
 
         match Self::map_gamepadcode(&btn) {
             Some(key) => match key {
                 InputKey::Left => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_left(true);
+                    Some(InputKey::Left)
                 },
                 InputKey::Right => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_right(true);
+                    Some(InputKey::Right)
                 },
                 InputKey::Up => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_up(true);
+                    Some(InputKey::Up)
                 },
                 InputKey::Down => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_down(true);
+                    Some(InputKey::Down)
                 },
                 InputKey::SpaceAction => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_fire(true);
-                    drop(input);
+                    Some(InputKey::SpaceAction)
 
                     //MeowBuilder::build(world, ctx, physics_world);
                 },
-                InputKey::Exit => {
-                    ggez::event::quit(ctx);
-                }
-                _ => {}
+                other => { Some(other) }
             },
-            _ => {}
+            _ => { None }
         }
     }
 
     pub fn key_up(world: &mut World,
         ctx: &mut Context,
         keycode: KeyCode,
-        keymod: KeyMods,) {
+        keymod: KeyMods,) -> Option<InputKey> {
 
         match Self::map_keycode(&keycode) {
             Some(key) => match key {
                 InputKey::Left => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_left(false);
+                    Some(InputKey::Left)
                 },
                 InputKey::Right => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_right(false);
+                    Some(InputKey::Right)
                 },
                 InputKey::Up => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_up(false);
+                    Some(InputKey::Up)
                 },
                 InputKey::Down => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_down(false);
+                    Some(InputKey::Down)
                 },
                 InputKey::SpaceAction => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_fire(false);
+                    Some(InputKey::SpaceAction)
                 },
                 // InputKey::AddCircle => {
                 //     let mut input = world.fetch_mut::<InputResource>();
                 //     input.add_action(WorldAction::AddCircle);
                 // },
-                _ => {}
+                other => { Some(other) }
             },
-            _ => {}
+            _ => { None }
         }
     }
 
     pub fn gamepad_button_up(world: &mut World,
         ctx: &mut Context,
         btn: Button,
-        id: GamepadId) {
+        id: GamepadId) -> Option<InputKey> {
 
         match Self::map_gamepadcode(&btn) {
             Some(key) => match key {
                 InputKey::Left => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_left(false);
+                    Some(InputKey::Left)
                 },
                 InputKey::Right => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_right(false);
+                    Some(InputKey::Right)
                 },
                 InputKey::Up => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_up(false);
+                    Some(InputKey::Up)
                 },
                 InputKey::Down => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_down(false);
+                    Some(InputKey::Down)
                 },
                 InputKey::SpaceAction => {
                     let mut input = world.fetch_mut::<InputResource>();
                     input.set_fire(false);
+                    Some(InputKey::SpaceAction)
                 },
                 // InputKey::AddCircle => {
                 //     let mut input = world.fetch_mut::<InputResource>();
                 //     input.add_action(WorldAction::AddCircle);
                 // },
-                _ => {}
+                other => { Some(other) }
             },
-            _ => {}
+            _ => { None }
         }
     }
 

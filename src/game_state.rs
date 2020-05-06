@@ -41,7 +41,7 @@ use crate::entities::empty_box::{BoxBuilder};
 use crate::physics;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
 use crate::render;
-use crate::input::{InputMap,MouseInput};
+use crate::input::{InputMap,MouseInput,InputKey};
 
 #[derive(Clone,Debug,PartialEq)]
 pub enum RunningState {
@@ -657,6 +657,42 @@ impl GameState {
 
         self.actual_load_level(ctx, level_name);
     }
+
+    pub fn game_key_down(&mut self, ctx: &mut Context, key: &InputKey) {
+        match &key {
+            InputKey::Exit => {
+                ggez::event::quit(ctx);
+            },
+            InputKey::Pause => {
+                match self.current_state {
+                    State::Paused => {
+                        self.play();
+                    },
+                    State::Running => {
+                        match self.running_state {
+                            RunningState::Playing => {
+                                self.pause();
+                            },
+                            _ => {} // don't pause on dialogs
+                        }
+                    }
+                }
+            },
+            _ => {}
+        }
+    }
+
+    pub fn game_key_up(&mut self, ctx: &mut Context, key: &InputKey) {
+        match &key {
+            InputKey::Exit => {
+
+            },
+            InputKey::Pause => {
+
+            },
+            _ => {}
+        }
+    }
 }
 
 // Struct which holds body/fixture physics query results
@@ -798,7 +834,10 @@ impl event::EventHandler for GameState {
 
 
 
-        InputMap::key_down(&mut self.world, ctx, keycode, keymod);
+        let key = InputMap::key_down(&mut self.world, ctx, keycode, keymod);
+        if let Some(i_key) = key {
+            self.game_key_down(ctx, &i_key);
+        }
     }
 
     fn key_up_event(
@@ -808,22 +847,22 @@ impl event::EventHandler for GameState {
         keymod: KeyMods,
     ) {
 
-        if keycode == KeyCode::P {
-            match self.current_state {
-                State::Paused => {
-                    self.play();
-                },
-                State::Running => {
-                    match self.running_state {
-                        RunningState::Playing => {
-                            self.pause();
-                        },
-                        _ => {} // don't pause on dialogs
-                    }
-                }
-            }
-        }
-        else if keycode == KeyCode::J {
+        // if keycode == KeyCode::P {
+        //     match self.current_state {
+        //         State::Paused => {
+        //             self.play();
+        //         },
+        //         State::Running => {
+        //             match self.running_state {
+        //                 RunningState::Playing => {
+        //                     self.pause();
+        //                 },
+        //                 _ => {} // don't pause on dialogs
+        //             }
+        //         }
+        //     }
+        // }
+        if keycode == KeyCode::J {
             // Get world action if any
             //println!("Processing AddCircle action");
             let mut rng = rand::thread_rng();
@@ -879,7 +918,11 @@ impl event::EventHandler for GameState {
         }
         
 
-        InputMap::key_up(&mut self.world, ctx, keycode, keymod);
+        let key = InputMap::key_up(&mut self.world, ctx, keycode, keymod);
+        if let Some(i_key) = key {
+            self.game_key_up(ctx, &i_key);
+        }
+        
     }
 
     fn gamepad_button_down_event(
@@ -889,7 +932,10 @@ impl event::EventHandler for GameState {
         id: GamepadId
     ) {
         //println!("gamepad_button_down: {:?}", &_btn);
-        InputMap::gamepad_button_down(&mut self.world, ctx, btn, id);
+        let key = InputMap::gamepad_button_down(&mut self.world, ctx, btn, id);
+        if let Some(i_key) = key {
+            self.game_key_down(ctx, &i_key);
+        }
     }
 
     fn gamepad_button_up_event(
@@ -899,7 +945,10 @@ impl event::EventHandler for GameState {
         id: GamepadId
     ) {
         //println!("gamepad_button_up: {:?}", &_btn);
-        InputMap::gamepad_button_up(&mut self.world, ctx, btn, id);
+        let key = InputMap::gamepad_button_up(&mut self.world, ctx, btn, id);
+        if let Some(i_key) = key {
+            self.game_key_up(ctx, &i_key);
+        }
     }
 
     fn gamepad_axis_event(
