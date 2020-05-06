@@ -349,7 +349,7 @@ impl GameState {
                 // update button components
                 button.update(time_delta, coll, &mut self.phys_world);
                 if button.triggered {
-                    println!("Button {} triggered", &button.name);
+                    //println!("Button {} triggered", &button.name);
                     if button.name == "ghost" {
                         spawn_ghost = true;
                     //     let test : u16 = rng.gen::<u16>();
