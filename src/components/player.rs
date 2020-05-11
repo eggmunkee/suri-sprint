@@ -658,40 +658,46 @@ impl super::RenderTrait for CharacterDisplayComponent {
             }
 
             {
+                // Use shader if needed
                 let mut shader_res = world.fetch_mut::<ShaderResources>();
                 let mut _lock : Option<ggez::graphics::ShaderLock> = None;
-                if let Ok(shader_ref) = shader_res.shader_ref("suri_shader".to_string()) {
-                    if self.in_idle {
+                if self.in_idle {
+                    if let Ok(shader_ref) = shader_res.shader_ref("suri_shader".to_string()) {
                         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                     }
-                
-                    let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
-                    if let Ok(image) = image_ref {
-                        // let w = image.width();
-                        // let h = image.height();
-        
-                        let src_x = 0.0 + 0.1 * (self.anim_frame as f32);
-                        let src_y = 0.0 + 0.1 * (self.anim_set as f32);
-        
-                        // if !self.going_left && !self.going_right {
-                        //     src_x = 0.0;
-                        // }
-                
-                        let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
-                        if let Err(_) = ggez::graphics::draw(ctx, image, 
-                            DrawParam::default()
-                            .src(Rect::new(src_x,src_y,0.1,0.1))
-                            .dest(texture_position)
-                            .scale(na::Vector2::new(x_scale,texture_scale))
-                            .offset(na::Point2::new(0.5,0.5))
-                            .rotation(angle)
-                        ) {
-                            //(draw_pos.clone(),)) { // add back x/y pos  //
-                            _draw_ok = false;
-                        }
-                    }                    
                 }
-
+                else {
+                    if let Ok(shader_ref) = shader_res.shader_ref("suri_shadow".to_string()) {
+                        _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                    }
+                }
+                
+                // Draw spritesheet texture
+                let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
+                if let Ok(image) = image_ref {
+                    // let w = image.width();
+                    // let h = image.height();
+    
+                    let src_x = 0.0 + 0.1 * (self.anim_frame as f32);
+                    let src_y = 0.0 + 0.1 * (self.anim_set as f32);
+    
+                    // if !self.going_left && !self.going_right {
+                    //     src_x = 0.0;
+                    // }
+            
+                    let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
+                    if let Err(_) = ggez::graphics::draw(ctx, image, 
+                        DrawParam::default()
+                        .src(Rect::new(src_x,src_y,0.1,0.1))
+                        .dest(texture_position)
+                        .scale(na::Vector2::new(x_scale,texture_scale))
+                        .offset(na::Point2::new(0.5,0.5))
+                        .rotation(angle)
+                    ) {
+                        //(draw_pos.clone(),)) { // add back x/y pos  //
+                        _draw_ok = false;
+                    }
+                }                    
 
             }
 
