@@ -57,6 +57,9 @@ pub enum LevelItem {
     Player {
         x: f32, y: f32,
     },
+    PlayerNamed {
+        x: f32, y: f32, name: String,
+    },
     Platform {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
     },
@@ -125,13 +128,16 @@ impl LevelConfig {
 
     }
 
-    pub fn build_level(&self, world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld) {
+    pub fn build_level(&self, world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, entry_name: String) {
         
         for item in &self.items {
             match item {
-                LevelItem::Player{ x, y } => {
+                LevelItem::Player{ x, y } if entry_name.is_empty() => {
                     SuriBuilder::build(world, ctx, physics_world, *x, *y);
                     //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
+                },
+                LevelItem::PlayerNamed{ x, y, name } if name == &entry_name => {
+                    SuriBuilder::build(world, ctx, physics_world, *x, *y);
                 },
                 LevelItem::Platform{ x, y, w, h, ang} => {
                     PlatformBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());

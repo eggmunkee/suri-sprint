@@ -4,7 +4,7 @@ ConfigData(
     window_setup: (
         title: "--- SURI SPRINT ---",
         samples: Eight, // anti-aliasing setting
-        vsync: true,
+        vsync: false,
         icon: "/icon.png",
         srgb: true,
     ),

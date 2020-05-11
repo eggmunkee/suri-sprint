@@ -1,0 +1,4 @@
+ShaderConfig(
+    vert_path: "/shaders/basic.glslv",
+    frag_path: "/shaders/suri_glow_pattern.glslf",
+)

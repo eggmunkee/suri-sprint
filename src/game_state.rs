@@ -70,6 +70,7 @@ pub struct GameState {
     pub running_state: RunningState,
     pub mode: GameMode,
     pub current_level_name: String,
+    pub current_entry_name: String,
     pub level: LevelConfig,
     pub window_w: f32,
     pub window_h: f32,
@@ -90,6 +91,7 @@ pub struct GameState {
     pub level_warping: bool,
     pub level_warp_timer: f32,
     pub warp_level_name: String,
+    pub warp_level_entry_name: String,
     // paused anim
     pub paused_anim: f32,
     // audio
@@ -127,6 +129,7 @@ impl GameState {
             running_state: RunningState::Dialog("Loading game".to_string()),
             mode: GameMode::Play,
             current_level_name: "start".to_string(),
+            current_entry_name: "".to_string(),
             level: LevelConfig::new(),
             window_w: win_w,
             window_h: win_h,
@@ -142,7 +145,8 @@ impl GameState {
             click_info: vec![],
             level_warping: false,
             level_warp_timer: 0.0,
-            warp_level_name: String::from(""),
+            warp_level_name: "".to_string(),
+            warp_level_entry_name: "".to_string(),
             paused_anim: 0.0,
             audio: Audio::new(),
         };
@@ -417,7 +421,8 @@ impl GameState {
     pub fn run_post_physics_update(&mut self, ctx: &mut Context, time_delta: f32) {
         //let world = &mut self.world;
 
-        let mut exit_name = String::from("");
+        let mut exit_name = "".to_string();
+        let mut exit_entry_name = "".to_string();
         let mut portal_id = -1;
 
         {
@@ -460,10 +465,21 @@ impl GameState {
                         let exit_res = self.world.read_storage::<ExitComponent>();
                         if let Some(exit) = exit_res.get(exit_ent) {
                             println!("Exit info {:?}", &exit);
-                            let exit_dest = exit.destination.clone();
-        
+                            let mut exit_dest = exit.destination.clone();
+
                             if exit_dest.is_empty() == false {
-                                exit_name = exit_dest;
+                                if let Some(index) = exit_dest.find(":") {
+                                    let (just_exit_name, entry_name) = exit_dest.split_at_mut(index);
+                                    let (_, entry_name) = entry_name.split_at(1);
+                                    exit_name = just_exit_name.to_string();
+                                    exit_entry_name = entry_name.to_string();
+                                }
+                                else {
+                                    exit_name = exit_dest;
+                                    exit_entry_name = "".to_string();
+                                }
+
+
                             }                            
                         }
         
@@ -533,7 +549,7 @@ impl GameState {
         }
 
         if self.level_warping == false && exit_name.is_empty() == false {
-            self.start_warp(exit_name);
+            self.start_warp(exit_name, exit_entry_name);
         }
 
     }
@@ -546,7 +562,8 @@ impl GameState {
 
             if self.level_warp_timer > WARP_TIME_LIMIT {
                 let level_name = self.warp_level_name.clone();
-                self.load_level(ctx, level_name);
+                let entry_name = self.warp_level_entry_name.clone();
+                self.load_level(ctx, level_name, entry_name);
                 self.level_warp_timer = 0.0;
                 self.level_warping = false;
             }
@@ -614,8 +631,9 @@ impl GameState {
             &game_res.level_bounds.min_y, &game_res.level_bounds.max_x, &game_res.level_bounds.max_y);
     }
 
-    pub fn start_warp(&mut self, level_name: String) {
+    pub fn start_warp(&mut self, level_name: String, entry_name: String) {
         self.warp_level_name = level_name;
+        self.warp_level_entry_name = entry_name;
         self.level_warping = true;
         self.level_warp_timer = 0.0;
     }
@@ -627,7 +645,7 @@ impl GameState {
         crate::conf::save_ron_config(save_path, &self.level);
     }
 
-    pub fn actual_load_level(&mut self, ctx: &mut Context, level_name: String) {
+    pub fn actual_load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {
         // load level from file
         self.level = LevelConfig::load_level(&level_name);
 
@@ -643,19 +661,20 @@ impl GameState {
         let mut world = &mut self.world;
         // Get mut ref to new physics world
         let mut physics_world = &mut self.phys_world;
-        &self.level.build_level(&mut world, ctx, &mut physics_world);
+        &self.level.build_level(&mut world, ctx, &mut physics_world, entry_name);
     }
 
-    pub fn load_level(&mut self, ctx: &mut Context, level_name: String) {
+    pub fn load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {
         self.current_level_name = level_name.clone();
-        self.running_state = RunningState::Dialog(format!("Level {}", &level_name));
+        self.current_entry_name = entry_name.clone();
+        self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
 
         //self.stop_music(ctx);
 
         self.clear_world();
         self.clear_physics();
 
-        self.actual_load_level(ctx, level_name);
+        self.actual_load_level(ctx, level_name, entry_name);
     }
 
     pub fn game_key_down(&mut self, ctx: &mut Context, key: &InputKey) {
@@ -816,7 +835,7 @@ impl event::EventHandler for GameState {
                 }            
             }
             else if keycode == KeyCode::Equals {
-                if self.display_scale < 2.75 {
+                if self.display_scale < 4.75 {
                     self.display_scale += 0.05;
                 }            
             }
@@ -890,7 +909,7 @@ impl event::EventHandler for GameState {
             }            
         }
         else if keycode == KeyCode::Equals {
-            if self.display_scale < 2.75 {
+            if self.display_scale < 4.75 {
                 self.display_scale += 0.05;
             }            
         }
@@ -905,7 +924,7 @@ impl event::EventHandler for GameState {
         }
         // reload current level
         else if keycode == KeyCode::R {
-            self.load_level(ctx, self.current_level_name.clone());
+            self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
         }        
         //
         if keycode == KeyCode::RBracket {

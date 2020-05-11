@@ -36,6 +36,12 @@ impl SpriteLayer {
     }
 }
 
+#[derive(Debug,Default,Deserialize)]
+pub struct ShaderConfig {
+    pub vert_path: String,
+    pub frag_path: String,
+}
+
 
 #[derive(Debug,Default,Deserialize)]
 pub struct SpriteConfig {

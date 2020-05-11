@@ -14,9 +14,11 @@ use crate::entities::level_builder::{LevelBounds};
 
 mod image;
 mod connection;
+mod shaders;
 
 pub use crate::resources::image::*;
 pub use crate::resources::connection::*;
+pub use crate::resources::shaders::*;
 
 #[derive(Default,Debug)]
 pub struct GameStateResource {
@@ -135,6 +137,13 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
         images: Vec::<Image>::new(),
         font: font,
     });
+
+    let mut shaders = ShaderResources::new();
+    shaders.load_shader("suri_shader".to_string(), "shaders/suri_shader".to_string(), ctx);
+
+    world.insert(shaders);
+
+
 
     world.insert(ConnectionResource::new());
 

@@ -1,13 +1,13 @@
 use ggez::{Context};
 use ggez::graphics;
-use ggez::graphics::{Rect,Image,Color,DrawParam};
+use ggez::graphics::{Rect,Image,Color,DrawParam,ShaderLock};
 use ggez::nalgebra as na;
 use specs::{ Component, DenseVecStorage, World, WorldExt };
 //use specs::shred::{Dispatcher};
 use rand::prelude::*;
 
 //use crate::game_state::{GameState};
-use crate::resources::{ImageResources};
+use crate::resources::{ImageResources,ShaderResources};
 use crate::components::collision::{Collision};
 use crate::components::{Velocity};
 use crate::physics;
@@ -89,7 +89,7 @@ const SIT_FRAMES : u32 = 5;
 #[derive(Debug)]
 pub struct CharacterDisplayComponent {
     // image path
-    pub path: String,
+    pub spritesheet_path: String,
     // movement status
     pub going_left: bool,
     pub going_right: bool,
@@ -138,7 +138,7 @@ impl CharacterDisplayComponent {
 
         CharacterDisplayComponent {
             //image: image,
-            path: char_img.clone(),
+            spritesheet_path: char_img.clone(),
             going_left: false,
             going_right: false,
             going_up: false,
@@ -153,7 +153,7 @@ impl CharacterDisplayComponent {
             rot: 0.0,
             in_jump: false,
             jump_duration: 0.0,
-            since_stand: 0.0,
+            since_stand: 0.5,
             since_move: 0.0,
             in_fall: true,
             fall_anim_dir: 1,
@@ -164,7 +164,7 @@ impl CharacterDisplayComponent {
             in_portal: false,
             exit_id: -1,
             portal_id: -1,
-            since_warp: 0.2,
+            since_warp: 0.0,
             input_enabled: true,
         }
     }
@@ -638,6 +638,8 @@ impl super::RenderTrait for CharacterDisplayComponent {
         }
 
         let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
+    
+        let mut image_resources = world.fetch_mut::<ImageResources>();
 
         let exhaust_radius = 27.0;
         let self_rot = self.rot;
@@ -655,32 +657,45 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 x_scale = -x_scale;
             }
 
-            let mut image_resources = world.fetch_mut::<ImageResources>();
-            let image_ref = image_resources.image_ref(self.path.clone());
-            if let Ok(image) = image_ref {
-                // let w = image.width();
-                // let h = image.height();
-
-                let src_x = 0.0 + 0.1 * (self.anim_frame as f32);
-                let src_y = 0.0 + 0.1 * (self.anim_set as f32);
-
-                // if !self.going_left && !self.going_right {
-                //     src_x = 0.0;
-                // }
+            {
+                let mut shader_res = world.fetch_mut::<ShaderResources>();
+                let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+                if let Ok(shader_ref) = shader_res.shader_ref("suri_shader".to_string()) {
+                    if self.in_idle {
+                        _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                    }
+                
+                    let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
+                    if let Ok(image) = image_ref {
+                        // let w = image.width();
+                        // let h = image.height();
         
-                let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
-                if let Err(_) = ggez::graphics::draw(ctx, image, 
-                    DrawParam::default()
-                    .src(Rect::new(src_x,src_y,0.1,0.1))
-                    .dest(texture_position)
-                    .scale(na::Vector2::new(x_scale,texture_scale))
-                    .offset(na::Point2::new(0.5,0.5))
-                    .rotation(angle)
-                ) {
-                    //(draw_pos.clone(),)) { // add back x/y pos  //
-                    _draw_ok = false;
+                        let src_x = 0.0 + 0.1 * (self.anim_frame as f32);
+                        let src_y = 0.0 + 0.1 * (self.anim_set as f32);
+        
+                        // if !self.going_left && !self.going_right {
+                        //     src_x = 0.0;
+                        // }
+                
+                        let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
+                        if let Err(_) = ggez::graphics::draw(ctx, image, 
+                            DrawParam::default()
+                            .src(Rect::new(src_x,src_y,0.1,0.1))
+                            .dest(texture_position)
+                            .scale(na::Vector2::new(x_scale,texture_scale))
+                            .offset(na::Point2::new(0.5,0.5))
+                            .rotation(angle)
+                        ) {
+                            //(draw_pos.clone(),)) { // add back x/y pos  //
+                            _draw_ok = false;
+                        }
+                    }                    
                 }
+
+
             }
+
+
 
             // if let Ok(rect) = graphics::Mesh::new_rectangle(
             //     ctx,
@@ -714,12 +729,16 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 //         }                    
                 //     }
                 // };
+                //let curr_transform = ggez::graphics::transform();
+
+
                 let text = ggez::graphics::Text::new(typeText);
-                let text_size_x = text.width(ctx) as f32 / 2.0;
-                let text_size_y = text.height(ctx) as f32 / 2.0;
+                //let text_size_x = text.width(ctx) as f32 / 2.0;
+                //let text_size_y = text.height(ctx) as f32 / 2.0;
                 if let Err(_) = graphics::draw(ctx, &text,
                     DrawParam::default()
-                    .dest(na::Point2::new(draw_pos.x - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    .dest(na::Point2::new(draw_pos.x, draw_pos.y)) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    //.offset(na::Point2::new(text_size_x, text_size_y))
                 ) {
                     _draw_ok = false;
                 }
