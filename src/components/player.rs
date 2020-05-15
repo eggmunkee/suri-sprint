@@ -1,3 +1,4 @@
+use std::cmp;
 use ggez::{Context};
 use ggez::graphics;
 use ggez::graphics::{Rect,Image,Color,DrawParam,ShaderLock};
@@ -7,7 +8,7 @@ use specs::{ Component, DenseVecStorage, World, WorldExt };
 use rand::prelude::*;
 
 //use crate::game_state::{GameState};
-use crate::resources::{ImageResources,ShaderResources};
+use crate::resources::{ImageResources,ShaderResources,GameStateResource};
 use crate::components::collision::{Collision};
 use crate::components::{Velocity};
 use crate::physics;
@@ -623,6 +624,12 @@ impl super::CharLevelInteractor for CharacterDisplayComponent {
 impl super::RenderTrait for CharacterDisplayComponent {
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
         //println!("PlayerRenderTrait drawing...");
+        let time : f32 = {
+            let game_state_res = world.fetch::<GameStateResource>();
+
+            let gs = &*game_state_res;
+            0.0
+        };
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
@@ -639,19 +646,27 @@ impl super::RenderTrait for CharacterDisplayComponent {
 
         let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
     
+        let mut shader_res = world.fetch_mut::<ShaderResources>();
         let mut image_resources = world.fetch_mut::<ImageResources>();
 
         let exhaust_radius = 27.0;
         let self_rot = self.rot;
+        let texture_green = if self.jump_duration <= 0.0 {
+            0.0
+        } else if self.jump_duration > 1.0 {
+            1.0
+        } else {
+            self.jump_duration
+        };
+
         if let Ok(rect) = graphics::Mesh::new_circle(
             ctx,
             graphics::DrawMode::fill(),
             na::Point2::new(0.0,0.0),
             3.0, 0.7,
-            graphics::WHITE,
+            graphics::Color::new(1.0,texture_green,1.0,1.0),
         ) {
-            let col_vals: (u8,) = rng.gen();
-
+            // Mirror X-scale if facing left
             let mut x_scale = texture_scale;
             if self.facing_right == false {
                 x_scale = -x_scale;
@@ -659,7 +674,6 @@ impl super::RenderTrait for CharacterDisplayComponent {
 
             {
                 // Use shader if needed
-                let mut shader_res = world.fetch_mut::<ShaderResources>();
                 let mut _lock : Option<ggez::graphics::ShaderLock> = None;
                 if self.in_idle {
                     if let Ok(shader_ref) = shader_res.shader_ref("suri_shader".to_string()) {
@@ -675,26 +689,23 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 // Draw spritesheet texture
                 let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
                 if let Ok(image) = image_ref {
-                    // let w = image.width();
-                    // let h = image.height();
+                    // Get starting x/y in spritesheet space (0.0-1.0,0.0-1.0)
+                    let ss_cells = 10.0;
+                    let ss_rows = 10.0;
+                    let src_x = 0.0 + (self.anim_frame as f32) / ss_cells;
+                    let src_y = 0.0 + (self.anim_set as f32) / ss_rows;
+                    let (src_w, src_h) = (1.0 / ss_cells, 1.0 / ss_rows);
     
-                    let src_x = 0.0 + 0.1 * (self.anim_frame as f32);
-                    let src_y = 0.0 + 0.1 * (self.anim_set as f32);
-    
-                    // if !self.going_left && !self.going_right {
-                    //     src_x = 0.0;
-                    // }
-            
                     let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
                     if let Err(_) = ggez::graphics::draw(ctx, image, 
+                        // Setup draw parameters
                         DrawParam::default()
-                        .src(Rect::new(src_x,src_y,0.1,0.1))
-                        .dest(texture_position)
-                        .scale(na::Vector2::new(x_scale,texture_scale))
-                        .offset(na::Point2::new(0.5,0.5))
-                        .rotation(angle)
+                        .src(Rect::new(src_x,src_y,src_w,src_h)) // set texture source rectangle
+                        .dest(texture_position) // world space location for texture
+                        .scale(na::Vector2::new(x_scale,texture_scale)) // set draw scale,including x-mirroring
+                        .offset(na::Point2::new(0.5,0.5)) // set anchor point at middle of image rect
+                        .rotation(angle) // would rotate if altered
                     ) {
-                        //(draw_pos.clone(),)) { // add back x/y pos  //
                         _draw_ok = false;
                     }
                 }                    

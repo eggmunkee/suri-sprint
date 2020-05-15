@@ -1,7 +1,7 @@
 
 use ggez::{Context};
 use ggez::graphics;
-use ggez::graphics::{Rect,Image,Color,DrawParam,WrapMode};
+use ggez::graphics::{Rect,Image,Color,DrawParam,WrapMode,BlendMode};
 use ggez::nalgebra as na;
 use specs::{Component, DenseVecStorage, World, WorldExt};
 //use specs::shred::{Dispatcher};
@@ -13,7 +13,7 @@ use serde::{Deserialize,de::DeserializeOwned};
 
 //use crate::game_state::{GameState};
 use crate::components::collision::{Collision};
-use crate::resources::{ImageResources};
+use crate::resources::{ImageResources,ShaderResources};
 use crate::conf::*;
 
 #[allow(dead_code)]
@@ -36,10 +36,21 @@ impl SpriteLayer {
     }
 }
 
-#[derive(Debug,Default,Deserialize)]
+#[derive(Debug,Deserialize)]
 pub struct ShaderConfig {
     pub vert_path: String,
     pub frag_path: String,
+    pub blend_modes: Vec<String>,
+}
+
+impl Default for ShaderConfig {
+    fn default() -> Self {
+        ShaderConfig {
+            vert_path: "".to_string(),
+            frag_path: "".to_string(),
+            blend_modes: vec![],
+        }
+    }
 }
 
 
@@ -51,6 +62,7 @@ pub struct SpriteConfig {
     pub z_order: f32,
     pub alpha: f32,
     pub src: (f32, f32, f32, f32),
+    pub shader: Option<String>,
 }
 
 impl SpriteConfig {
@@ -79,7 +91,7 @@ impl SpriteConfig {
         sprite.scale.y = config.scale.1;
         sprite.alpha = config.alpha;
         sprite.src = Rect::new(config.src.0, config.src.1, config.src.2, config.src.3);
-        //sprite.an
+        sprite.shader = config.shader;
 
         sprite
     }
@@ -97,6 +109,7 @@ pub struct SpriteComponent {
     pub src: Rect,
     pub visible: bool,
     pub toggleable: bool,
+    pub shader: Option<String>,
 }
 
 impl SpriteComponent {
@@ -112,6 +125,7 @@ impl SpriteComponent {
             src: Rect::new(0.0, 0.0, 1.0, 1.0),
             visible: true,
             toggleable: false,
+            shader: None,
         }
     }
 
@@ -139,6 +153,7 @@ impl super::RenderTrait for SpriteComponent {
 
         }
 
+        let mut shader_res = world.fetch_mut::<ShaderResources>();
         let mut images = world.fetch_mut::<ImageResources>();
         let texture_ref = images.image_ref(self.path.clone());
 
@@ -154,6 +169,14 @@ impl super::RenderTrait for SpriteComponent {
                 //println!("Rendering source outside image: {:?}", &self.src);
             }
             texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
+
+            let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+            if let Some(shader_name) = &self.shader {
+                if let Ok(shader_ref) = shader_res.shader_ref(shader_name.clone()) {
+                    _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                }
+            }
+
             if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
                     .src(self.src)
                     .dest(draw_pos.clone())

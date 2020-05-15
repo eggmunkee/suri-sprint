@@ -26,6 +26,8 @@ pub struct GameStateResource {
     pub window_h: f32,
     pub window_mode: WindowMode,
     pub delta_seconds: f32,
+    pub level_world_seconds: f32,
+    pub game_run_seconds: f32,
     pub level_bounds: LevelBounds,
 }
 
@@ -132,13 +134,18 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
 
     let font = graphics::Font::new(ctx, "/FreeMonoBold.ttf").unwrap();
 
-    world.insert(ImageResources {
+    let mut images = ImageResources {
         image_lookup: HashMap::new(),
         images: Vec::<Image>::new(),
         font: font,
-    });
+    };
+    images.load_image("/overlay.png".to_string(), ctx);
+    world.insert(images);
+
+
 
     let mut shaders = ShaderResources::new();
+    shaders.load_shader("overlay".to_string(), "shaders/overlay_shader".to_string(), ctx);
     shaders.load_shader("suri_shader".to_string(), "shaders/suri_shader".to_string(), ctx);
     shaders.load_shader("suri_shadow".to_string(), "shaders/suri_shadow".to_string(), ctx);
 

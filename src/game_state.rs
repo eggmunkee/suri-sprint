@@ -108,7 +108,8 @@ impl GameState {
         let (win_w, win_h) = ggez::graphics::drawable_size(ctx);
         let game_state_resource = GameStateResource {
             window_w: win_w, window_h: win_h, window_mode: window_mode,
-            delta_seconds: 0.15, level_bounds: LevelBounds::new(-500.0, -500.0, 3000.0, 3000.0)
+            delta_seconds: 0.15, level_bounds: LevelBounds::new(-500.0, -500.0, 3000.0, 3000.0),
+            level_world_seconds: 0.0, game_run_seconds: 0.0, 
         };
 
         // get window
@@ -192,12 +193,26 @@ impl GameState {
         }        
     }
 
+    pub fn reset_level_time(&mut self) {
+        // get game resource to set delta
+        let world = &mut self.world;
+        let mut game_res = world.fetch_mut::<GameStateResource>();
+        game_res.level_world_seconds = 0.0;
+    }
+
     pub fn set_frame_time(&mut self, time_delta: f32) {
         // get game resource to set delta
         let world = &mut self.world;
         let mut game_res = world.fetch_mut::<GameStateResource>();
         game_res.delta_seconds = time_delta;
+        game_res.level_world_seconds += time_delta;
+    }
 
+    pub fn update_run_time(&mut self, time_delta: f32) {
+        // get game resource to set delta
+        let world = &mut self.world;
+        let mut game_res = world.fetch_mut::<GameStateResource>();
+        game_res.game_run_seconds += time_delta;
     }
   
     pub fn set_running_state(&mut self, ctx: &mut Context, new_state: RunningState) {
@@ -574,6 +589,8 @@ impl GameState {
 
     pub fn run_update_step(&mut self, ctx: &mut Context, time_delta: f32) {
 
+        self.update_run_time(time_delta);
+
         // Pre-process frame time
         let time_delta = self.process_time_delta(ctx, time_delta);
 
@@ -662,6 +679,8 @@ impl GameState {
         // Get mut ref to new physics world
         let mut physics_world = &mut self.phys_world;
         &self.level.build_level(&mut world, ctx, &mut physics_world, entry_name);
+
+        self.reset_level_time();
     }
 
     pub fn load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {

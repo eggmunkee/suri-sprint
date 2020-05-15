@@ -33,18 +33,12 @@ mod input;
 mod game_state;
 
 use crate::conf::*;
-use crate::entities::level_builder::{LevelConfig};
-
-
 
 // ======================== MAIN INIT APP ============================
 
 // Do setup and start main event loop
 pub fn main() -> GameResult {
 
-    //let level : LevelConfig = LevelConfig::load_level("test");
-
-    //println!("Loaded level: {:?}", &level);
 
     let config : ConfigData = get_game_config().unwrap();    
     let win_title = config.window_setup.title.clone();

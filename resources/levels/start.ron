@@ -12,7 +12,7 @@ LevelConfig(
         PlayerNamed ( x: 900.0, y: -10.0, name: "b" ),
         Portal ( x: 900.0, y: -10.0, w: 25.0, h: 25.0, name: "portal_c", destination: "", enabled: false),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), shader: Some("overlay") ),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 

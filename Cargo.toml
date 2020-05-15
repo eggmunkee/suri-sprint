@@ -15,6 +15,7 @@ winit = "~0.19.5"
 ron = "0.5.1"
 wrapped2d = "0.4.0"
 serde = "1.0.105"
+gfx = "0.18.2"
 
 [profile.dev]
 opt-level = 2

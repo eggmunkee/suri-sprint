@@ -1,4 +1,5 @@
 ShaderConfig(
     vert_path: "/shaders/basic.glslv",
     frag_path: "/shaders/suri_shadow.glslf",
+    blend_modes: ["alpha"],
 )

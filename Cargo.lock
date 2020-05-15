@@ -2168,6 +2168,7 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 name = "suri_sprint"
 version = "0.0.1"
 dependencies = [
+ "gfx",
  "ggez",
  "rand 0.7.3",
  "ron",

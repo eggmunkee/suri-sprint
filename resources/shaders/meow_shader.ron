@@ -1,0 +1,5 @@
+ShaderConfig(
+    vert_path: "/shaders/basic.glslv",
+    frag_path: "/shaders/basic.glslf",
+    blend_modes: ["multiply"],
+)

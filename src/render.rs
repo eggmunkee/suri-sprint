@@ -15,7 +15,7 @@ pub mod level;
 pub mod dialog;
 pub mod paused;
 
-use crate::resources::{GameStateResource};
+use crate::resources::{GameStateResource,ShaderResources,ImageResources};
 use crate::components::{Position,Velocity,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent};
 use crate::components::player::{CharacterDisplayComponent};
@@ -57,9 +57,16 @@ impl Renderer {
         let mut char_in_warp = false;
         let mut char_in_portal = false;
 
+        let mut level_run_time : f32 = 0.0;
+        let mut game_run_time : f32 = 0.0;        
+
         // BUILD RENDER OBJECTS LIST -----------------------------------------------------------------
         {
-           
+            let gs_res = game_state.world.fetch::<GameStateResource>();
+
+            level_run_time = gs_res.level_world_seconds;
+            game_run_time = gs_res.game_run_seconds;
+
             let pos = game_state.world.read_storage::<Position>();
             //let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
             let entities = game_state.world.entities();
@@ -200,6 +207,59 @@ impl Renderer {
 
 
         self.post_render_list(ctx, world);
+
+        // World overlay shader
+        {
+            let mut images = game_state.world.fetch_mut::<ImageResources>();
+            let texture_ref = images.image_ref("/overlay.png".to_string());
+            let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+
+            if let Ok(mut texture) = texture_ref {
+                let mut shader_res = world.fetch_mut::<ShaderResources>();
+
+                let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+                if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
+                    let mut dim = shader_ref.send(ctx, crate::resources::Dim {rate: game_run_time});
+
+                    _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                }
+
+                let w = texture.width();
+                let h = texture.height();
+                let scale_x = scrw / w as f32;
+                let scale_y = scrh / h as f32;
+                if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
+                        .dest(na::Point2::new(0.0,0.0))
+                        //.offset(na::Point2::new(0.5f32,0.5f32))
+                        .scale(na::Vector2::new(scale_x, scale_y))
+                        .color(Color::new(1.0,1.0,1.0,1.0))) { 
+                    //_draw_ok = false;
+                    println!("Failed to render overlay image");
+                }
+            }
+            else {
+                println!("Failed to get overlay texture");
+            }
+
+            // let fill_opt = ggez::graphics::FillOptions::DEFAULT.clone();
+            // let (w, h) = (game_state.window_w, game_state.window_h);
+            // if let Ok(overlay_rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+            //     ggez::graphics::DrawMode::Fill(fill_opt),
+            //     ggez::graphics::Rect::new(0.0, 0.0, w, h),
+            //     ggez::graphics::Color::new(1.0, 1.0, 1.0, 0.25)
+            // ) {
+                
+            //     let mut shader_res = world.fetch_mut::<ShaderResources>();
+
+            //     let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+            //     if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
+            //         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+            //     }
+
+            //     ggez::graphics::draw(ctx, &overlay_rect, DrawParam::default() );
+            // }
+        }
+
 
         // RENDER UI STATE --------------------------------------------------------------------------
         match &game_state.current_state {

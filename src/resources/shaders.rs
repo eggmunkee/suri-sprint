@@ -3,6 +3,7 @@
 // use std::fmt::{Display};
 use std::collections::{HashMap};
 use std::collections::hash_map::{Entry};
+use gfx::{self, *};
 use ggez::graphics::{Shader,EmptyConst,BlendMode};
 use ggez::graphics::{Image,Font};
 use ggez::{Context,GameResult,GameError};
@@ -15,10 +16,17 @@ use crate::components::sprite::{ShaderConfig};
 use crate::conf::{get_ron_config};
 
 
+// Define the input struct for our shader.
+gfx_defines! {
+    constant Dim {
+        rate: f32 = "u_Rate",
+    }
+}
+
 #[allow(dead_code)]
 pub struct ShaderResources {
     pub shader_lookup: HashMap<String,usize>,
-    pub shaders: Vec<Shader<EmptyConst>>,
+    pub shaders: Vec<Shader<Dim>>,
 }
 
 impl ShaderResources {
@@ -34,15 +42,37 @@ impl ShaderResources {
         return self.shader_lookup.contains_key(&path);
     }
 
-    pub fn shader_factory(&self, name: String, path: String, ctx: &mut Context) -> Option<Shader<EmptyConst>> {
+    pub fn shader_factory(&self, name: String, path: String, ctx: &mut Context) -> Option<Shader<Dim>> {
         println!("SHADER=FACTORY$> {}, {}", &name, &path);
         if let Some(shader_config) = get_ron_config::<ShaderConfig>(path) {
-            let data = ggez::graphics::EmptyConst {};
+            let data = Dim { rate: 0.0f32 };
             let vert_path = shader_config.vert_path;
             let frag_path = shader_config.frag_path;
+            let v_blend_modes = shader_config.blend_modes;
+            let mut blend_modes : Vec<BlendMode> = vec![];
+
+            for bm in &v_blend_modes {
+                match bm.to_lowercase().as_str() {
+                    "add" => { blend_modes.push(BlendMode::Add); },
+                    "subtract" => { blend_modes.push(BlendMode::Subtract); },
+                    "alpha" => { blend_modes.push(BlendMode::Alpha); },
+                    "multiply" => { blend_modes.push(BlendMode::Multiply); },
+                    "lighten" => { blend_modes.push(BlendMode::Lighten); },
+                    "darken" => { blend_modes.push(BlendMode::Darken); },
+                    "invert" => { blend_modes.push(BlendMode::Invert); },
+                    "replace" => { blend_modes.push(BlendMode::Replace); },
+                    _ => {}
+                }
+            }
+
+            let mut blend_mode_option : Option<&[BlendMode]> = None;
+            if blend_modes.len() > 0 {
+                blend_mode_option = Some(blend_modes.as_slice());
+            }
+
             println!("Shader Factory paths: {}, {}", &vert_path, &frag_path);
 
-            if let Ok(shader) = Shader::<EmptyConst>::new(ctx, vert_path, frag_path, data, name, Some(&vec![BlendMode::Alpha]) ) {
+            if let Ok(shader) = Shader::<Dim>::new(ctx, vert_path, frag_path, data, name, blend_mode_option) {
                 println!("Shader: {:?}", &shader);
                 Some(shader)
             }
@@ -78,7 +108,7 @@ impl ShaderResources {
     }
 
     #[allow(dead_code)]
-    pub fn shader_ref<'a>(&mut self, name:String) -> GameResult<&mut Shader<EmptyConst>> {
+    pub fn shader_ref<'a>(&mut self, name:String) -> GameResult<&mut Shader<Dim>> {
         
         //self.load_image(path.clone(), ctx)?;
 
