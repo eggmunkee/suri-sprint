@@ -8,8 +8,8 @@ LevelConfig(
     items: [
         // named entrances
         Player ( x: 110.0, y: 50.0, ), // default entrance
-        PlayerNamed ( x: 110.0, y: 50.0, name: "a" ),
-        PlayerNamed ( x: 830.0, y: 650.0, name: "b" ),
+        PlayerNamed ( x: 150.0, y: 480.0, name: "a" ),
+        PlayerNamed ( x: 900.0, y: 250.0, name: "b" ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 

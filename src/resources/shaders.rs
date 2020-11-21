@@ -16,17 +16,17 @@ use crate::components::sprite::{ShaderConfig};
 use crate::conf::{get_ron_config};
 
 
-// Define the input struct for our shader.
+// Define generic shader inputs
 gfx_defines! {
-    constant Dim {
-        rate: f32 = "u_Rate",
+    constant ShaderInputs {
+        game_time: f32 = "u_Rate",
     }
 }
 
 #[allow(dead_code)]
 pub struct ShaderResources {
     pub shader_lookup: HashMap<String,usize>,
-    pub shaders: Vec<Shader<Dim>>,
+    pub shaders: Vec<Shader<ShaderInputs>>,
 }
 
 impl ShaderResources {
@@ -42,10 +42,10 @@ impl ShaderResources {
         return self.shader_lookup.contains_key(&path);
     }
 
-    pub fn shader_factory(&self, name: String, path: String, ctx: &mut Context) -> Option<Shader<Dim>> {
+    pub fn shader_factory(&self, name: String, path: String, ctx: &mut Context) -> Option<Shader<ShaderInputs>> {
         println!("SHADER=FACTORY$> {}, {}", &name, &path);
         if let Some(shader_config) = get_ron_config::<ShaderConfig>(path) {
-            let data = Dim { rate: 0.0f32 };
+            let data = ShaderInputs { game_time: 0.0f32 };
             let vert_path = shader_config.vert_path;
             let frag_path = shader_config.frag_path;
             let v_blend_modes = shader_config.blend_modes;
@@ -72,7 +72,7 @@ impl ShaderResources {
 
             println!("Shader Factory paths: {}, {}", &vert_path, &frag_path);
 
-            if let Ok(shader) = Shader::<Dim>::new(ctx, vert_path, frag_path, data, name, blend_mode_option) {
+            if let Ok(shader) = Shader::<ShaderInputs>::new(ctx, vert_path, frag_path, data, name, blend_mode_option) {
                 println!("Shader: {:?}", &shader);
                 Some(shader)
             }
@@ -108,7 +108,7 @@ impl ShaderResources {
     }
 
     #[allow(dead_code)]
-    pub fn shader_ref<'a>(&mut self, name:String) -> GameResult<&mut Shader<Dim>> {
+    pub fn shader_ref<'a>(&mut self, name:String) -> GameResult<&mut Shader<ShaderInputs>> {
         
         //self.load_image(path.clone(), ctx)?;
 

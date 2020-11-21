@@ -4,7 +4,7 @@ LevelConfig(
         min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 750.0,
         solid_sides: (true, true, true, true),
     ),
-    soundtrack: "",
+    soundtrack: "Suri Boogie.mp3",
     items: [
         Player ( x: 250.0, y: 350.0 ),
         

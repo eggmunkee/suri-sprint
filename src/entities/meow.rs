@@ -36,6 +36,7 @@ impl MeowBuilder {
         sprite.scale.x = width / 24.0;
         sprite.scale.y = height / 24.0;
         sprite.z_order = SpriteLayer::PlayerBehind.to_z();
+        //sprite.shader = Some("meow_shader".to_string());
 
         let mut collision = Collision::new_specs(0.1,0.72, width, height);
         // collision.dim_1 = width;

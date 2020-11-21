@@ -21,5 +21,5 @@ ConfigData(
         max_height: 0.0,
         resizable: true,
     ),
-    start_level: "start",
+    start_level: "a",
 )

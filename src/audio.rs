@@ -49,9 +49,9 @@ impl Audio {
     }
 
     pub fn play_music(&mut self, ctx: &mut Context, music_path: String) {
-        println!("Playing music...");
         let vol = self.curr_volume();
         let song_path = music_path.clone();
+        println!("Playing music... {} at vol {}", &song_path, &vol);
 
         if song_path != self.song_path && song_path != "" {
             if let Ok(mut source) = Source::new(ctx, music_path) {

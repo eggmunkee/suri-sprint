@@ -15,7 +15,7 @@ pub mod level;
 pub mod dialog;
 pub mod paused;
 
-use crate::resources::{GameStateResource,ShaderResources,ImageResources};
+use crate::resources::{GameStateResource,ShaderResources,ShaderInputs,ImageResources};
 use crate::components::{Position,Velocity,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent};
 use crate::components::player::{CharacterDisplayComponent};
@@ -217,12 +217,12 @@ impl Renderer {
             if let Ok(mut texture) = texture_ref {
                 let mut shader_res = world.fetch_mut::<ShaderResources>();
 
-                let mut _lock : Option<ggez::graphics::ShaderLock> = None;
-                if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
-                    let mut dim = shader_ref.send(ctx, crate::resources::Dim {rate: game_run_time});
+                // let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+                // if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
+                //     let mut dim = shader_ref.send(ctx, ShaderInputs {game_time: game_run_time});
 
-                    _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
-                }
+                //     _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                // }
 
                 let w = texture.width();
                 let h = texture.height();

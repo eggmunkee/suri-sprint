@@ -7,8 +7,8 @@ LevelConfig(
     soundtrack: "Suri Title theme.mp3",
     items: [
         Player ( x: 30.0, y: 50.0, ),
-        PlayerNamed ( x: 30.0, y: 50.0, name: "a" ),
-        PlayerNamed ( x: 830.0, y: 650.0, name: "b" ),
+        PlayerNamed ( x: 300.0, y: 375.0, name: "a" ),
+        PlayerNamed ( x: 900.0, y: 200.0, name: "b" ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/white-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 

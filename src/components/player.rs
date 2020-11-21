@@ -675,12 +675,13 @@ impl super::RenderTrait for CharacterDisplayComponent {
             {
                 // Use shader if needed
                 let mut _lock : Option<ggez::graphics::ShaderLock> = None;
-                if self.in_idle {
+                /* if self.in_idle {
                     if let Ok(shader_ref) = shader_res.shader_ref("suri_shader".to_string()) {
                         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                     }
                 }
-                else {
+                else */
+                {
                     if let Ok(shader_ref) = shader_res.shader_ref("suri_shadow".to_string()) {
                         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                     }

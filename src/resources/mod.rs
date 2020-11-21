@@ -147,6 +147,7 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
     let mut shaders = ShaderResources::new();
     shaders.load_shader("overlay".to_string(), "shaders/overlay_shader".to_string(), ctx);
     shaders.load_shader("suri_shader".to_string(), "shaders/suri_shader".to_string(), ctx);
+    shaders.load_shader("meow_shader".to_string(), "shaders/meow_shader".to_string(), ctx);
     shaders.load_shader("suri_shadow".to_string(), "shaders/suri_shadow".to_string(), ctx);
 
     world.insert(shaders);

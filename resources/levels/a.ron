@@ -4,9 +4,9 @@ LevelConfig(
         min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 750.0,
         solid_sides: (true, true, true, true),
     ),
-    soundtrack: "",
+    soundtrack: "Suri Title theme.mp3",
     items: [
-        Player ( x: 30.0, y: 700.0 ),
+        Player ( x: 80.0, y: 700.0 ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 

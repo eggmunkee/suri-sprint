@@ -12,5 +12,14 @@ layout (std140) uniform Globals {
 void main() {
 
     Target0 = texture(t_Texture, v_Uv) * v_Color;
+    /*
+    vec4 texColor = texture(t_Texture, v_Uv) * v_Color;
+    float a = texColor.a;
+    float rev_a = min(1.0, 1.5 - a);
+    float r = texColor.r;
+    texColor.rgb = vec3(rev_a,rev_a,rev_a) + 2.0 * texColor.rgb;
+    texColor.a = 1.0;
+    //texColor.a = r;
+    Target0 = texColor; */
 
 }
