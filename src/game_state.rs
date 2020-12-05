@@ -20,8 +20,8 @@ use wrapped2d::user_data::*;
 // =====================================
 
 use crate::audio::{Audio};
-use crate::resources::{InputResource,WorldAction,GameStateResource};
-use crate::components::{Position,Velocity};
+use crate::resources::{InputResource,GameStateResource};
+use crate::components::{Position};
 use crate::components::collision::{Collision};
 use crate::components::sprite::{SpriteLayer,SpriteComponent};
 use crate::components::meow::{MeowComponent};
@@ -30,18 +30,18 @@ use crate::components::portal::{PortalComponent};
 use crate::components::button::{ButtonComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
-use crate::systems::{InterActorSys,InputSystem};
+use crate::systems::{InputSystem};
 use crate::systems::logic::{LogicSystem};
-use crate::world::{create_world,create_dispatcher};
+use crate::world::{create_world};
 use crate::entities::level_builder::{LevelConfig,LevelBounds};
-use crate::entities::ghost::{GhostBuilder};
+//use crate::entities::ghost::{GhostBuilder};
 use crate::entities::meow::{MeowBuilder};
-use crate::entities::platform::{PlatformBuilder};
-use crate::entities::empty_box::{BoxBuilder};
+//use crate::entities::platform::{PlatformBuilder};
+//use crate::entities::empty_box::{BoxBuilder};
 use crate::physics;
-use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle};
+use crate::physics::{PhysicsWorld};
 use crate::render;
-use crate::input::{InputMap,MouseInput,InputKey};
+use crate::input::{InputMap,InputKey};
 
 #[derive(Clone,Debug,PartialEq)]
 pub enum RunningState {
@@ -168,7 +168,7 @@ impl GameState {
         self.audio.play_music(ctx, "".to_string());
     }
 
-    pub fn dim_music(&mut self, ctx: &mut Context) {
+    pub fn dim_music(&mut self, _ctx: &mut Context) {
         //self.audio.stop_music(ctx);
         self.audio.set_dimmed(true);
     }
@@ -356,7 +356,7 @@ impl GameState {
                     // Destroy physics body of collision component
                     coll.destroy_body(&mut self.phys_world);
                     // Delete entity from ecs world
-                    entities.delete(ent);
+                    entities.delete(ent).expect("Failed to delete meow");
                 }
             }
         }
@@ -423,8 +423,8 @@ impl GameState {
             crate::entities::mouse::MouseBuilder::build(&mut self.world, ctx, &mut self.phys_world, 150.0, -50.0, 12.0, 6.0, 0.0, SpriteLayer::Entities.to_z() );
         }
         if spawn_ghost {
-            let mut rng = rand::thread_rng();
-            let test : u16 = rng.gen::<u16>();
+            //let mut rng = rand::thread_rng();
+            //let test : u16 = rng.gen::<u16>();
             crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
                 30.0, 0.15, 25.0, 25.0);
         }
@@ -445,22 +445,23 @@ impl GameState {
         }
     }
 
-    pub fn run_dialog_update(&mut self, ctx: &mut Context, time_delta: f32) {
+    #[allow(dead_code)]
+    pub fn run_dialog_update(&mut self, _ctx: &mut Context, _time_delta: f32) {
         
         {
-            let mut world = &mut self.world;
+            let world = &mut self.world;
             let mut input_sys = InputSystem::new();
             input_sys.run_now(&world);
         }
     }
 
 
-    pub fn run_post_physics_update(&mut self, ctx: &mut Context, time_delta: f32) {
+    pub fn run_post_physics_update(&mut self, _ctx: &mut Context, _time_delta: f32) {
         //let world = &mut self.world;
 
         let mut exit_name = "".to_string();
         let mut exit_entry_name = "".to_string();
-        let mut portal_id = -1;
+        //let mut portal_id = -1;
 
         {
             // get character entities, handle portal & exit statuses
@@ -484,7 +485,7 @@ impl GameState {
             }
 
             // Join entities and their components to process physics update
-            for (ent, mut character_opt, mut npc_opt,  mut pos, mut coll, mut sprite) in 
+            for (_ent, mut character_opt, mut npc_opt,  mut pos, mut coll, mut sprite) in 
                 (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res, (&mut sprite_res).maybe()).join() {
 
                 let mut facing_right = true;
@@ -528,7 +529,7 @@ impl GameState {
                 // Handle Collider entered portal - generic portal behavior
                 if coll.in_portal && coll.since_warp > 0.75 {
                     // get
-                    portal_id = coll.portal_id as i32;
+                    let portal_id = coll.portal_id as i32;
                     //println!("Collider since warp: {}", &coll.since_warp);
 
                     //exit_id = character.exit_id as i32;
@@ -543,7 +544,7 @@ impl GameState {
                         //println!("Portal info {:?}", &portal);
                         let portal_dest = portal.destination.clone();
                         if portal_dest.is_empty() == false {
-                            if let Some((portal_id, x, y)) = portal_hash.get(&portal_dest) {
+                            if let Some((_portal_id, x, y)) = portal_hash.get(&portal_dest) {
 
                                 //println!("Portal at {}, {}", &x, &y);
                                 pos.x = *x;
@@ -692,6 +693,7 @@ impl GameState {
         self.level_warp_timer = 0.0;
     }
 
+    #[allow(dead_code)]
     pub fn save_level(&self, save_name: String) {
         // TEST CODE TO SAVE LEVEL CONFIG
         let mut save_path = String::from("levels/");
@@ -759,7 +761,7 @@ impl GameState {
         }
     }
 
-    pub fn game_key_up(&mut self, ctx: &mut Context, key: &InputKey) {
+    pub fn game_key_up(&mut self, _ctx: &mut Context, key: &InputKey) {
         match &key {
             InputKey::Exit => {
 
@@ -838,7 +840,7 @@ impl event::EventHandler for GameState {
 
     }
 
-    fn mouse_button_down_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
+    fn mouse_button_down_event(&mut self, ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
         let button_index = match button {
             MouseButton::Left => {
                 Some(0usize)
@@ -856,7 +858,7 @@ impl event::EventHandler for GameState {
         }
     }
 
-    fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
+    fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
         let button_index = match button {
             MouseButton::Left => {
                 Some(0usize)
@@ -875,11 +877,11 @@ impl event::EventHandler for GameState {
         
     }
 
-    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, xrel: f32, yrel: f32) {
+    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _xrel: f32, _yrel: f32) {
         InputMap::mouse_set_pos(&mut self.world, _ctx, x, y);
     }
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
+    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) {
         //println!("Mousewheel event, x: {}, y: {}", x, y);
     }
 
@@ -1048,7 +1050,7 @@ impl event::EventHandler for GameState {
 
     }
 
-    fn text_input_event(&mut self, _ctx: &mut Context, ch: char) {
+    fn text_input_event(&mut self, _ctx: &mut Context, _ch: char) {
         //println!("Text input: {}", ch);
     }
 
@@ -1078,7 +1080,7 @@ impl event::EventHandler for GameState {
         mode.height = height;
         //println!("New window mode {:?}", &mode);
 
-        ggez::graphics::set_screen_coordinates(ctx, Rect::new(0.0, 0.0, width, height));
+        ggez::graphics::set_screen_coordinates(ctx, Rect::new(0.0, 0.0, width, height)).expect("Failed to set coords on resize");
 
         drop(game_state_writer);
         

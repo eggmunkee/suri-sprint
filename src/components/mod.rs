@@ -1,12 +1,8 @@
-use std::fmt;
-use ggez::{Context,GameResult};
+use ggez::{Context};
 use ggez::nalgebra as na;
-use specs::{ Component,Entity, DenseVecStorage, VecStorage, World, WorldExt};
+use specs::{ Component, DenseVecStorage, VecStorage, World, WorldExt};
 
 use specs_derive::*;
-//use specs::shred::{Dispatcher};
-
-use crate::game_state::{GameState};
 
 pub mod logic;
 pub mod sprite;
@@ -32,10 +28,6 @@ pub struct Position {
     pub y: f32,
 }
 
-// impl Component for Position {
-//     type Storage = VecStorage<Self>;
-// }
-
 #[derive(Debug,Copy,Clone,Component)]
 #[storage(DenseVecStorage)]
 pub struct Velocity {
@@ -45,49 +37,9 @@ pub struct Velocity {
     pub frozen: bool,
 }
 
-// impl Component for Velocity {
-//     type Storage = VecStorage<Self>;
-// }
-
-//pub type draw_fn = fn(game_state: &mut GameState, entity: &Entity, ctx: &mut Context) -> GameResult<()>;
-
-// pub enum DisplayCompType {
-//     DrawCircle,
-//     DrawSelf
-// }
-// impl fmt::Debug for DisplayCompType {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         //let ds = f.debug_struct("DisplayCompType");
-//         match self {
-//             DisplayCompType::DrawCircle => {
-//                 f.write_str("DrawCircle")?;
-//             },
-//             DisplayCompType::DrawSelf => {
-//                 f.write_str("DrawSelf")?;
-//             }
-//         }
-//         Ok(())
-//     }
-// }
-
-// #[derive(Debug,Component)]
-// #[storage(VecStorage)]
-// pub struct DisplayComp {
-//     pub circle: bool,
-//     pub display_type: DisplayCompType,
-// }
-// impl DisplayComp {
-//     #[allow(dead_code)]
-//     fn draw_self(_game_state: &mut GameState, _entity: &Entity, _ctx: &mut Context) -> GameResult<()> {
-//         Ok(())
-//     }
-
-// }
-
 pub trait CharLevelInteractor {
     fn set_standing(&mut self, is_standing: bool);
 }
-
 
 
 pub trait RenderTrait {    
@@ -96,7 +48,7 @@ pub trait RenderTrait {
 
 
 impl RenderTrait for &dyn RenderTrait {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
+    fn draw(&self, _ctx: &mut Context, _world: &World, _ent: Option<u32>, _pos: na::Point2::<f32>, _item_index: u32) {
 
     }
 }
