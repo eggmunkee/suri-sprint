@@ -139,7 +139,11 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
         images: Vec::<Image>::new(),
         font: font,
     };
+    // Paused overlay (borders)
     images.load_image("/overlay.png".to_string(), ctx);
+    // Warp In / Warp Out overlays
+    images.load_image("/warp-overlay-purple.png".to_string(), ctx);
+    images.load_image("/warp-overlay-grey.png".to_string(), ctx);
     world.insert(images);
 
 

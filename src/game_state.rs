@@ -85,6 +85,7 @@ pub struct GameState {
 
     // Current view offset
     pub current_offset: na::Point2::<f32>,
+    pub snap_view: bool,
     // what collision item was clicked
     pub click_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
     // level transition
@@ -122,6 +123,8 @@ impl GameState {
         println!("World init");
         let ecs_world = create_world(ctx, game_state_resource, &mut physics_world);
 
+        let audio_engine = Audio::new(ctx);
+
         // Create main state instance with dispatcher and world
         let s = GameState { 
             window_title: title,
@@ -143,13 +146,14 @@ impl GameState {
             // images: Vec::<Image>::new(),
             paused_text: text,
             current_offset: na::Point2::new(0.0,0.0),
+            snap_view: true,
             click_info: vec![],
             level_warping: false,
             level_warp_timer: 0.0,
             warp_level_name: "".to_string(),
             warp_level_entry_name: "".to_string(),
             paused_anim: 0.0,
-            audio: Audio::new(),
+            audio: audio_engine,
         };
 
         Ok(s)
@@ -246,9 +250,14 @@ impl GameState {
             input_sys.run_now(&world);
 
             // Process meow creation
+            let mut meow_count : i32 = 0;
             for m in &input_sys.meows {
                 // Create a meow bubble
                 MeowBuilder::build(world, ctx, &mut self.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
+                meow_count += 1;
+            }
+            if meow_count > 0 {
+                self.audio.play_jump();
             }
 
             // CLICK - COLLIDER HANDLING CODE - in testing =========================
@@ -261,12 +270,15 @@ impl GameState {
             // list for entities found at click
             let mut entity_clicked : Vec<u32> = vec![];
 
+            let mut click_items : i32 = 0;
+
             // Iterate through any click_info item from input system
             for click in &input_sys.click_info {
                 // get center x/y based on click and display offset
                 // to get from screen coordinates to game object coords
                 let center_x = click.x - display_offset.x;
                 let center_y = click.y - display_offset.y;
+                click_items += 1;
                 // println!("Click position: {}, {}", &click.x, &click.y);
                 // println!("Display offset: {}, {}", &display_offset.x, &display_offset.y);
                 // println!("Click game pos: {}, {}", &(click.x-1.0-display_offset.x), &(click.y-1.0-display_offset.y));
@@ -275,8 +287,8 @@ impl GameState {
                 // very small rectangle around the cursor position translated into world coords
                 let mut aabb = b2::AABB::new();
                 // create physics-scale positions for bounding box
-                aabb.lower = physics::create_pos(&na::Point2::new(center_x-0.1, center_y-0.1));
-                aabb.upper = physics::create_pos(&na::Point2::new(click.x+0.1, click.y+0.1));
+                aabb.lower = physics::create_pos(&na::Point2::new(center_x-0.5, center_y-0.5));
+                aabb.upper = physics::create_pos(&na::Point2::new(center_x+0.5, center_y+0.5));
         
                 {
                     let physics = &self.phys_world;
@@ -306,8 +318,18 @@ impl GameState {
                 }
             }
 
+            let mut ent_click_ct : i32 = 0;
             for ent in &entity_clicked {
                 println!("Entity {:?} clicked", &ent);
+                ent_click_ct += 1;
+            }
+            if click_items > 0 {
+                if ent_click_ct == 0 {
+                    println!("No entity clicked");
+                }
+                else {
+                    self.audio.play_jump();
+                }
             }
 
             input_sys.meows.clear();
@@ -451,6 +473,7 @@ impl GameState {
             //let mut vel_res = self.world.write_storage::<Velocity>();
             // collision component
             let mut coll_res = self.world.write_storage::<Collision>();
+            let mut sprite_res = self.world.write_storage::<SpriteComponent>();
 
             // hash to store portal names and their positions - avoid needing to search for them later
             let mut portal_hash = HashMap::<String,(i32,f32,f32)>::new();
@@ -461,8 +484,8 @@ impl GameState {
             }
 
             // Join entities and their components to process physics update
-            for (ent, mut character_opt, mut npc_opt,  mut pos, mut coll) in 
-                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res).join() {
+            for (ent, mut character_opt, mut npc_opt,  mut pos, mut coll, mut sprite) in 
+                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res, (&mut sprite_res).maybe()).join() {
 
                 let mut facing_right = true;
 
@@ -546,6 +569,17 @@ impl GameState {
                                 // Update Position and Velocity of collider body
                                 coll.update_body_transform(&mut self.phys_world, &na::Point2::<f32>::new(*x, *y));
                                 coll.update_body_velocity(&mut self.phys_world, &na::Vector2::<f32>::new(nvx, nvy));
+
+                                if let Some(ref mut sprite_comp) = sprite {
+                                    //sprite
+                                    //sprite_comp
+                                    if sprite_comp.scale[0] > 0.0 {
+                                        sprite_comp.scale[0] = -sprite_comp.scale[0];
+                                    }
+                                    else if sprite_comp.scale[0] < 0.0 {
+                                        sprite_comp.scale[0] = -sprite_comp.scale[0];
+                                    }
+                                }
                             }
                         }
                         
@@ -583,6 +617,9 @@ impl GameState {
                 self.level_warping = false;
             }
     
+        }
+        else {
+            time_delta *= 1.0;
         }
         time_delta
     }
@@ -687,6 +724,8 @@ impl GameState {
         self.current_level_name = level_name.clone();
         self.current_entry_name = entry_name.clone();
         self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
+        //self.running_state = RunningState::Playing;
+        self.snap_view = true;
 
         //self.stop_music(ctx);
 
@@ -783,7 +822,12 @@ impl event::EventHandler for GameState {
 
         let mut renderer = render::Renderer::new(self.paused_anim);
 
-        let gr = renderer.render_frame(self, &self.world, ctx);
+        // if self.snap_view {
+        //     renderer.snap_view = true;
+        //     self.snap_view = false;
+        // }
+
+        let gr = renderer.render_frame(self, ctx);
 
         self.current_offset = renderer.display_offset;
 
@@ -866,7 +910,7 @@ impl event::EventHandler for GameState {
             else if keycode == KeyCode::LBracket {
                 let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
                 self.audio.set_volume(new_level);
-            }
+            }            
     
         }
 
@@ -953,6 +997,10 @@ impl event::EventHandler for GameState {
         else if keycode == KeyCode::LBracket {
             let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
             self.audio.set_volume(new_level);
+        }
+        else if keycode == KeyCode::K {
+                
+            self.set_running_state(ctx, RunningState::Dialog("K dialog".to_string()));
         }
         
 

@@ -1,15 +1,15 @@
 LevelConfig(
-    name: "start_a",
+    name: "Start B",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 750.0,
-        solid_sides: (false, true, true, true),
+        solid_sides: (true, true, true, true),
     ),
     soundtrack: "Suri Title theme.mp3",
     items: [
         // named entrances
         Player ( x: 110.0, y: 50.0, ), // default entrance
-        PlayerNamed ( x: 150.0, y: 480.0, name: "a" ),
-        PlayerNamed ( x: 900.0, y: 250.0, name: "b" ),
+        PlayerNamed ( x: 175.0, y: 360.0, name: "a" ),
+        PlayerNamed ( x: 900.0, y: 170.0, name: "b" ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 

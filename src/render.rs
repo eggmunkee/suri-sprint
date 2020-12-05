@@ -37,6 +37,7 @@ pub enum RenderObjectType {
 pub struct Renderer {
     pub display_offset: na::Point2::<f32>,
     pub paused_renderer: PausedRenderer,
+    //pub snap_view: bool,
 }
 
 impl Renderer {
@@ -46,11 +47,12 @@ impl Renderer {
             paused_renderer: PausedRenderer {
                 anim_position: paused_anim,
             },
+            //snap_view: false
         }
     }
 
-    pub fn render_frame(&mut self, game_state: &GameState, world: &World, ctx: &mut Context) -> GameResult {
-        
+    pub fn render_frame(&mut self, game_state: &mut GameState, ctx: &mut Context) -> GameResult {
+        let world: &World = &game_state.world;
         let mut render_objects : Vec<(u32,na::Point2<f32>,f32,u32)> = vec![];
         //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
 
@@ -59,6 +61,28 @@ impl Renderer {
 
         let mut level_run_time : f32 = 0.0;
         let mut game_run_time : f32 = 0.0;        
+
+        let mut target_offset_x : f32 = game_state.current_offset.x;
+        let mut target_offset_y : f32 = game_state.current_offset.y;
+
+        let mut move_camera : bool = true;
+
+        match &game_state.running_state {
+            // DISPLAY DIALOG TEXT
+            RunningState::Dialog(_) => {
+                move_camera = false;
+            },
+            _ => {}
+        }
+        match &game_state.current_state {
+            State::Paused => {
+                move_camera = false;
+            },
+            _ => {}
+        }
+
+        self.display_offset.x = target_offset_x;
+        self.display_offset.y = target_offset_y;
 
         // BUILD RENDER OBJECTS LIST -----------------------------------------------------------------
         {
@@ -80,8 +104,8 @@ impl Renderer {
                 // Check for any of the display components
                 match opt_char_disp {
                     Some(character) => {
-                        self.display_offset.x = -pos.x;
-                        self.display_offset.y = -pos.y;
+                        target_offset_x = -pos.x;
+                        target_offset_y = -pos.y;
                         let z_order = SpriteLayer::Player.to_z();
                         char_in_portal = character.in_exit || character.in_portal;
 
@@ -118,12 +142,42 @@ impl Renderer {
 
         }
 
-        if char_in_portal {
-            graphics::clear(ctx, [0.5, 0.5, 0.6, 1.0].into());
+        let targ_x_mag = (target_offset_x - self.display_offset.x).abs();
+        let targ_y_mag = (target_offset_y - self.display_offset.y).abs();
+        let targ_axes_sum = targ_x_mag * targ_x_mag + targ_y_mag * targ_y_mag;
+        if !game_state.snap_view && move_camera == true {
+
+            if targ_axes_sum < 10000.0 {
+            }
+            else if targ_axes_sum < 200000.0 {
+                // let midpoint = (self.display_offset.x - target_offset_x) * (targ_x_mag / 20.0);
+                // self.display_offset.x -= midpoint;
+                let midpoint_x = (self.display_offset.x - target_offset_x) * (targ_x_mag / 8000.0);
+                self.display_offset.x -= midpoint_x;
+                let midpoint_y = (self.display_offset.y - target_offset_y) * (targ_y_mag / 2500.0);
+                self.display_offset.y -= midpoint_y;
+            }
+            else {
+                //self.display_offset.x = target_offset_x;
+                //let midpoint = (self.display_offset.x - target_offset_x) * 0.95;
+                self.display_offset.x = target_offset_x; //midpoint;
+                self.display_offset.y = target_offset_y;
+            }
         }
-        else {
-            graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
+        else if game_state.snap_view {
+            self.display_offset.x = target_offset_x; //midpoint;
+            self.display_offset.y = target_offset_y;
+            game_state.snap_view = false;
         }
+
+        // if char_in_portal {
+        //     graphics::clear(ctx, [0.5, 0.5, 0.6, 0.0].into());
+        // }
+        // else {
+        //     graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
+        // }
+        // Clear background
+        graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
         
 
 
@@ -172,9 +226,9 @@ impl Renderer {
         if game_state.mode == GameMode::Edit {
             // Render Edit mode level setup            
             LevelRenderer::render(&game_state, ctx);
-        }
+        
 
-        {
+        
             // draw level bounds
             let game_res = game_state.world.fetch::<GameStateResource>();
             let level_bounds = game_res.level_bounds.clone();
@@ -208,59 +262,6 @@ impl Renderer {
 
         self.post_render_list(ctx, world);
 
-        // World overlay shader
-        {
-            let mut images = game_state.world.fetch_mut::<ImageResources>();
-            let texture_ref = images.image_ref("/overlay.png".to_string());
-            let (scrw, scrh) = (game_state.window_w, game_state.window_h);
-
-            if let Ok(mut texture) = texture_ref {
-                let mut shader_res = world.fetch_mut::<ShaderResources>();
-
-                // let mut _lock : Option<ggez::graphics::ShaderLock> = None;
-                // if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
-                //     let mut dim = shader_ref.send(ctx, ShaderInputs {game_time: game_run_time});
-
-                //     _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
-                // }
-
-                let w = texture.width();
-                let h = texture.height();
-                let scale_x = scrw / w as f32;
-                let scale_y = scrh / h as f32;
-                if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
-                        .dest(na::Point2::new(0.0,0.0))
-                        //.offset(na::Point2::new(0.5f32,0.5f32))
-                        .scale(na::Vector2::new(scale_x, scale_y))
-                        .color(Color::new(1.0,1.0,1.0,1.0))) { 
-                    //_draw_ok = false;
-                    println!("Failed to render overlay image");
-                }
-            }
-            else {
-                println!("Failed to get overlay texture");
-            }
-
-            // let fill_opt = ggez::graphics::FillOptions::DEFAULT.clone();
-            // let (w, h) = (game_state.window_w, game_state.window_h);
-            // if let Ok(overlay_rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-            //     ggez::graphics::DrawMode::Fill(fill_opt),
-            //     ggez::graphics::Rect::new(0.0, 0.0, w, h),
-            //     ggez::graphics::Color::new(1.0, 1.0, 1.0, 0.25)
-            // ) {
-                
-            //     let mut shader_res = world.fetch_mut::<ShaderResources>();
-
-            //     let mut _lock : Option<ggez::graphics::ShaderLock> = None;
-            //     if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
-            //         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
-            //     }
-
-            //     ggez::graphics::draw(ctx, &overlay_rect, DrawParam::default() );
-            // }
-        }
-
-
         // RENDER UI STATE --------------------------------------------------------------------------
         match &game_state.current_state {
             // RUNNING - check for dialog
@@ -277,7 +278,61 @@ impl Renderer {
             // PAUSED STATE -----------------------------------------------------------------
             State::Paused => {
                 // DRAW PAUSED DISPLAY
-                self.paused_renderer.render(&game_state, ctx);
+                {
+                    self.paused_renderer.render(&game_state, ctx);
+                }
+
+                // World overlay shader
+                {
+                    let mut images = game_state.world.fetch_mut::<ImageResources>();
+                    let texture_ref = images.image_ref("/overlay.png".to_string());
+                    let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+
+                    if let Ok(mut texture) = texture_ref {
+                        let mut shader_res = world.fetch_mut::<ShaderResources>();
+
+                        let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+                        if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
+                            let mut dim = shader_ref.send(ctx, ShaderInputs {game_time: game_run_time});
+
+                            _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                        }
+
+                        let w = texture.width();
+                        let h = texture.height();
+                        let scale_x = scrw / w as f32;
+                        let scale_y = scrh / h as f32;
+                        if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
+                                .dest(na::Point2::new(0.0,0.0))
+                                //.offset(na::Point2::new(0.5f32,0.5f32))
+                                .scale(na::Vector2::new(scale_x, scale_y))
+                                .color(Color::new(1.0,1.0,1.0,1.0))) { 
+                            //_draw_ok = false;
+                            println!("Failed to render overlay image");
+                        }
+                    }
+                    else {
+                        println!("Failed to get overlay texture");
+                    }
+
+                    // let fill_opt = ggez::graphics::FillOptions::DEFAULT.clone();
+                    // let (w, h) = (game_state.window_w, game_state.window_h);
+                    // if let Ok(overlay_rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                    //     ggez::graphics::DrawMode::Fill(fill_opt),
+                    //     ggez::graphics::Rect::new(0.0, 0.0, w, h),
+                    //     ggez::graphics::Color::new(1.0, 1.0, 1.0, 0.25)
+                    // ) {
+                        
+                    //     let mut shader_res = world.fetch_mut::<ShaderResources>();
+
+                    //     let mut _lock : Option<ggez::graphics::ShaderLock> = None;
+                    //     if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
+                    //         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                    //     }
+
+                    //     ggez::graphics::draw(ctx, &overlay_rect, DrawParam::default() );
+                    // }
+                }
                 
             },
             _ => {}
@@ -287,7 +342,75 @@ impl Renderer {
         if ggez::timer::ticks(ctx) % 10 == 0 {
             let fps = ggez::timer::fps(ctx);
             set_window_title(ctx, format!("{} ({:.1} fps for {} render objs)", &game_state.window_title, &fps, &render_count).as_str());
+
         }
+
+        let mut warping_in = false;
+        let mut warping_in_time : f32 = 0.0;
+
+        {
+            let game_res = world.fetch::<GameStateResource>();
+            
+            if game_res.level_world_seconds < 2.5 {
+                warping_in = true;
+                warping_in_time = game_res.level_world_seconds;
+            }
+        }
+
+        if warping_in {
+            //graphics::clear(ctx, [0.5, 0.5, 0.5, (1.5 - game_state.level_warp_timer) * 0.1 ].into());
+            let mut images = game_state.world.fetch_mut::<ImageResources>();
+            let texture_ref = images.image_ref("/warp-overlay-purple.png".to_string());
+
+            let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+
+            if let Ok(mut texture) = texture_ref {
+
+                let w = texture.width();
+                let h = texture.height();
+                let scale_x = scrw / w as f32;
+                let scale_y = scrh / h as f32;
+                if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
+                        .dest(na::Point2::new(0.0,0.0))
+                        //.offset(na::Point2::new(0.5f32,0.5f32))
+                        .scale(na::Vector2::new(scale_x, scale_y))
+                        .color(Color::new(1.0,1.0,1.0,(2.5 - warping_in_time) / 2.6))) { 
+                    //_draw_ok = false;
+                    println!("Failed to render overlay image");
+                }
+            }
+            else {
+                println!("Failed to get overlay texture");
+            }
+        }
+
+        if game_state.level_warping {
+            //graphics::clear(ctx, [0.5, 0.5, 0.5, (1.5 - game_state.level_warp_timer) * 0.1 ].into());
+            let mut images = game_state.world.fetch_mut::<ImageResources>();
+            let texture_ref = images.image_ref("/warp-overlay-grey.png".to_string());
+
+            let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+
+            if let Ok(mut texture) = texture_ref {
+
+                let w = texture.width();
+                let h = texture.height();
+                let scale_x = scrw / w as f32;
+                let scale_y = scrh / h as f32;
+                if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
+                        .dest(na::Point2::new(0.0,0.0))
+                        //.offset(na::Point2::new(0.5f32,0.5f32))
+                        .scale(na::Vector2::new(scale_x, scale_y))
+                        .color(Color::new(1.0,1.0,1.0,game_state.level_warp_timer * 0.25))) { 
+                    //_draw_ok = false;
+                    println!("Failed to render overlay image");
+                }
+            }
+            else {
+                println!("Failed to get overlay texture");
+            }
+        }
+
 
         graphics::present(ctx)?;
 

@@ -37,7 +37,7 @@ impl GhostBuilder {
         collision.collision_category = CollisionCategory::Etherial;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
-        //collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Portal);
         collision.collision_mask.push(CollisionCategory::Sound);

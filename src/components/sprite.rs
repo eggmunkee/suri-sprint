@@ -13,7 +13,7 @@ use serde::{Deserialize,de::DeserializeOwned};
 
 //use crate::game_state::{GameState};
 use crate::components::collision::{Collision};
-use crate::resources::{ImageResources,ShaderResources};
+use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource};
 use crate::conf::*;
 
 #[allow(dead_code)]
@@ -153,6 +153,11 @@ impl super::RenderTrait for SpriteComponent {
 
         }
 
+        let gs_res = world.fetch::<GameStateResource>();
+
+        let level_run_time = gs_res.level_world_seconds;
+        let game_run_time = gs_res.game_run_seconds;
+
         let mut shader_res = world.fetch_mut::<ShaderResources>();
         let mut images = world.fetch_mut::<ImageResources>();
         let texture_ref = images.image_ref(self.path.clone());
@@ -173,6 +178,7 @@ impl super::RenderTrait for SpriteComponent {
             let mut _lock : Option<ggez::graphics::ShaderLock> = None;
             if let Some(shader_name) = &self.shader {
                 if let Ok(shader_ref) = shader_res.shader_ref(shader_name.clone()) {
+                    let mut dim = shader_ref.send(ctx, ShaderInputs {game_time: game_run_time});
                     _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                 }
             }

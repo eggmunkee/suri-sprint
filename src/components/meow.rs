@@ -31,7 +31,7 @@ impl MeowComponent {
     }
 
     fn calc_alpha(&self) -> f32 {
-        self.meow_time
+        (self.meow_time * 1.2).min(1.0)
     }
 
     fn calc_radius(&self) -> f32 {

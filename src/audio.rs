@@ -9,17 +9,34 @@ pub struct Audio {
     pub base_music_volume: f32,
     pub dimmed_mult: f32,
     pub is_dimmed: bool,
+    pub jump_source: Option<Source>,
 }
 
 
 impl Audio {
-    pub fn new() -> Self {
+    pub fn new(ctx: &mut Context) -> Self {
+
+        let mut jump : Option<Source> = None;
+        let jump_path = "/audio/8bitgame3-jump.ogg";        
+        if let Ok(mut source) = Source::new(ctx, jump_path.clone()) {
+            source.set_volume(0.1);
+            //println!("Loading sound? {}", &source.playing());
+            source.set_repeat(false);
+            //source.play();
+
+            jump = Some(source);
+        }
+        else {
+            println!("Could not load sound effect: {}", &jump_path);
+        }
+
         Audio {
             music_source: None,
             song_path: String::new(),
             base_music_volume: 0.05, // .3
             dimmed_mult: 0.5,
             is_dimmed: false,
+            jump_source: jump
         }
     }
 
@@ -100,6 +117,15 @@ impl Audio {
             if source.paused() {
                 source.resume();
             }            
+        }
+    }
+
+    pub fn play_jump(&mut self) {
+        if let Some(ref mut jump) = &mut self.jump_source {
+            if !jump.playing() {
+                jump.play();
+            }
+            
         }
     }
 }

@@ -111,6 +111,9 @@ pub struct CharacterDisplayComponent {
     // jump variables
     pub in_jump: bool,
     pub jump_duration: f32,
+    pub jump_lift_time: f32,
+    pub jump_lift_time_min: f32,
+    pub jump_lift_time_max: f32,
     // stand/fall status
     pub since_stand: f32,
     pub since_move: f32,
@@ -154,6 +157,9 @@ impl CharacterDisplayComponent {
             rot: 0.0,
             in_jump: false,
             jump_duration: 0.0,
+            jump_lift_time: 0.125,
+            jump_lift_time_min: 0.125,
+            jump_lift_time_max: 0.3,
             since_stand: 0.5,
             since_move: 0.0,
             in_fall: true,
@@ -193,13 +199,14 @@ impl CharacterDisplayComponent {
     }
 
     pub fn process_jump(&mut self, time_delta: f32) {
-        if self.jump_duration < 0.3 {
+        if self.jump_duration < self.jump_lift_time {
             self.jump_duration += time_delta;                
             //println!("In jump! {}", &self.jump_duration);
         }
         else {
             //self.start_fall();
             self.going_up = false;
+            
             // self.in_jump = false;
             // self.jump_duration = 0.0;
             // self.since_stand = 0.0;
@@ -250,17 +257,33 @@ impl CharacterDisplayComponent {
         self.in_walk = true;
         self.jump_duration = 0.0;
         self.since_stand = 0.0;
+        //self.jump_lift_time = self.jump_lift_time_min;
     }
 
     pub fn process_walk(&mut self, time_delta: f32) {
         if self.going_up {
             if self.jump_duration >= 0.0 && self.recent_stand() {
                 //println!("Start jump! {}", &self.jump_duration);
+                self.jump_lift_time *= 1.20;
+                if self.jump_lift_time > self.jump_lift_time_max {
+                    self.jump_lift_time = self.jump_lift_time_max;
+                }
                 self.start_jump();
+                return;
             }
-            else {
-                //println!("Can't start jump! {}", &self.jump_duration);
-                self.going_up = false;
+            // else {
+            //     //println!("Can't start jump! {}", &self.jump_duration);
+            //     self.going_up = false;
+            //     // if self.recent_stand() == false {
+            //     //     self.jump_lift_time = self.jump_lift_time_min;
+            //     // }
+            // }
+        }
+        
+        {
+            self.going_up = false;
+            if self.jump_duration >= 0.0 {
+                self.jump_lift_time = self.jump_lift_time_min;
             }
         }
     }
@@ -276,17 +299,27 @@ impl CharacterDisplayComponent {
         self.jump_duration = 0.0;
         self.since_stand = 0.0;
         self.fall_anim_dir = 1;
+        self.jump_lift_time = self.jump_lift_time_min;
     }
 
     pub fn process_idle(&mut self, time_delta: f32) {
         if self.going_up {
             if self.jump_duration >= 0.0 && self.recent_stand() {
                 //println!("Start jump! {}", &self.jump_duration);
+                // self.jump_lift_time += 0.25;
+                // if self.jump_lift_time > self.jump_lift_time_max {
+                //     self.jump_lift_time = self.jump_lift_time_max;
+                // }
+                self.jump_lift_time = self.jump_lift_time_min;
                 self.start_jump();
+
             }
             else {
                 //println!("Can't start jump! {}", &self.jump_duration);
                 self.going_up = false;
+                // if self.recent_stand() == false {
+                //     self.jump_lift_time = self.jump_lift_time_min;
+                // }
             }
         }
     }
@@ -733,7 +766,7 @@ impl super::RenderTrait for CharacterDisplayComponent {
 
             if self.since_meow < 0.25 {
                 let font = image_resources.font;
-                let typeText = String::from("*meow*");
+                let typeText = String::from("*MEOW*");
                 // match &self.in_fall {
                 //     true => {
                 //         typeText.push_str(&format!("FALL {}", &self.anim_frame).to_string());
@@ -747,19 +780,56 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 //         }                    
                 //     }
                 // };
-                //let curr_transform = ggez::graphics::transform();
+                
+                let curr_transform = ggez::graphics::transform(ctx);
+                ggez::graphics::pop_transform(ctx);
+                ggez::graphics::apply_transformations(ctx);
 
-
-                let text = ggez::graphics::Text::new(typeText);
-                //let text_size_x = text.width(ctx) as f32 / 2.0;
-                //let text_size_y = text.height(ctx) as f32 / 2.0;
+                let mut text = ggez::graphics::Text::new(typeText);
+                text.set_font(font, ggez::graphics::Scale::uniform(18.0));
+                let (width, height) = ggez::graphics::size(ctx);
+                let text_size_x = text.width(ctx) as f32 / 2.0;
+                let text_size_y = text.height(ctx) as f32 / 2.0;
                 if let Err(_) = graphics::draw(ctx, &text,
-                    DrawParam::default()
-                    .dest(na::Point2::new(draw_pos.x, draw_pos.y)) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    DrawParam::new()
+                    //.dest(na::Point2::new(20.0, 20.0))   //width*0.5-text_size_x+draw_pos.x, height*0.5-text_size_y+draw_pos.y))
+                    .dest(na::Point2::new(width * 0.4995 - text_size_x, height * 0.5495 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    //.scale(na::Vector2::new(x_scale.abs(), x_scale.abs()))
+                    .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+                    //.scale(na::Vector2::new(5.0, 5.0))
+                    //.offset(na::Point2::new(text_size_x, text_size_y))
+                    //.scale(na::Vector2::new(x_scale.abs(),x_scale.abs())) 
                     //.offset(na::Point2::new(text_size_x, text_size_y))
                 ) {
                     _draw_ok = false;
                 }
+
+                if let Err(_) = graphics::draw(ctx, &text,
+                    DrawParam::new()
+                    .dest(na::Point2::new(width * 0.5005 - text_size_x, height * 0.5495 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+                ) {
+                    _draw_ok = false;
+                }
+
+                if let Err(_) = graphics::draw(ctx, &text,
+                    DrawParam::new()
+                    .dest(na::Point2::new(width * 0.50 - text_size_x, height * 0.5505 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+                ) {
+                    _draw_ok = false;
+                }
+
+                if let Err(_) = graphics::draw(ctx, &text,
+                    DrawParam::new()
+                    .dest(na::Point2::new(width * 0.5 - text_size_x, height * 0.55 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+                    //.color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+                ) {
+                    _draw_ok = false;
+                }
+
+                ggez::graphics::push_transform(ctx, Some(curr_transform));
+                ggez::graphics::apply_transformations(ctx);
             }
             
 

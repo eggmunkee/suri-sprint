@@ -31,6 +31,7 @@ impl MouseBuilder {
         //let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), z_order);
         sprite.scale.x *= width / 24.0;
         sprite.scale.y *= height / 12.0;
+        sprite.z_order = SpriteLayer::Entities.to_z();
 
         //let avg_rad = (width + height) / 4.0;
         let mut collision = Collision::new_specs(1.0,0.75, width*0.5, height*0.5);

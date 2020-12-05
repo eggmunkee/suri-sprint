@@ -1,16 +1,18 @@
 LevelConfig(
-    name: "start_a",
+    name: "Start A",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 750.0,
-        solid_sides: (false, true, true, true),
+        solid_sides: (true, true, true, true),
     ),
     soundtrack: "Suri Title theme.mp3",
     items: [
-        Player ( x: 30.0, y: 50.0, ),
-        PlayerNamed ( x: 300.0, y: 375.0, name: "a" ),
-        PlayerNamed ( x: 900.0, y: 200.0, name: "b" ),
+        Player ( x: 345.0, y: 350.0, ),
+        PlayerNamed ( x: 300.0, y: 300.0, name: "a" ),
+        PlayerNamed ( x: 900.0, y: 100.0, name: "b" ),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/white-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+        DynSprite ( x: 500.0, y: 375.0, sprite: "entities/white-tile-bg", z: 2.0, angle: 0.0, src: (-4,-3,8,6),
+            name: "dynbg", is_enabled: true ),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 
@@ -21,11 +23,17 @@ LevelConfig(
         //Platform ( x: 450.0, y: 350.0, w: 100.0, h: 20.0, ang: 0.0),
         Platform ( x: 700.0, y: 200.0, w: 100.0, h: 20.0, ang: 0.0),
 
+        Button ( x: 300.0, y: 405.0, w: 35.0, h: 7, ang: 0, name: "btna",),
+
         Exit ( x: 300.0, y: 300.0, w: 25.0, h: 25.0, name: "", destination: "start:a"),
 
         Exit ( x: 900.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "start_b:a"),
 
         Ghost ( x: 200.0, y: 100.0 ),
+
+        Connection ( from: "btna", to: "dynbg", conn_type: Switch ),
+
+        Connection ( from: "btna", to: "mouse", conn_type: Switch ),
 
     ],
 )

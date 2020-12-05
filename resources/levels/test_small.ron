@@ -4,7 +4,7 @@ LevelConfig(
         min_x: 0.0, min_y: 0.0, max_x: 2000.0, max_y: 2000.0,
         solid_sides: (false, true, false, true),
     ),
-    soundtrack: "",
+    soundtrack: "8bitgame3-jump.ogg",
     items: [
         Player ( x: 500.0, y: 370.0 ),
 

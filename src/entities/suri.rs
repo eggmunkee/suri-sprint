@@ -43,8 +43,8 @@ impl SuriBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Portal);
-        //collision.collision_mask.push(CollisionCategory::Etherial);
-        //collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Etherial);
+        collision.collision_mask.push(CollisionCategory::Player);
         // Create physics body from collision properties
         //collision.create_dynamic_body_box_upright(physics_world);
         collision.create_dynamic_body_box_upright(physics_world);
@@ -96,10 +96,9 @@ impl SuriBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Portal);
-        //collision.collision_mask.push(CollisionCategory::Etherial);
+        collision.collision_mask.push(CollisionCategory::Etherial);
         //collision.collision_mask.push(CollisionCategory::Player);
         // Create physics body from collision properties
-        //collision.create_dynamic_body_box_upright(physics_world);
         collision.create_dynamic_body_box_upright(physics_world);
         // get body handle value
         let body_handle_clone = collision.body_handle.clone();

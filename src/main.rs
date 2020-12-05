@@ -3,7 +3,7 @@ use std::env;
 use std::path;
 use ggez;
 use ggez::event;
-use ggez::filesystem;
+//use ggez::filesystem;
 use ggez::{GameResult};
 
 // ================== ROOT MODULES ========================
@@ -39,7 +39,7 @@ use crate::conf::*;
 // Do setup and start main event loop
 pub fn main() -> GameResult {
 
-
+    // Get config from file, get windows info
     let config : ConfigData = get_game_config().unwrap();    
     let win_title = config.window_setup.title.clone();
     //let win_setup = get_window_setup();

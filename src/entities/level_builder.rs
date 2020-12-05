@@ -17,6 +17,7 @@ use crate::entities::exit::{ExitBuilder};
 use crate::entities::suri::{SuriBuilder};
 use crate::entities::ghost::{GhostBuilder};
 use crate::entities::bowl::{BowlBuilder};
+use crate::entities::mouse::{MouseBuilder};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 use crate::resources::{ConnectionResource};
@@ -66,6 +67,12 @@ pub enum LevelItem {
     DynPlatform {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
     },
+    StaticLevelProp {
+        x: f32, y: f32, w: f32, h: f32, ang: f32, image: String, img_w: f32, img_h: f32,
+    },
+    DynStaticLevelProp {
+        x: f32, y: f32, w: f32, h: f32, ang: f32, image: String, img_w: f32, img_h: f32,
+    },
     EmptyBox {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
     },
@@ -90,8 +97,14 @@ pub enum LevelItem {
     Exit {
         x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
     },
+    ExitCustom {
+        x: f32, y: f32, w: f32, h: f32, name: String, destination: String, image: String, img_w: f32, img_h: f32,
+    },
     Bowl {
         x: f32, y: f32,
+    },
+    Mouse {
+        x: f32, y: f32
     },
     Connection {
         from: String, to: String, conn_type: ConnectionType,
@@ -133,10 +146,11 @@ impl LevelConfig {
         for item in &self.items {
             match item {
                 LevelItem::Player{ x, y } if entry_name.is_empty() => {
-                    SuriBuilder::build(world, ctx, physics_world, *x, *y);
                     //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
+                    SuriBuilder::build(world, ctx, physics_world, *x, *y);
                 },
                 LevelItem::PlayerNamed{ x, y, name } if name == &entry_name => {
+                    //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
                     SuriBuilder::build(world, ctx, physics_world, *x, *y);
                 },
                 LevelItem::Platform{ x, y, w, h, ang} => {
@@ -144,6 +158,12 @@ impl LevelConfig {
                 },
                 LevelItem::DynPlatform{ x, y, w, h, ang} => {
                     PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
+                },
+                LevelItem::StaticLevelProp{ x, y, w, h, ang, image, img_w, img_h} => {
+                    PlatformBuilder::build_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z(), (*image).to_string(), *img_w, *img_h);
+                },
+                LevelItem::DynStaticLevelProp{ x, y, w, h, ang, image, img_w, img_h} => {
+                    PlatformBuilder::build_dynamic_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z(), (*image).to_string(), *img_w, *img_h);
                 },
                 LevelItem::EmptyBox{ x, y, w, h, ang} => {
                     BoxBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang);
@@ -184,8 +204,15 @@ impl LevelConfig {
                 LevelItem::Exit { x, y, w, h, name, destination } => {
                     ExitBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());
                 },
+                LevelItem::ExitCustom { x, y, w, h, name, destination, image, img_w, img_h } => {
+                    ExitBuilder::build_w_image(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string(),
+                        (*image).to_string(), *img_w, *img_h);
+                },
                 LevelItem::Bowl { x, y } => {
                     BowlBuilder::build(world, ctx, physics_world, *x, *y);
+                },
+                LevelItem::Mouse { x, y } => {
+                    MouseBuilder::build(world, ctx, physics_world, *x, *y, 32.0, 8.0, 0.0, 300.0);
                 },
                 LevelItem::Connection { from, to, conn_type } => {
                     let mut connection_res = world.fetch_mut::<ConnectionResource>();

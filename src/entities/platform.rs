@@ -26,14 +26,24 @@ impl PlatformBuilder {
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
         width: f32, height: f32, angle: f32, z_order: f32) -> Entity {
+        
+        PlatformBuilder::build_w_image(world, ctx, physics_world, x, y, width, height, angle, z_order, 
+            "entities/box".to_string(), 48.0, 48.0)
+    }
+
+    pub fn build_w_image(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+        width: f32, height: f32, angle: f32, z_order: f32, image: String, img_w: f32, img_h: f32) -> Entity {
 
         // Create sprite from config
-        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, image);
+
+        let half_img_w = img_w / 2.0;
+        let half_img_h = img_h / 2.0;
 
         sprite.z_order = z_order;
         //sprite.rotation = angle;
-        sprite.scale.x *= width / 24.0;
-        sprite.scale.y *= height / 24.0;
+        sprite.scale.x *= width / half_img_w;
+        sprite.scale.y *= height / half_img_h;
 
         let mut collision = Collision::new_specs(5.0,0.02, width, height);
         // collision.dim_1 = width;
@@ -71,12 +81,23 @@ impl PlatformBuilder {
     pub fn build_dynamic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
         width: f32, height: f32, angle: f32, z_order: f32) -> Entity {
 
-        // Create sprite from config
-        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
+        PlatformBuilder::build_dynamic_w_image(world, ctx, physics_world, x, y, width, height, angle, z_order, 
+            "entities/box".to_string(), 48.0, 48.0)
+    }
 
-        //let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), z_order);
-        sprite.scale.x *= width / 24.0;
-        sprite.scale.y *= height / 24.0;
+    pub fn build_dynamic_w_image(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+        width: f32, height: f32, angle: f32, z_order: f32, image: String, img_w: f32, img_h: f32) -> Entity {
+
+        // Create sprite from config
+        let mut sprite = SpriteConfig::create_from_config(world, ctx, image);
+
+        let half_img_w = img_w / 2.0;
+        let half_img_h = img_h / 2.0;
+
+        sprite.z_order = z_order;
+        //sprite.rotation = angle;
+        sprite.scale.x *= width / half_img_w;
+        sprite.scale.y *= height / half_img_h;
 
         //let npc = NpcComponent::new();
 

@@ -25,7 +25,8 @@ impl<'a> System<'a> for LogicSystem {
                         Write<'a, ConnectionResource>,
                         Entities<'a>);
 
-    fn run(&mut self, (mut logic_res, mut portal_res, mut button_res, mut sprite_res, game_state, mut connection, mut entities): Self::SystemData) {
+    fn run(&mut self, (mut logic_res, mut portal_res, mut button_res, mut sprite_res,
+            game_state, mut connection, mut entities): Self::SystemData) {
         use specs::Join;
 
         let time_delta = game_state.delta_seconds;
@@ -84,15 +85,19 @@ impl<'a> System<'a> for LogicSystem {
             logic.set_input_value(val);
             //println!("Logic result value {} - Value {}, input val {}, active {}", &logic.id, &logic.value, &logic.input_value, &logic.is_active);
 
+            // Handle entities that can be toggled by logic
+            // Portal toggle
             if let Some(mut portal) = portal_res.get_mut(ent) {
                 //println!("Updating portal enabled from logic {}", &val);
                 portal.is_enabled = val;
             }
+            // Sprite Toggle (dyn sprite)
             else if let Some(mut sprite) = sprite_res.get_mut(ent) {
                 if sprite.toggleable {
                     sprite.visible = val;
                 }
             }
+
         }
     }
 

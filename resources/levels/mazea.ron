@@ -12,6 +12,12 @@ LevelConfig(
 
         Sprite ( x: 1000.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), ),
 
+        StaticLevelProp( x: 300, y: 915.0, w: 100.0, h: 32.0, ang: -0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 550, y: 900.0, w: 100.0, h: 32.0, ang: 0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 800, y: 850.0, w: 100.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        DynStaticLevelProp( x: 100, y: 650.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        DynStaticLevelProp( x: 200, y: 750.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
 
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/white-tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/tile-bg", z: 16.0, angle: 0.78, src: (-1.5,-1.5,2.75,2.75), ),
@@ -24,7 +30,7 @@ LevelConfig(
 
         //DynEmptyBox ( x: 500.0, y: 900.0, w: 50.0, h: 50.0, ang: 0.0),
 
-        DynPlatform ( x: 500.0, y: 900.0, w: 40.0, h: 40.0, ang: 0.0),
+        DynPlatform ( x: 810.0, y: 750.0, w: 40.0, h: 40.0, ang: 0.0),
 
         // lower blockers
         //Platform ( x: 1.0, y: 825.0, w: 150.0, h: 15.0, ang: -1.57),
@@ -72,6 +78,51 @@ LevelConfig(
         Exit ( x: 1200.0, y: 400.0, w: 25.0, h: 25.0, name: "", destination: "test"),
 
         Ghost ( x: 1600.0, y: 300.0 ),
+
+
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),
+
 
         //Connection ( from: "btna", to: "btnb", conn_type: Switch),
         Connection ( from: "btna", to: "lower_left", conn_type: Switch),
