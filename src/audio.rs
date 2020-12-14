@@ -19,7 +19,7 @@ impl Audio {
         let mut jump : Option<Source> = None;
         let jump_path = "/audio/8bitgame3-jump.ogg";        
         if let Ok(mut source) = Source::new(ctx, jump_path.clone()) {
-            source.set_volume(0.1);
+            source.set_volume(0.05);
             //println!("Loading sound? {}", &source.playing());
             source.set_repeat(false);
             //source.play();

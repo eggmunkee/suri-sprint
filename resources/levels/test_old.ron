@@ -16,9 +16,9 @@ LevelConfig(
 
         DynEmptyBox ( x: 400.0, y: 50.0, w: 40.0, h: 40.0, ang: 0.0),
 
-        Portal ( x: 300.0, y: 1900.0, w: 30.0, name: "b", destination: "", enabled: true ),
+        Portal ( x: 300.0, y: 1900.0, w: 30.0, name: "b", destination: "", start_enabled: true ),
 
-        Portal ( x: 2000.0, y: -500.0, w: 30.0, name: "a", destination: "b", enabled: true ),
+        Portal ( x: 2000.0, y: -500.0, w: 30.0, name: "a", destination: "b", start_enabled: true ),
 
         Bowl ( x: 500.0, y: 500.0 ),
 

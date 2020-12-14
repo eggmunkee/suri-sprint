@@ -13,6 +13,6 @@ LevelConfig(
 
         Sprite ( x: 250.0, y: 250.0, sprite: "entities/white-tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), ),
 
-        Portal ( x: 250, y: 250, w: 35, name: "portal1", destination: "portal1", enabled: true ),
+        Portal ( x: 250, y: 250, w: 35, name: "portal1", destination: "portal1", start_enabled: true ),
     ]
 )       

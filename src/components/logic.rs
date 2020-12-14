@@ -24,6 +24,21 @@ impl Default for ConnectionType {
     }
 }
 
+#[derive(Debug,Clone,Deserialize,Serialize)]
+pub enum LogicOpType {
+    And,
+    Or,
+    Odd,
+    Even,
+}
+
+impl Default for LogicOpType {
+    fn default() -> Self {
+        Self::And
+    }
+}
+
+
 #[derive(Debug,Default,Deserialize,Serialize)]
 pub struct LogicConnection {
     pub from: String,
@@ -46,10 +61,20 @@ impl LogicConnection {
 #[storage(DenseVecStorage)]
 pub struct LogicComponent {
     pub id: String,
+    // Static Logic Inputs
     pub initial_value: bool, // base value
-    pub input_value: bool,
-    pub value: bool, // the node's result value
+    pub logic_op: LogicOpType,
+
+    // Dynamic Values
+    pub input_value: Option<bool>, // If the external input has a signal and its value
     pub is_active: bool, // If this node is generating an active signal
+    pub value: bool, // the node's output result value
+
+    // History keeping
+    pub last_value: bool,
+    pub last_input: Option<bool>,
+    pub last_active: bool,
+    pub change_count: i32,
 }
 
 impl LogicComponent {
@@ -57,22 +82,43 @@ impl LogicComponent {
 
         let mut logic = LogicComponent {
             id: id,
-            initial_value: !is_enabled,
-            input_value: false,
-            value: !is_enabled,
+            initial_value: is_enabled,
+            logic_op: LogicOpType::And,
+            input_value: None,
+            value: is_enabled,
             is_active: false,
+            last_value: is_enabled,
+            last_active: false,
+            last_input: None,
+            change_count: 0,
         };
 
         logic
     }
 
-    fn calc_value(&mut self) {
+    pub fn clear_input(&mut self) {
+        self.input_value = None;
+    }
+
+    pub fn calc_value(&mut self) {
+        let debug = false; //self.id.eq("btna");
         let mut calc_val = self.initial_value;
-        if self.input_value {
-            calc_val = !calc_val;
+        if debug {
+            println!("[LOGIC][{}] INITIAL, value: {}", &self.id, &calc_val);
         }
-        else if self.is_active {
+        if let Some(input) = self.input_value {
+            if input {
+                calc_val = !calc_val;
+                if debug {
+                    println!("[LOGIC][{}] FLIP BY INPUT VAL, value: {}", &self.id, &calc_val);
+                }
+            }
+        }
+        if self.is_active {
             calc_val = !calc_val;
+            if debug {
+                println!("[LOGIC][{}] FLIP BY ACTIVE VAL, value: {}", &self.id, &calc_val);
+            }
         }
         self.value = calc_val;
     }
@@ -82,12 +128,27 @@ impl LogicComponent {
         self.calc_value();
     }
 
-    pub fn set_input_value(&mut self, input_value: bool) {
-        self.input_value = input_value;
+    pub fn set_input_value(&mut self, input_value: bool) -> bool {
+        //println!("Set input value on id {}, input_val: {}", &self.id, &input_value);
+        self.input_value = Some(input_value);
         self.calc_value();
+        //println!("Result value: {}", &self.value);
+        
+        self.value
     }
 
     pub fn update(&mut self, time_delta: f32) {
+        if self.last_value != self.value {
+            self.change_count += 1;
+            if self.change_count > 2 {
+                println!("[LOGIC] {} from {} => {} (change {})", &self.id, &self.last_value, &self.value, &self.change_count);
+            }
+        }
+        else {
+            self.change_count = 0;
+        }
+
+        self.last_value = self.value;
 
     }
 

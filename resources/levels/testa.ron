@@ -29,9 +29,9 @@ LevelConfig(
         Platform ( x: -100.0, y: -500.0, w: 150.0, h: 10.0, ang: -0.1),
 
 
-        Portal ( x: 1500.0, y: -500.0, w: 30.0, name: "a", destination: "", enabled: true ),
+        Portal ( x: 1500.0, y: -500.0, w: 30.0, name: "a", destination: "", start_enabled: true ),
 
-        Portal ( x: 2400.0, y: 1800.0, w: 30.0, name: "b", destination: "a", enabled: true),
+        Portal ( x: 2400.0, y: 1800.0, w: 30.0, name: "b", destination: "a", start_enabled: true),
 
         Platform ( x: 400.0, y: 2000.0, w: 400.0, h: 20.0, ang: -0.2),
         Platform ( x: -200.0, y: 2000.0, w: 400.0, h: 20.0, ang: 0.2),

@@ -27,10 +27,10 @@ impl ButtonBuilder {
     // }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-        width: f32, height: f32, angle: f32, name: String) -> (Entity, Entity) {
+        width: f32, height: f32, angle: f32, name: String, start_enabled: bool) -> (Entity, Entity) {
 
         // BUTTON ENTITY
-        let mut button = ButtonComponent::new(name.clone());
+        let button = ButtonComponent::new(name.clone());
         
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/button-base".to_string());
@@ -54,7 +54,7 @@ impl ButtonBuilder {
 
         let body_handle_clone = collision.body_handle.clone();
 
-        let logic = LogicComponent::new(name, true);
+        let logic = LogicComponent::new(name, start_enabled);
         //logic.
 
         let button_entity = world.create_entity()

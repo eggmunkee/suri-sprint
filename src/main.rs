@@ -64,6 +64,8 @@ pub fn main() -> GameResult {
     // create app's state
     let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode)?;
 
+    state.audio.set_volume(config.music_volume);
+
     state.load_level(ctx, config.start_level, "".to_string());
     //{
         //let mut world = &mut state.world;

@@ -28,7 +28,7 @@ impl PortalBuilder {
         sprite.scale.y = width / 24.0;
         sprite.z_order = SpriteLayer::PlayerBehind.to_z();
 
-        let logic = LogicComponent::new(name, true);
+        let logic = LogicComponent::new(name, enabled);
 
         let mut collision = Collision::new_specs(0.1,0.72, width * 0.5, width * 0.5);
         // collision.dim_1 = width;

@@ -3,12 +3,14 @@ use specs::{Component, DenseVecStorage, World, WorldExt};
 use ggez::nalgebra::{Point2,Vector2,distance};
 use wrapped2d::b2;
 use wrapped2d::user_data::NoUserData;
+use wrapped2d::b2::{MetaBody};
+//use wrapped2d::dynamics
 use rand::prelude::*;
 
 
 use crate::entities::level_builder::{LevelBounds};
 use crate::physics;
-use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyHandle, EntityType, CollisionCategory, CollideType};
+use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyType, PhysicsBodyHandle, EntityType, CollisionCategory, CollideType};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
 
@@ -254,41 +256,50 @@ impl Collision {
 
             let mut curr_pos = physics::get_pos(body.position());
 
-            let mut updated_pos = false;
             
-            if curr_pos.y > level_bounds.max_y {
-                curr_pos.y = level_bounds.min_y;
+            let body_type = body.body_type();
 
-                //let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
+            if body_type != PhysicsBodyType::Static { 
 
-                // move falling objects inward from edges as they wrap to the top
-                // if curr_pos.x > 4900.0 {
-                //     curr_pos.x = new_x;
-                // }
-                // if curr_pos.x < 100.0 {
-                //     curr_pos.x = new_x;
-                // }
+                let mut updated_pos = false;
 
-                updated_pos = true;
+                if curr_pos.y > level_bounds.max_y {
+                    curr_pos.y = level_bounds.min_y;
+    
+                    //let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
+    
+                    // move falling objects inward from edges as they wrap to the top
+                    // if curr_pos.x > 4900.0 {
+                    //     curr_pos.x = new_x;
+                    // }
+                    // if curr_pos.x < 100.0 {
+                    //     curr_pos.x = new_x;
+                    // }
+    
+                    updated_pos = true;
+                }
+    
+                if curr_pos.x < level_bounds.min_x {
+                    curr_pos.x = level_bounds.max_x - 1.0;
+                    updated_pos = true;
+                }
+                else if curr_pos.x > level_bounds.max_x {
+                    curr_pos.x = level_bounds.min_x + 1.0;
+                    updated_pos = true;
+                }
+    
+                if updated_pos {
+                    //println!("collider new position: {}, {}", &curr_pos.x, &curr_pos.y);
+                    //self.update_body_transfrom(physics_world, &curr_pos, &mut body);
+    
+                    let phys_pos = physics::create_pos(&curr_pos);
+                    let curr_ang = body.angle();
+                    body.set_transform(&phys_pos, curr_ang);
+                }
+
             }
 
-            if curr_pos.x < level_bounds.min_x {
-                curr_pos.x = level_bounds.max_x - 1.0;
-                updated_pos = true;
-            }
-            else if curr_pos.x > level_bounds.max_x {
-                curr_pos.x = level_bounds.min_x + 1.0;
-                updated_pos = true;
-            }
-
-            if updated_pos {
-                //println!("collider new position: {}, {}", &curr_pos.x, &curr_pos.y);
-                //self.update_body_transfrom(physics_world, &curr_pos, &mut body);
-
-                let phys_pos = physics::create_pos(&curr_pos);
-                let curr_ang = body.angle();
-                body.set_transform(&phys_pos, curr_ang);
-            }
+            
     
         }
 

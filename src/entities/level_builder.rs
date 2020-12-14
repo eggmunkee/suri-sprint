@@ -69,9 +69,11 @@ pub enum LevelItem {
     },
     StaticLevelProp {
         x: f32, y: f32, w: f32, h: f32, ang: f32, image: String, img_w: f32, img_h: f32,
+        z: Option<f32>,
     },
     DynStaticLevelProp {
         x: f32, y: f32, w: f32, h: f32, ang: f32, image: String, img_w: f32, img_h: f32,
+        z: Option<f32>,
     },
     EmptyBox {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
@@ -80,7 +82,7 @@ pub enum LevelItem {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
     },
     Button {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, name: String,
+        x: f32, y: f32, w: f32, h: f32, ang: f32, name: String, start_enabled: bool,
     },
     Ghost {
         x: f32, y: f32,
@@ -89,10 +91,10 @@ pub enum LevelItem {
         x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), shader: Option<String>,
     },
     DynSprite {
-        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), name: String, is_enabled: bool,
+        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), name: String, start_enabled: bool,
     },
     Portal {
-        x: f32, y: f32, w: f32, name: String, destination: String, enabled: bool,
+        x: f32, y: f32, w: f32, name: String, destination: String, start_enabled: bool,
     },
     Exit {
         x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
@@ -159,11 +161,19 @@ impl LevelConfig {
                 LevelItem::DynPlatform{ x, y, w, h, ang} => {
                     PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
                 },
-                LevelItem::StaticLevelProp{ x, y, w, h, ang, image, img_w, img_h} => {
-                    PlatformBuilder::build_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z(), (*image).to_string(), *img_w, *img_h);
+                LevelItem::StaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z} => {
+                    let mut z_value = SpriteLayer::World.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    PlatformBuilder::build_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h);
                 },
-                LevelItem::DynStaticLevelProp{ x, y, w, h, ang, image, img_w, img_h} => {
-                    PlatformBuilder::build_dynamic_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z(), (*image).to_string(), *img_w, *img_h);
+                LevelItem::DynStaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z} => {
+                    let mut z_value = SpriteLayer::World.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    PlatformBuilder::build_dynamic_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h);
                 },
                 LevelItem::EmptyBox{ x, y, w, h, ang} => {
                     BoxBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang);
@@ -171,8 +181,8 @@ impl LevelConfig {
                 LevelItem::DynEmptyBox{ x, y, w, h, ang} => {
                     BoxBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
                 },
-                LevelItem::Button{ x, y, w, h, ang, name } => {
-                    ButtonBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, (*name).to_string());
+                LevelItem::Button{ x, y, w, h, ang, name, start_enabled } => {
+                    ButtonBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, (*name).to_string(), *start_enabled);
                 },
                 LevelItem::Ghost{ x, y } => {
                     GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
@@ -187,7 +197,7 @@ impl LevelConfig {
 
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
                 },
-                LevelItem::DynSprite{ x, y, z, sprite, angle, src, name, is_enabled } => {
+                LevelItem::DynSprite{ x, y, z, sprite, angle, src, name, start_enabled } => {
                     let sprite_path = &*sprite;
                     let mut sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
                     sprite.angle = *angle;
@@ -195,11 +205,11 @@ impl LevelConfig {
                     sprite.toggleable = true;
                     sprite.set_src(&src); 
 
-                    let logic_comp = LogicComponent::new((*name).to_string(), *is_enabled);
+                    let logic_comp = LogicComponent::new((*name).to_string(), *start_enabled);
                     world.create_entity().with(sprite).with(logic_comp).with(Position { x: *x, y: *y }).build();
                 },
-                LevelItem::Portal { x, y, w, name, destination, enabled } => {
-                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string(), *enabled);
+                LevelItem::Portal { x, y, w, name, destination, start_enabled } => {
+                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string(), *start_enabled);
                 },
                 LevelItem::Exit { x, y, w, h, name, destination } => {
                     ExitBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());

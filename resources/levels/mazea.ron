@@ -10,7 +10,9 @@ LevelConfig(
         
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-1,-1,2,2), ),
 
-        Sprite ( x: 1000.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), ),
+        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/dark-tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg", start_enabled: false ),
+        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/white-tile-bg-overlay", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg2", start_enabled: false ),
+        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "main-bg", start_enabled: true ),
 
         StaticLevelProp( x: 300, y: 915.0, w: 100.0, h: 32.0, ang: -0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
         StaticLevelProp( x: 550, y: 900.0, w: 100.0, h: 32.0, ang: 0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
@@ -19,7 +21,7 @@ LevelConfig(
         DynStaticLevelProp( x: 100, y: 650.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
         DynStaticLevelProp( x: 200, y: 750.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
 
-        Sprite ( x: 504.0, y: 451.0, sprite: "entities/white-tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), ),
+        DynSprite ( x: 504.0, y: 451.0, sprite: "entities/white-tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), name: "center-bg", start_enabled: true ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/tile-bg", z: 16.0, angle: 0.78, src: (-1.5,-1.5,2.75,2.75), ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/white-tile-bg", z: 17.0, angle: 1.57, src: (-1,-1,2,2), ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/tile-bg", z: 18.0, angle: 2.35, src: (-0.5,-0.5,1,1), ),
@@ -36,31 +38,31 @@ LevelConfig(
         //Platform ( x: 1.0, y: 825.0, w: 150.0, h: 15.0, ang: -1.57),
         //Platform ( x: 1999.0, y: 825.0, w: 150.0, h: 15.0, ang: -1.57),
 
-        //Button ( x: 120.0, y: 970.0, w: 35.0, h: 10, ang: 0, name: "btnb",),
-        //Button ( x: 200.0, y: 970.0, w: 35.0, h: 10, ang: 0, name: "btnc",),
+        //Button ( start_enabled: false, x: 120.0, y: 970.0, w: 35.0, h: 10, ang: 0, name: "btnb",),
+        //Button ( start_enabled: false, x: 200.0, y: 970.0, w: 35.0, h: 10, ang: 0, name: "btnc",),
 
         // lower left-right portals
-        Portal ( x: 504.0, y: 451.0, w: 35.0, name: "lower_left", destination: "exit_room_out", enabled: false ),
+        Portal ( x: 504.0, y: 451.0, w: 35.0, name: "lower_left", destination: "exit_room_out", start_enabled: false ),
 
         // ramp from top-left out portal
         Platform ( x: 950.0, y: 450.0, w: 75.0, h: 20.0, ang: -0.78),
 
 
         // button platform above portal
-        Button ( x: 300.0, y: 230.0, w: 35.0, h: 7, ang: 0, name: "btna",),
+        Button ( start_enabled: false, x: 300.0, y: 230.0, w: 35.0, h: 7, ang: 0, name: "btna",),
         Platform ( x: 300.0, y: 250.0, w: 150.0, h: 20.0, ang: 0.0),
-        Portal ( x: 930.0 , y: 100.0, w: 35.0, name: "top_left_out", destination: "", enabled: true),
+        Portal ( x: 930.0 , y: 100.0, w: 35.0, name: "top_left_out", destination: "", start_enabled: true),
 
         // platform from mid-left to mid-right
         Platform ( x: 240.0, y: 600.0, w: 260.0, h: 20.0, ang: 0.0),
         // mid-right platform - tilt upward to left
         Platform ( x: 1705.0, y: 550.0, w: 315.0, h: 20.0, ang: 0.16,),
-        Portal ( x: 1450.0 , y: 450.0, w: 35.0, name: "mid_right_in", destination: "mid_right_out", enabled: true),
+        Portal ( x: 1450.0 , y: 450.0, w: 35.0, name: "mid_right_in", destination: "mid_right_out", start_enabled: true),
         Platform ( x: 1755.0, y: 200.0, w: 250.0, h: 20.0, ang: 0.0,),
-        Portal ( x: 1650.0 , y: 100.0, w: 35.0, name: "mid_right_out", destination: "", enabled: true),
+        Portal ( x: 1650.0 , y: 100.0, w: 35.0, name: "mid_right_out", destination: "", start_enabled: true),
 
-        Portal ( x: 1070.0, y: 920, w: 35.0, name: "lower_right", destination: "top_left_out", enabled: true),
-        Portal ( x: 1192.0, y: 277, w: 35.0, name: "exit_room_out", destination: "lower_left", enabled: false),
+        Portal ( x: 1070.0, y: 920, w: 35.0, name: "lower_right", destination: "top_left_out", start_enabled: true),
+        Portal ( x: 1192.0, y: 277, w: 35.0, name: "exit_room_out", destination: "lower_left", start_enabled: false),
 
         Platform ( x: 1385.0, y: 270.0, w: 250.0, h: 15.0, ang: -1.57),
         Platform ( x: 1025.0, y: 500.0, w: 350.0, h: 20.0, ang: 0.0),
@@ -71,9 +73,9 @@ LevelConfig(
 
         Sprite ( x: 1192.0, y: 252.0, sprite: "entities/dark-tile-bg", z: 15.0, angle: 0, src: (-1,-1,3,4),),
         DynSprite ( x: 1192.0, y: 252.0, sprite: "entities/white-tile-bg-overlay", z: 16.0, angle: 0.0, src: (-1,-1,3,4),
-            name:"tileswitch0", is_enabled: false),
+            name:"tileswitch0", start_enabled: true),
         DynSprite ( x: 1192.0, y: 202.0, sprite: "entities/spotlight", z: 25.0, angle: 0.0, src: (0,0,1,1), 
-            name:"tileswitch", is_enabled: true),
+            name:"tileswitch", start_enabled: false),
 
         Exit ( x: 1200.0, y: 400.0, w: 25.0, h: 25.0, name: "", destination: "test"),
 
@@ -129,5 +131,9 @@ LevelConfig(
         Connection ( from: "btna", to: "exit_room_out", conn_type: Switch),
         Connection ( from: "btna", to: "tileswitch0", conn_type: Switch),
         Connection ( from: "btna", to: "tileswitch", conn_type: Switch),
+        Connection ( from: "btna", to: "main-bg", conn_type: Switch),
+        Connection ( from: "btna", to: "alt-bg", conn_type: Switch),
+        Connection ( from: "btna", to: "alt-bg2", conn_type: Switch),
+        Connection ( from: "btna", to: "center-bg", conn_type: Switch),
     ],
 )

@@ -61,7 +61,7 @@ pub enum GameMode {
 }
 
 const WARP_TIME_LIMIT : f32 = 1.5f32;
-const WARP_TIME_SCALE : f32  = 0.025f32;
+const WARP_TIME_SCALE : f32  = 0.035;  //0.025f32;
 
 // Main game state struct
 pub struct GameState {
@@ -82,6 +82,7 @@ pub struct GameState {
     //pub image_lookup: HashMap<String,usize>,
     //pub images: Vec<Image>
     pub paused_text: graphics::Text,
+    pub cursor_offset: na::Point2::<f32>,
 
     // Current view offset
     pub current_offset: na::Point2::<f32>,
@@ -97,6 +98,9 @@ pub struct GameState {
     pub paused_anim: f32,
     // audio
     pub audio: Audio,
+
+    // debug flags
+    pub debug_logic_frames: i32,
 }
 
 impl GameState {
@@ -145,6 +149,7 @@ impl GameState {
             // image_lookup: HashMap::<String,usize>::new(),
             // images: Vec::<Image>::new(),
             paused_text: text,
+            cursor_offset: na::Point2::new(10.0,10.0),
             current_offset: na::Point2::new(0.0,0.0),
             snap_view: true,
             click_info: vec![],
@@ -154,6 +159,7 @@ impl GameState {
             warp_level_entry_name: "".to_string(),
             paused_anim: 0.0,
             audio: audio_engine,
+            debug_logic_frames: 2,
         };
 
         Ok(s)
@@ -238,8 +244,19 @@ impl GameState {
 
         {
             //let mut world = &mut self.world;
-            let mut logic_sys = LogicSystem {};
+            let mut logic_sys = LogicSystem {
+                show_debug_output: self.debug_logic_frames > 0
+            };
+
+            if logic_sys.show_debug_output {
+                println!(" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+                println!("Starting logic pass {} =============================================================", &self.debug_logic_frames);
+            }
             logic_sys.run_now(&world);
+
+            if self.debug_logic_frames > 0 {
+                self.debug_logic_frames -= 1;
+            }
         }
 
         // Run Input System - Mainly handle meow creation right now
@@ -725,8 +742,12 @@ impl GameState {
     pub fn load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {
         self.current_level_name = level_name.clone();
         self.current_entry_name = entry_name.clone();
-        self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
-        //self.running_state = RunningState::Playing;
+        if entry_name.is_empty() {
+            self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
+        }
+        else {
+            self.running_state = RunningState::Playing;
+        }
         self.snap_view = true;
 
         //self.stop_music(ctx);
@@ -840,7 +861,7 @@ impl event::EventHandler for GameState {
 
     }
 
-    fn mouse_button_down_event(&mut self, ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
+    fn mouse_button_down_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
         let button_index = match button {
             MouseButton::Left => {
                 Some(0usize)
@@ -854,11 +875,12 @@ impl event::EventHandler for GameState {
             _ => None
         };
         if let Some(index) = button_index {
+            InputMap::mouse_set_pos(&mut self.world, ctx, x, y);
             InputMap::mouse_button_down(&mut self.world, ctx, index.clone());
         }
     }
 
-    fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
+    fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
         let button_index = match button {
             MouseButton::Left => {
                 Some(0usize)
@@ -872,13 +894,14 @@ impl event::EventHandler for GameState {
             _ => None
         };
         if let Some(index) = button_index {
+            InputMap::mouse_set_pos(&mut self.world, ctx, x, y);
             InputMap::mouse_button_up(&mut self.world, ctx, index.clone());
         }
         
     }
 
-    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _xrel: f32, _yrel: f32) {
-        InputMap::mouse_set_pos(&mut self.world, _ctx, x, y);
+    fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, _xrel: f32, _yrel: f32) {
+        InputMap::mouse_set_pos(&mut self.world, ctx, x, y);
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, _y: f32) {
@@ -987,6 +1010,25 @@ impl event::EventHandler for GameState {
                 self.mode = GameMode::Play;
             }
         }
+        else if keycode == KeyCode::F10 {
+            let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
+
+            let mut new_fs_type : ggez::conf::FullscreenType = ggez::conf::FullscreenType::Windowed;
+            match game_state_writer.window_mode.fullscreen_type {
+                ggez::conf::FullscreenType::Windowed => {
+                    new_fs_type = ggez::conf::FullscreenType::Desktop;
+                },
+                ggez::conf::FullscreenType::Desktop => {
+                    new_fs_type = ggez::conf::FullscreenType::True;
+                },
+                ggez::conf::FullscreenType::True => {
+                    new_fs_type = ggez::conf::FullscreenType::Windowed;
+                }
+            }
+            game_state_writer.window_mode.fullscreen_type = new_fs_type;
+
+            ggez::graphics::set_fullscreen(ctx, new_fs_type);
+        }
         // reload current level
         else if keycode == KeyCode::R {
             self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
@@ -1003,6 +1045,10 @@ impl event::EventHandler for GameState {
         else if keycode == KeyCode::K {
                 
             self.set_running_state(ctx, RunningState::Dialog("K dialog".to_string()));
+        }
+        else if keycode == KeyCode::L {
+            println!("DEBUG LOGIC 3x -------------------------------------------------");
+            self.debug_logic_frames = 3;
         }
         
 

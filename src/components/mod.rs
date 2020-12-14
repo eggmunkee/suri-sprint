@@ -16,6 +16,7 @@ pub mod exit;
 // DEFINE COMMON COMPONENTS
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct GridLoc {
     pub row: i32,
     pub col: i32,

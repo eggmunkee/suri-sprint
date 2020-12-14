@@ -10,11 +10,13 @@ LevelConfig(
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 
-        //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
+        DynStaticLevelProp ( x: 200.0, y: 600.0, w: 64.0, h: 64.0, ang:0.0, image: "entities/exit", img_w: 41.0, img_h: 41.0 ),
+
+        //StaticLevelProp( x: 300, y: 915.0, w: 100.0, h: 32.0, ang: -0.1, image: "entities/grass-block-light", img_w: 128.0, img_h: 128.0),
 
         Platform ( x: 700.0, y: 250.0, w: 100.0, h: 20.0, ang: 0.0),
         Platform ( x: 450.0, y: 200.0, w: 100.0, h: 20.0, ang: 0.1),
-        Platform ( x: 950.0, y: 500.0, w: 50.0, h: 20.0, ang: -0.02),
+        Platform ( x: 950.0, y: 400.0, w: 50.0, h: 20.0, ang: -0.02),
 
         Exit ( x: 100.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
 

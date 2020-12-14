@@ -333,7 +333,7 @@ impl CharacterDisplayComponent {
 
         self.since_meow += time_delta;
         if self.meowing {
-            if self.since_meow < 0.35 {
+            if self.since_meow < 0.15 { //0.35
                 self.meowing = false;
             }
         }

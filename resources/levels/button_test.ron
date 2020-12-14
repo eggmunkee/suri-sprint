@@ -11,20 +11,20 @@ LevelConfig(
         Sprite ( x: 350.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
         Sprite ( x: 350.0, y: 300.0, sprite: "entities/dark-tile-bg", z: 5.0, angle: 0.0, src: (-1.80,-1.35,5.9,5),),
         DynSprite ( x: 350.0, y: 300.0, sprite: "entities/white-tile-bg-overlay", z: 6.0, angle: 0.0, src: (-2.95,-2.5,5.9,5),
-            name:"tileswitch0", is_enabled: false),
+            name:"tileswitch0", start_enabled: false),
         DynSprite ( x: 350.0, y: 150.0, sprite: "entities/spotlight", z: 25.0, angle: 0.0, src: (0,0,1,1), 
-            name:"tileswitch", is_enabled: true),
+            name:"tileswitch", start_enabled: true),
 
-        Button ( x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "btna",),
-        DynSprite (x:30, y:335, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btna-light", is_enabled: true),
+        Button ( start_enabled: false, x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "btna",),
+        DynSprite (x:30, y:335, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btna-light", start_enabled: true),
         Platform ( x: 60.0, y: 400.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        Button ( x: 450.0, y: 231.0, w: 60.0, h: 15.0, ang: 0.0, name: "btnb",),
-        DynSprite (x:450, y:231, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnb-light", is_enabled: true),
+        Button ( start_enabled: false, x: 450.0, y: 231.0, w: 60.0, h: 15.0, ang: 0.0, name: "btnb",),
+        DynSprite (x:450, y:231, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnb-light", start_enabled: true),
         Platform ( x: 450.0, y: 250.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        Button ( x: 290.0, y: 581.0, w: 30.0, h: 6.0, ang: 0.0, name: "btnc",),
-        DynSprite (x:290, y:581, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnc-light", is_enabled: true),
+        Button ( start_enabled: false, x: 290.0, y: 581.0, w: 30.0, h: 6.0, ang: 0.0, name: "btnc",),
+        DynSprite (x:290, y:581, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnc-light", start_enabled: true),
 
         Platform ( x: 275.0, y: 599.0, w: 125.0, h: 15.0, ang: 0.0),
 
@@ -36,9 +36,9 @@ LevelConfig(
 
         Ghost ( x: 200.0, y: 100.0 ),
 
-        Portal ( x: 290.0, y: 540.0, w: 20, name: "portA", destination: "portB", enabled: true ),
+        Portal ( x: 290.0, y: 540.0, w: 20, name: "portA", destination: "portB", start_enabled: true ),
 
-        Portal ( x: 450.0, y: 100.0, w: 20, name: "portB", destination: "", enabled: true ),
+        Portal ( x: 450.0, y: 100.0, w: 20, name: "portB", destination: "", start_enabled: true ),
 
         Connection ( from: "btna", to: "mouse", conn_type: Switch ),
         Connection ( from: "btnb", to: "tileswitch0", conn_type: Switch ),

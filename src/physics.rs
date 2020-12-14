@@ -80,7 +80,9 @@ pub enum CollisionCategory {
     Etherial = 4, // ghosts plane of existence
     Sound = 8, // sound plane
     Portal = 16, // portal & exit colliders
-    Unused = 128,
+    Unused = 32,
+    Unused1 = 64,
+    Unused2 = 128,
 }
 
 impl Default for CollisionCategory {

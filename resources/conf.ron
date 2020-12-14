@@ -21,5 +21,7 @@ ConfigData(
         max_height: 0.0,
         resizable: true,
     ),
-    start_level: "a",
+    start_level: "start",
+    music_volume: 0.01,
+    audio_volume: 0.01
 )
