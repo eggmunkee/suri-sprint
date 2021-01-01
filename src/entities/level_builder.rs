@@ -6,6 +6,8 @@ use serde::{Deserialize,Serialize};
 
 
 use crate::conf::*;
+use crate::components::anim_sprite::*;
+use crate::components::particle_sys::{ParticleSysConfig};
 use crate::components::sprite::*;
 use crate::components::logic::*;
 use crate::components::{Position};
@@ -54,6 +56,15 @@ impl LevelBounds {
 
 #[allow(dead_code)]
 #[derive(Clone,Debug,Deserialize,Serialize)]
+pub struct ItemLogic {
+    pub name: String,
+    pub start_enabled: bool,
+    pub logic_op: Option<LogicOpType>,
+    pub logic_type: Option<ConnectionType>,
+}
+
+#[allow(dead_code)]
+#[derive(Clone,Debug,Deserialize,Serialize)]
 pub enum LevelItem {
     Player {
         x: f32, y: f32,
@@ -62,18 +73,18 @@ pub enum LevelItem {
         x: f32, y: f32, name: String,
     },
     Platform {
-        x: f32, y: f32, w: f32, h: f32, ang: f32,
+        x: f32, y: f32, w: f32, h: f32, ang: f32, z: Option<f32>, logic: Option<ItemLogic>
     },
     DynPlatform {
-        x: f32, y: f32, w: f32, h: f32, ang: f32,
+        x: f32, y: f32, w: f32, h: f32, ang: f32, 
     },
     StaticLevelProp {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, image: String, img_w: f32, img_h: f32,
-        z: Option<f32>,
+        x: f32, y: f32, w: f32, h: f32, ang: f32, z: Option<f32>, 
+        image: String, img_w: f32, img_h: f32,
+        logic: Option<ItemLogic>,
     },
     DynStaticLevelProp {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, image: String, img_w: f32, img_h: f32,
-        z: Option<f32>,
+        x: f32, y: f32, w: f32, h: f32, ang: f32, z: Option<f32>, image: String, img_w: f32, img_h: f32,
     },
     EmptyBox {
         x: f32, y: f32, w: f32, h: f32, ang: f32,
@@ -92,21 +103,29 @@ pub enum LevelItem {
     },
     DynSprite {
         x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), name: String, start_enabled: bool,
+        logic_op: Option<LogicOpType>,
+    },
+    AnimSprite {
+        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), shader: Option<String>,
     },
     Portal {
-        x: f32, y: f32, w: f32, name: String, destination: String, start_enabled: bool,
+        x: f32, y: f32, w: f32, z: Option<f32>, name: String, destination: String, start_enabled: bool,
+        logic_op: Option<LogicOpType>,
+    },
+    ParticleSys {
+        x: f32, y: f32, z: f32, config: String,
     },
     Exit {
-        x: f32, y: f32, w: f32, h: f32, name: String, destination: String,
+        x: f32, y: f32, w: f32, h: f32, z: Option<f32>, name: String, destination: String,
     },
     ExitCustom {
-        x: f32, y: f32, w: f32, h: f32, name: String, destination: String, image: String, img_w: f32, img_h: f32,
+        x: f32, y: f32, w: f32, h: f32, z: Option<f32>, name: String, destination: String, image: String, img_w: f32, img_h: f32,
     },
     Bowl {
-        x: f32, y: f32,
+        x: f32, y: f32,z: Option<f32>, 
     },
     Mouse {
-        x: f32, y: f32
+        x: f32, y: f32, z: Option<f32>, 
     },
     Connection {
         from: String, to: String, conn_type: ConnectionType,
@@ -155,18 +174,22 @@ impl LevelConfig {
                     //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
                     SuriBuilder::build(world, ctx, physics_world, *x, *y);
                 },
-                LevelItem::Platform{ x, y, w, h, ang} => {
-                    PlatformBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
-                },
-                LevelItem::DynPlatform{ x, y, w, h, ang} => {
-                    PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
-                },
-                LevelItem::StaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z} => {
+                LevelItem::Platform{ x, y, w, h, ang, z, logic} => {
                     let mut z_value = SpriteLayer::World.to_z();
                     if let Some(z_cfg_val) = z {
                         z_value = *z_cfg_val;
                     }
-                    PlatformBuilder::build_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h);
+                    PlatformBuilder::build_w_logic(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, logic.clone());
+                },
+                LevelItem::DynPlatform{ x, y, w, h, ang} => {
+                    PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
+                },
+                LevelItem::StaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z, logic} => {
+                    let mut z_value = SpriteLayer::World.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    PlatformBuilder::build_w_image_logic(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h, logic.clone());
                 },
                 LevelItem::DynStaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z} => {
                     let mut z_value = SpriteLayer::World.to_z();
@@ -197,7 +220,17 @@ impl LevelConfig {
 
                     world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
                 },
-                LevelItem::DynSprite{ x, y, z, sprite, angle, src, name, start_enabled } => {
+                LevelItem::AnimSprite{ x, y, z, sprite, angle, src, shader} => {
+                    let sprite_path = &*sprite;
+                    let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, sprite_path.clone());
+                    sprite.angle = *angle;
+                    sprite.z_order = *z;
+                    sprite.set_src(&src); 
+                    sprite.shader = shader.clone();
+
+                    world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
+                },
+                LevelItem::DynSprite{ x, y, z, sprite, angle, src, name, start_enabled, logic_op } => {
                     let sprite_path = &*sprite;
                     let mut sprite = SpriteConfig::create_from_config(world, ctx, sprite_path.clone());
                     sprite.angle = *angle;
@@ -205,30 +238,61 @@ impl LevelConfig {
                     sprite.toggleable = true;
                     sprite.set_src(&src); 
 
-                    let logic_comp = LogicComponent::new((*name).to_string(), *start_enabled);
+                    let logic_comp = LogicComponent::new((*name).to_string(), *start_enabled, *logic_op);
+                    // set logic operation if specified
+                    // if let Some(logic_operation) = &logic_op {
+                    //     logic_comp.logic_op = *logic_operation;
+                    // }
                     world.create_entity().with(sprite).with(logic_comp).with(Position { x: *x, y: *y }).build();
                 },
-                LevelItem::Portal { x, y, w, name, destination, start_enabled } => {
-                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string(), *start_enabled);
+                LevelItem::Portal { x, y, w, z, name, destination, start_enabled, logic_op } => {
+                    let mut z_value = SpriteLayer::World.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    PortalBuilder::build(world, ctx, physics_world, *x, *y, *w, (*name).to_string(), (*destination).to_string(), *start_enabled, *logic_op);
                 },
-                LevelItem::Exit { x, y, w, h, name, destination } => {
-                    ExitBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string());
+                LevelItem::ParticleSys { x, y, z, config } => {
+                    let config_path = &*config;
+                    let mut part_sys = ParticleSysConfig::create_from_config(world, ctx, config_path.clone());
+                    part_sys.z_order = *z;
+
+                    world.create_entity().with(part_sys).with(Position { x: *x, y: *y }).build();
                 },
-                LevelItem::ExitCustom { x, y, w, h, name, destination, image, img_w, img_h } => {
-                    ExitBuilder::build_w_image(world, ctx, physics_world, *x, *y, *w, *h, (*name).to_string(), (*destination).to_string(),
+                LevelItem::Exit { x, y, w, h, z, name, destination } => {
+                    let mut z_value = SpriteLayer::BGNear.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    ExitBuilder::build(world, ctx, physics_world, *x, *y, z_value, *w, *h, (*name).to_string(), (*destination).to_string());
+                },
+                LevelItem::ExitCustom { x, y, w, h, z, name, destination, image, img_w, img_h } => {
+                    let mut z_value = SpriteLayer::BGNear.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    ExitBuilder::build_w_image(world, ctx, physics_world, *x, *y, z_value, *w, *h, (*name).to_string(), (*destination).to_string(),
                         (*image).to_string(), *img_w, *img_h);
                 },
-                LevelItem::Bowl { x, y } => {
-                    BowlBuilder::build(world, ctx, physics_world, *x, *y);
+                LevelItem::Bowl { x, y, z } => {
+                    let mut z_value = SpriteLayer::Entities.to_z();
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    BowlBuilder::build(world, ctx, physics_world, *x, *y, z_value);
                 },
-                LevelItem::Mouse { x, y } => {
-                    MouseBuilder::build(world, ctx, physics_world, *x, *y, 32.0, 8.0, 0.0, 300.0);
+                LevelItem::Mouse { x, y, z } => {
+                    let mut z_value = 300.0;
+                    if let Some(z_cfg_val) = z {
+                        z_value = *z_cfg_val;
+                    }
+                    MouseBuilder::build(world, ctx, physics_world, *x, *y, 32.0, 8.0, 0.0, z_value);
                 },
                 LevelItem::Connection { from, to, conn_type } => {
                     let mut connection_res = world.fetch_mut::<ConnectionResource>();
 
                     let mut connection = &mut *connection_res;
-                    connection.add_connection(from.clone(), to.clone());
+                    connection.add_connection(from.clone(), to.clone(), LogicOpType::And);
                 },
                 _ => {}
             }

@@ -18,6 +18,8 @@ pub mod paused;
 use crate::resources::{GameStateResource,ShaderResources,ShaderInputs,ImageResources,InputResource};
 use crate::components::{Position,Velocity,RenderTrait};
 use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent};
+use crate::components::anim_sprite::{AnimSpriteComponent};
+use crate::components::particle_sys::{ParticleSysComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::game_state::{GameState,State,GameMode,RunningState};
 use crate::entities::level_builder::{LevelItem};
@@ -88,6 +90,7 @@ impl Renderer {
         {
             let gs_res = game_state.world.fetch::<GameStateResource>();
 
+            let current_player_num = gs_res.player_1_char_num;
             level_run_time = gs_res.level_world_seconds;
             game_run_time = gs_res.game_run_seconds;
 
@@ -98,14 +101,20 @@ impl Renderer {
             // Get read storage for all display components
             let sprite_disp = game_state.world.read_storage::<SpriteComponent>();
             let multi_sprite_disp = game_state.world.read_storage::<MultiSpriteComponent>();
+            let anim_sprite_disp = game_state.world.read_storage::<AnimSpriteComponent>();
+            let particle_sys_disp = game_state.world.read_storage::<ParticleSysComponent>();
             let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
-            for (opt_sprite_disp,opt_char_disp,opt_multi_sprite,pos,ent) in 
-                ((&sprite_disp).maybe(), (&char_disp).maybe(), (&multi_sprite_disp).maybe(),  &pos,&entities).join() {
+            for (opt_sprite_disp,opt_char_disp,opt_multi_sprite,opt_anim_sprite,opt_particle_sys,pos,ent) in 
+                ((&sprite_disp).maybe(), (&char_disp).maybe(), (&multi_sprite_disp).maybe(), 
+                (&anim_sprite_disp).maybe(), (&particle_sys_disp).maybe(),                
+                &pos,&entities).join() {
                 // Check for any of the display components
                 match opt_char_disp {
                     Some(character) => {
-                        target_offset_x = -pos.x;
-                        target_offset_y = -pos.y;
+                        if character.player_number == current_player_num {
+                            target_offset_x = -pos.x;
+                            target_offset_y = -pos.y;
+                        }
                         let z_order = SpriteLayer::Player.to_z();
                         char_in_portal = character.in_exit || character.in_portal;
 
@@ -133,7 +142,23 @@ impl Renderer {
                                     index += 1;
                                 }
                             },
-                            _ => {}
+                            _ => match opt_anim_sprite {
+                                Some(anim_sprite) => {
+                                    let z_order = anim_sprite.z_order;
+                                    render_objects.push(
+                                        (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
+                                    );
+                                },
+                                _ => match opt_particle_sys {
+                                    Some(particle_sys) => {
+                                        let z_order = particle_sys.z_order;
+                                        render_objects.push(
+                                            (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
+                                        );
+                                    },
+                                    _ => {}
+                                }
+                            }
                         }
                     }
                 };
@@ -274,6 +299,14 @@ impl Renderer {
                 if game_res.level_world_seconds < 0.75 {
                     warping_in = true;
                     warping_in_time = game_res.level_world_seconds;
+                }
+            }
+
+            {
+                if game_state.level_warping {
+                    if game_state.level_warp_timer < 0.5 {
+
+                    }
                 }
             }
 
@@ -432,6 +465,15 @@ impl Renderer {
 
         }
 
+
+        {
+            let gs_res = game_state.world.fetch::<GameStateResource>();
+            let game_time = gs_res.game_run_seconds;
+            DialogRenderer::render_at(game_state, ctx, format!("{}", &game_time), 
+                0.075, 0.05, 0.15, 0.1, Color::new(0.0, 0.0, 0.0, 0.1), Color::new(0.5, 0.5, 0.5, 0.2) );
+
+        }
+
         // Update framerate on title every 5 frames
         if ggez::timer::ticks(ctx) % 10 == 0 {
             let fps = ggez::timer::fps(ctx);
@@ -470,6 +512,24 @@ impl Renderer {
                         // Call component render method
                         Self::render_item(ctx, &world, entity, pt, item_index, res);
                         //res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                    }
+                    else {
+                        let anim_sprite_comp = world.read_storage::<AnimSpriteComponent>();
+                        let anim_sprite_comp_res = anim_sprite_comp.get(entity);
+                        if let Some(res) = anim_sprite_comp_res {
+                            // Call component render method
+                            Self::render_item(ctx, &world, entity, pt, item_index, res);
+                            //res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                        }
+                        else {
+                            let p_sys_comp = world.read_storage::<ParticleSysComponent>();
+                            let p_sys_comp_res = p_sys_comp.get(entity);
+                            if let Some(res) = p_sys_comp_res {
+                                // Call component render method
+                                Self::render_item(ctx, &world, entity, pt, item_index, res);
+                                //res.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
+                            }
+                        }
                     }
                 }
             }

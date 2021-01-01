@@ -62,9 +62,10 @@ pub fn main() -> GameResult {
 
     //ggez::graphics::set_window_icon(ctx, Some("/icon.png"))?;
     // create app's state
-    let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode)?;
+    let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode, config.music_volume, config.gravity)?;
 
-    state.audio.set_volume(config.music_volume);
+    //state.set_gravity(80.0);
+    //state.audio.set_volume(config.music_volume);
 
     state.load_level(ctx, config.start_level, "".to_string());
     //{

@@ -20,10 +20,11 @@ use wrapped2d::user_data::*;
 // =====================================
 
 use crate::audio::{Audio};
-use crate::resources::{InputResource,GameStateResource};
+use crate::resources::{InputResource,GameStateResource,ConnectionResource};
 use crate::components::{Position};
 use crate::components::collision::{Collision};
 use crate::components::sprite::{SpriteLayer,SpriteComponent};
+use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::components::meow::{MeowComponent};
 use crate::components::exit::{ExitComponent};
 use crate::components::portal::{PortalComponent};
@@ -32,6 +33,8 @@ use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
 use crate::systems::{InputSystem};
 use crate::systems::logic::{LogicSystem};
+use crate::systems::animation::{AnimationSystem};
+use crate::systems::particles::{ParticleSystem};
 use crate::world::{create_world};
 use crate::entities::level_builder::{LevelConfig,LevelBounds};
 //use crate::entities::ghost::{GhostBuilder};
@@ -79,6 +82,8 @@ pub struct GameState {
     pub font: graphics::Font,
     pub phys_world: PhysicsWorld,
     pub display_scale: f32,
+    pub gravity_scale: f32,
+    pub gravity_x: f32,
     //pub image_lookup: HashMap<String,usize>,
     //pub images: Vec<Image>
     pub paused_text: graphics::Text,
@@ -104,17 +109,19 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(ctx: &mut Context, title: String, window_mode: WindowMode) -> GameResult<GameState> {
+    pub fn new(ctx: &mut Context, title: String, window_mode: WindowMode,
+        music_volume: f32, gravity: f32) -> GameResult<GameState> {
 
         // Create physics world to place in game state resource
-        let mut physics_world = physics::create_physics_world();
+        let mut physics_world = physics::create_physics_world_2d_grav((gravity, 0.0));
 
         // Create game state related to window size/mode
         let (win_w, win_h) = ggez::graphics::drawable_size(ctx);
         let game_state_resource = GameStateResource {
             window_w: win_w, window_h: win_h, window_mode: window_mode,
             delta_seconds: 0.15, level_bounds: LevelBounds::new(-500.0, -500.0, 3000.0, 3000.0),
-            level_world_seconds: 0.0, game_run_seconds: 0.0, 
+            level_world_seconds: 0.0, game_run_seconds: 0.0, player_target_loc: (500.0, 500.0),
+            player_count: 0, player_1_char_num: -1,
         };
 
         // get window
@@ -127,7 +134,8 @@ impl GameState {
         println!("World init");
         let ecs_world = create_world(ctx, game_state_resource, &mut physics_world);
 
-        let audio_engine = Audio::new(ctx);
+        let mut audio_engine = Audio::new(ctx);
+        audio_engine.set_volume(music_volume);
 
         // Create main state instance with dispatcher and world
         let s = GameState { 
@@ -146,6 +154,8 @@ impl GameState {
             world: ecs_world,
             font: font,
             phys_world: physics_world,
+            gravity_scale: gravity,
+            gravity_x: 0.0,
             // image_lookup: HashMap::<String,usize>::new(),
             // images: Vec::<Image>::new(),
             paused_text: text,
@@ -168,6 +178,16 @@ impl GameState {
 }
 
 impl GameState {
+
+    pub fn set_gravity(&mut self, gravity: f32) {
+        self.gravity_scale = gravity;
+        physics::update_world_gravity(&mut self.phys_world, gravity);
+    }
+
+    pub fn set_gravity_ext(&mut self, gravity: (f32, f32)) {
+        //self.gravity_scale = gravity;
+        physics::update_world_gravity_2d(&mut self.phys_world, gravity);
+    }
 
     pub fn play_music(&mut self, ctx: &mut Context) {
         self.audio.set_dimmed(false);
@@ -392,11 +412,67 @@ impl GameState {
             }
         }
 
+        // Animation system
+        {
+            //let mut world = &mut self.world;
+            let mut anim_sys = AnimationSystem {
+            };
+
+            anim_sys.run_now(&world);
+
+        }
+
+        // Animation system
+        {
+            //let mut world = &mut self.world;
+            let mut particle_sys = ParticleSystem {};
+
+            particle_sys.run_now(&world);
+
+        }
+
+        {
+            // Operator on meows, collisions and sprite components
+            let mut npc_reader = world.read_storage::<NpcComponent>();
+            let mut sprite_writer = world.write_storage::<SpriteComponent>();
+            let mut anim_sprite_writer = world.write_storage::<AnimSpriteComponent>();
+            let entities = world.entities();                
+
+            for (npc, sprite_opt, anim_sprite_opt, _ent) in 
+                (&npc_reader, (&mut sprite_writer).maybe(), (&mut anim_sprite_writer).maybe(), &entities).join() {
+                // update portal components
+                let is_moving = npc.going_right || npc.going_left;
+                if npc.is_enabled && is_moving {
+                    if let Some(sprite) = sprite_opt {
+                        let sx = sprite.scale.x;
+
+                        if npc.going_right && sx < 0.0 {
+                            sprite.scale.x = -sprite.scale.x;
+                        }
+                        if npc.going_left && sx > 0.0 {
+                            sprite.scale.x = -sprite.scale.x;
+                        }
+                    }
+                    if let Some(sprite) = anim_sprite_opt {
+                        let sx = sprite.scale.x;
+
+                        if npc.going_right && sx < 0.0 {
+                            sprite.scale.x = -sprite.scale.x;
+                        }
+                        if npc.going_left && sx > 0.0 {
+                            sprite.scale.x = -sprite.scale.x;
+                        }
+                    }
+                }
+            }
+        }
+
         // Button "system"
         let mut spawn_ghost = false;
         let mut spawn_box = false;
         let mut spawn_platform = false;
         let mut spawn_mouse = false;
+        let mut spawn_closed_box = false;
         {
             // Operator on meows, collisions and sprite components
             let mut button_reader = world.write_storage::<ButtonComponent>();
@@ -420,6 +496,9 @@ impl GameState {
                     //     let w = 10.0 + 0.001 * test as f32;
                     //     crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
                     //         w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
+                    }
+                    else if button.name == "closed_box" {
+                        spawn_closed_box = true;
                     }
                     else if button.name == "platform" {
                         spawn_platform = true;
@@ -451,6 +530,15 @@ impl GameState {
             let w = 10.0 + 0.001 * test as f32;
             crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
                 w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
+        }
+        if spawn_closed_box {
+            let mut rng = rand::thread_rng();
+            let test : u16 = rng.gen::<u16>().min(20000);
+            let w = 10.0 + 0.001 * test as f32;
+            crate::entities::platform::PlatformBuilder::build_dynamic_w_image(&mut self.world, ctx, 
+                &mut self.phys_world, 200.0, 100.0, w, w, 0.0, SpriteLayer::Entities.to_z(), "entities/closed_box".to_string(), 41.0, 41.0);
+
+                
         }
         if spawn_platform {
             let mut rng = rand::thread_rng();
@@ -492,6 +580,7 @@ impl GameState {
             // collision component
             let mut coll_res = self.world.write_storage::<Collision>();
             let mut sprite_res = self.world.write_storage::<SpriteComponent>();
+            let mut anim_sprite_res = self.world.write_storage::<AnimSpriteComponent>();
 
             // hash to store portal names and their positions - avoid needing to search for them later
             let mut portal_hash = HashMap::<String,(i32,f32,f32)>::new();
@@ -502,8 +591,9 @@ impl GameState {
             }
 
             // Join entities and their components to process physics update
-            for (_ent, mut character_opt, mut npc_opt,  mut pos, mut coll, mut sprite) in 
-                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res, (&mut sprite_res).maybe()).join() {
+            for (_ent, mut character_opt, mut npc_opt,  mut pos, mut coll, mut sprite, mut anim_sprite) in 
+                (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res,
+                    (&mut sprite_res).maybe(), (&mut anim_sprite_res).maybe()).join() {
 
                 let mut facing_right = true;
 
@@ -598,6 +688,16 @@ impl GameState {
                                         sprite_comp.scale[0] = -sprite_comp.scale[0];
                                     }
                                 }
+                                if let Some(ref mut anim_sprite_comp) = anim_sprite {
+                                    //sprite
+                                    //sprite_comp
+                                    if anim_sprite_comp.scale[0] > 0.0 {
+                                        anim_sprite_comp.scale[0] = -anim_sprite_comp.scale[0];
+                                    }
+                                    else if anim_sprite_comp.scale[0] < 0.0 {
+                                        anim_sprite_comp.scale[0] = -anim_sprite_comp.scale[0];
+                                    }
+                                }
                             }
                         }
                         
@@ -662,6 +762,19 @@ impl GameState {
                 // Cleanup the world state after changes
                 self.world.maintain();
 
+                {
+                    // ROTATE GRAVITY VECTOR
+                    // let mut world_sec = 0.0;
+                    // let mut game_res = self.world.fetch::<GameStateResource>();
+                    // world_sec = game_res.level_world_seconds * 0.1;
+                    // drop(game_res);
+
+                    // let cx = world_sec.sin();
+                    // let cy = world_sec.cos();
+
+                    // self.set_gravity_ext((cx * 35.0, cy * 35.0));
+
+                }
 
                 // Run physics update frame
                 physics::advance_physics(&mut self.world, &mut self.phys_world, time_delta);
@@ -685,11 +798,16 @@ impl GameState {
     pub fn clear_world(&mut self) {
         // Clear world of entity and component data
         self.world.delete_all();
+
+        // Clear Connection logic resources
+        let mut conn_res = self.world.fetch_mut::<ConnectionResource>();
+        conn_res.clear();        
     }
 
     pub fn clear_physics(&mut self) {
         // Drop and replace the physics world
-        self.phys_world = physics::create_physics_world();
+        //self.phys_world = physics::create_physics_world(self.gravity_scale);
+        self.phys_world = physics::create_physics_world_2d_grav((self.gravity_x, self.gravity_scale));
     }
 
     pub fn set_level_bounds(&mut self) {
@@ -704,6 +822,8 @@ impl GameState {
     }
 
     pub fn start_warp(&mut self, level_name: String, entry_name: String) {
+        //self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
+
         self.warp_level_name = level_name;
         self.warp_level_entry_name = entry_name;
         self.level_warping = true;
@@ -742,20 +862,27 @@ impl GameState {
     pub fn load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {
         self.current_level_name = level_name.clone();
         self.current_entry_name = entry_name.clone();
-        if entry_name.is_empty() {
-            self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
-        }
-        else {
-            self.running_state = RunningState::Playing;
-        }
         self.snap_view = true;
 
         //self.stop_music(ctx);
 
         self.clear_world();
         self.clear_physics();
+        {
+            let mut game_state = self.world.fetch_mut::<GameStateResource>();
+            game_state.player_count = 0;
+            game_state.player_1_char_num = 1;
+        }
 
         self.actual_load_level(ctx, level_name, entry_name);
+
+        if self.current_entry_name.is_empty() {
+            self.running_state = RunningState::Dialog(format!("Suri enters {}.\r\n\r\n\r\n\r\nPress Meow to Continue...", &self.level.name));
+        }
+        else {
+            self.running_state = RunningState::Playing;
+        }
+
     }
 
     pub fn game_key_down(&mut self, ctx: &mut Context, key: &InputKey) {
@@ -1010,7 +1137,7 @@ impl event::EventHandler for GameState {
                 self.mode = GameMode::Play;
             }
         }
-        else if keycode == KeyCode::F10 {
+        else if keycode == KeyCode::F11 {
             let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
 
             let mut new_fs_type : ggez::conf::FullscreenType = ggez::conf::FullscreenType::Windowed;
@@ -1049,6 +1176,11 @@ impl event::EventHandler for GameState {
         else if keycode == KeyCode::L {
             println!("DEBUG LOGIC 3x -------------------------------------------------");
             self.debug_logic_frames = 3;
+        }
+        else if keycode == KeyCode::E {
+            let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
+            game_state_writer.player_1_char_num = (game_state_writer.player_1_char_num % game_state_writer.player_count) + 1;
+            println!("New player number: {} / {}", &game_state_writer.player_1_char_num, &game_state_writer.player_count);
         }
         
 

@@ -43,7 +43,7 @@ impl SuriBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Portal);
-        collision.collision_mask.push(CollisionCategory::Etherial);
+        //collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Player);
         // Create physics body from collision properties
         //collision.create_dynamic_body_box_upright(physics_world);
@@ -81,6 +81,19 @@ impl SuriBuilder {
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
 
+
+        let mut player_num = 1;
+        {
+            let mut game_state = world.fetch_mut::<GameStateResource>();
+            let pc = game_state.player_count + 1;
+            game_state.player_count = pc;
+            player_num = pc;
+            println!("Player {} being created...", &player_num);
+        }
+        
+        let mut npc = NpcComponent::new();
+        npc.is_enabled = false;
+
         // Init Suri images from SpriteConfig
         let maybe_config = get_ron_config::<SpriteConfig>("entities/suri".to_string());
         let sprite_config = maybe_config.unwrap();
@@ -96,20 +109,23 @@ impl SuriBuilder {
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
         collision.collision_mask.push(CollisionCategory::Portal);
-        collision.collision_mask.push(CollisionCategory::Etherial);
-        //collision.collision_mask.push(CollisionCategory::Player);
+        //collision.collision_mask.push(CollisionCategory::Etherial);
+        collision.collision_mask.push(CollisionCategory::Player);
         // Create physics body from collision properties
         collision.create_dynamic_body_box_upright(physics_world);
         // get body handle value
         let body_handle_clone = collision.body_handle.clone();
 
+        let mut char_comp = CharacterDisplayComponent::new(ctx, &sprite_config.path);
+        char_comp.player_number = player_num;
+
         // Create entity
         let entity = world.create_entity()
-        //.with(npc)
+        .with(npc)
         .with(Position { x: x, y: y })
         //.with(Velocity { x: 0.0, y: 0.0, gravity: true, frozen: false })
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
-        .with(CharacterDisplayComponent::new(ctx, &sprite_config.path))
+        .with(char_comp)
         .with(collision)
         .build();
 

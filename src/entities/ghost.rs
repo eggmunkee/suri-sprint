@@ -3,6 +3,7 @@ use specs::{Builder,Entity,World,WorldExt};
 use wrapped2d::user_data::*;
 
 use crate::components::sprite::*;
+use crate::components::anim_sprite::*;
 use crate::components::{Position};
 //use crate::components::ball::*;
 use crate::components::collision::{Collision};
@@ -22,6 +23,9 @@ impl GhostBuilder {
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/ghost".to_string());
         sprite.z_order = SpriteLayer::Entities.to_z();
 
+        //let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, "entities/lemming".to_string());
+        //sprite.z_order = SpriteLayer::Entities.to_z();
+
         let npc = NpcComponent::new();
 
 
@@ -37,7 +41,7 @@ impl GhostBuilder {
         collision.collision_category = CollisionCategory::Etherial;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
-        collision.collision_mask.push(CollisionCategory::Player);
+        //collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Portal);
         collision.collision_mask.push(CollisionCategory::Sound);

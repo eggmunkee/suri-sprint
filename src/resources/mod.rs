@@ -7,6 +7,7 @@ use ggez::graphics::{Image,Font};
 use ggez::{Context,GameResult,GameError};
 use ggez::conf::{WindowMode};
 use specs::{World};
+use ggez::nalgebra as na;
 // -------------------------
 
 use crate::physics::{PhysicsWorld};
@@ -29,9 +30,14 @@ pub struct GameStateResource {
     pub level_world_seconds: f32,
     pub game_run_seconds: f32,
     pub level_bounds: LevelBounds,
+
+    // global player stats
+    pub player_count: i32,
+    pub player_1_char_num: i32,
+
+    // ai info
+    pub player_target_loc: (f32, f32),
 }
-
-
 
 #[derive(Debug)]
 pub enum WorldAction {

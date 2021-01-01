@@ -15,11 +15,12 @@ pub struct Audio {
 
 impl Audio {
     pub fn new(ctx: &mut Context) -> Self {
+        let default_vol = 0.05;
 
         let mut jump : Option<Source> = None;
         let jump_path = "/audio/8bitgame3-jump.ogg";        
         if let Ok(mut source) = Source::new(ctx, jump_path.clone()) {
-            source.set_volume(0.05);
+            source.set_volume(default_vol * 0.1);
             //println!("Loading sound? {}", &source.playing());
             source.set_repeat(false);
             //source.play();
@@ -33,7 +34,7 @@ impl Audio {
         Audio {
             music_source: None,
             song_path: String::new(),
-            base_music_volume: 0.05, // .3
+            base_music_volume: default_vol, // .3
             dimmed_mult: 0.5,
             is_dimmed: false,
             jump_source: jump
@@ -43,10 +44,11 @@ impl Audio {
     pub fn set_dimmed(&mut self, dimmed: bool) {
         self.is_dimmed = dimmed;
 
-        let vol = self.curr_volume();
-        if let Some(ref mut source) = &mut self.music_source {
-            source.set_volume(vol);
-        }
+        // let vol = self.curr_volume();
+        // if let Some(ref mut source) = &mut self.music_source {
+        //     source.set_volume(vol);
+        // }
+        self.set_volume_force(self.base_music_volume, true);
     }
 
     fn curr_volume(&self) -> f32 {
@@ -57,11 +59,19 @@ impl Audio {
     }
 
     pub fn set_volume(&mut self, new_level: f32) {
-        if self.base_music_volume == new_level { return; }
+        self.set_volume_force(new_level, false);
+    }
+
+    pub fn set_volume_force(&mut self, new_level: f32, force_update: bool) {
+        if !force_update && self.base_music_volume == new_level { return; }
         self.base_music_volume = new_level;
         let vol = self.curr_volume();
         if let Some(ref mut source) = &mut self.music_source {
-            source.set_volume(vol);
+            source.set_volume(vol * 0.05 );
+        }
+
+        if let Some(ref mut jump) = &mut self.jump_source {
+            jump.set_volume(vol * 0.1 )
         }
     }
 
@@ -72,7 +82,7 @@ impl Audio {
 
         if song_path != self.song_path && song_path != "" {
             if let Ok(mut source) = Source::new(ctx, music_path) {
-                source.set_volume(vol);
+                source.set_volume(vol * 0.05);
                 println!("Is music playing? {}", &source.playing());
                 source.set_repeat(true);
                 source.play();
@@ -87,7 +97,7 @@ impl Audio {
         else {
             println!("Already playing song");
             if let Some(ref mut source) = &mut self.music_source {
-                source.set_volume(vol);
+                source.set_volume(vol * 0.05);
                 if source.paused() {
                     source.resume();
                 }

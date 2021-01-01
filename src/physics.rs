@@ -13,6 +13,7 @@ use wrapped2d::dynamics::contacts::{Contact};
 use crate::resources::{GameStateResource};
 use crate::components::{Position,CharLevelInteractor};
 use crate::components::collision::{Collision};
+use crate::components::logic::{LogicComponent};
 use crate::components::exit::{ExitComponent};
 use crate::components::portal::{PortalComponent};
 use crate::components::player::{CharacterDisplayComponent};
@@ -116,13 +117,31 @@ impl CollisionBit for Vec::<CollisionCategory> {
 }
 
 
-pub fn create_physics_world() -> PhysicsWorld {
+pub fn create_physics_world(gravity_amount: f32) -> PhysicsWorld {
 
-    let gravity = PhysicsVec { x: 0.0, y: 25.0};
+    let gravity = PhysicsVec { x: 0.0, y: gravity_amount}; //25.0
     let world = PhysicsWorld::new(&gravity);
 
     world
+}
 
+pub fn create_physics_world_2d_grav(gravity_amount: (f32, f32)) -> PhysicsWorld {
+
+    let gravity = PhysicsVec { x: gravity_amount.0, y: gravity_amount.1 }; //25.0
+    let world = PhysicsWorld::new(&gravity);
+
+    world
+}
+
+
+pub fn update_world_gravity(phys_world: &mut PhysicsWorld, gravity: f32) {
+    let gravity_vec = PhysicsVec { x: 0.0, y: gravity}; //25.0
+    phys_world.set_gravity(&gravity_vec);
+}
+
+pub fn update_world_gravity_2d(phys_world: &mut PhysicsWorld, gravity: (f32, f32)) {
+    let gravity_vec = PhysicsVec { x: gravity.0, y: gravity.1}; //25.0
+    phys_world.set_gravity(&gravity_vec);
 }
 
 pub fn dot_product(v1: &PhysicsVec, v2: &PhysicsVec) -> f32 {
@@ -528,6 +547,8 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
     // Keep list of collider entities that need to be destroyed
     let mut delete_entity_list : Vec::<u32> = Vec::new();
 
+    let mut wake_body_list : Vec::<PhysicsBodyHandle> = Vec::new();
+
 
 
     //println!("After physics world step ---------------------------------------------");
@@ -621,6 +642,10 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                                         collision.in_portal = true;
                                         collision.portal_id = portal_id;
                                     }
+
+                                    if body.is_awake() == false {
+                                        wake_body_list.push(body_handle);
+                                    }
                                 }
                             },
                             _ => {}
@@ -639,6 +664,10 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
                                         let portal_id = primary_id as i32;
                                         collision.in_portal = true;
                                         collision.portal_id = portal_id;
+                                    }
+
+                                    if other_body.is_awake() == false {
+                                        wake_body_list.push(other_body_handle);
                                     }
                                 }
                             },
@@ -683,6 +712,11 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
 
     }
 
+    for &body_handle in &wake_body_list {
+        let mut body = physics_world.body_mut(body_handle);
+        body.set_awake(true);
+    }
+
     // Delete any entities on the list
     for &entity_id in &delete_entity_list {
         let entity = world.entities().entity(entity_id);
@@ -709,6 +743,7 @@ pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorl
 fn post_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
     let mut phys_writer = world.write_storage::<Collision>();
     let mut pos_writer = world.write_storage::<Position>();
+    let logic_reader = world.read_storage::<LogicComponent>();
     let entities = world.entities();
 
     // Update collision components after physics runs
@@ -717,6 +752,13 @@ fn post_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, del
         // update position from collision position
         pos.x = collision.pos.x;
         pos.y = collision.pos.y;
+    }
+
+    for (mut collision, logic, ent) in (&mut phys_writer, &logic_reader, &entities).join() {
+        
+        // check for logic value
+        let active = logic.value;
+        collision.update_body_obstruction(physics_world, active);
     }
 }
 

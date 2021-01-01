@@ -1,15 +1,39 @@
 LevelConfig(
-    name: "c",
+    name: "Combined Block Power",
     bounds: (
-        min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 1000.0,
+        min_x: -500.0, min_y: -500.0, max_x: 1500.0, max_y: 1500.0,
         solid_sides: (false, false, false, false),
     ),
     soundtrack: "pirates/track-03.mp3",
     items: [
         Player ( x: 200.0, y: 250.0 ),
+        /*Player ( x: 300.0, y: 350.0 ),
+        Player ( x: 400.0, y: 50.0 ),
+        Player ( x: 500.0, y: 650.0 ),
+        Player ( x: 600.0, y: 450.0 ),
+        Player ( x: 700.0, y: 350.0 ),
+        Player ( x: 800.0, y: 450.0 ),
+        Player ( x: 900.0, y: 550.0 ),
+        Player ( x: 500.0, y: 150.0 ),*/
         
+        // Create static animated sprite based on anim sprite config
+        AnimSprite ( x: 200, y: 700, z: 100.0, sprite: "entities/lemming", angle: 0.0, src: (0,0,1,1), ),
+        // Setup static particle systems based on particle system configs
+        ParticleSys ( x: 625, y: 30, z: 600.0, config: "entities/psys1" ),
+        ParticleSys ( x: 615, y: 160, z: 600.0, config: "entities/psys1" ),
+        ParticleSys ( x: 625, y: 410, z: 600.0, config: "entities/psys1" ),
+
+        ParticleSys ( x: 585, y: 735, z: 600.0, config: "entities/psys1" ),
+        ParticleSys ( x: 635, y: 735, z: 600.0, config: "entities/psys1" ),
+
+
+        //ParticleSys ( x: 450, y: 550, z: 50.0, config: "entities/psys2" ),
+        ParticleSys ( x: 630, y: 780, z: 600.0, config: "entities/psys2" ),
+        ParticleSys ( x: 500, y: -700, z: 700.0, config: "entities/psys_rain" ),
+
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (0,0,8,8), ),
 
+            // MAIN WALLS
             StaticLevelProp( x: -10, y: 500, w: 536, h: 28.0, ang: 1.57, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(100.0) ),
 
@@ -27,50 +51,94 @@ LevelConfig(
         //StaticLevelProp( x: 300, y: 915.0, w: 100.0, h: 32.0, ang: -0.1, image: "entities/grass-block-light", img_w: 128.0, img_h: 128.0),
 
         // LEVEL CONTENT
+            // blocks for buttons
+            DynPlatform ( x: 150.0, y: 100.0, w: 40.0, h: 40.0, ang: 0.0),
+            DynPlatform ( x: 850.0, y: 200.0, w: 40.0, h: 40.0, ang: 0.0),
+            DynPlatform ( x: 460.0, y: 300.0, w: 35.0, h: 40.0, ang: 0.0),
 
-            DynPlatform ( x: 150.0, y: 100.0, w: 40.0, h: 30.0, ang: 0.0),
-            DynPlatform ( x: 550.0, y: 300.0, w: 40.0, h: 30.0, ang: 0.0),
+            // top platform
             StaticLevelProp( x: 390, y: 180, w: 400, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(110.0)),
+                //Button ( start_enabled: false, x: 650.0, y: 145.0, w: 60.0, h: 15, ang: 0, name: "",),
+                //Button ( start_enabled: false, x: 550.0, y: 146.0, w: 50.0, h: 12.5, ang: 0, name: "",),
+                //Button ( start_enabled: false, x: 450.0, y: 147.0, w: 40.0, h: 10, ang: 0, name: "",),
+                //Button ( start_enabled: false, x: 350.0, y: 148.0, w: 30.0, h: 7.5, ang: 0, name: "",),
 
+                StaticLevelProp( x: 250, y: 170, w: 38, h: 24.0, ang: -0.45, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+                StaticLevelProp( x: 350, y: 170, w: 38, h: 24.0, ang: -0.45, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+                StaticLevelProp( x: 450, y: 165, w: 38, h: 24.0, ang: -0.55, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+                StaticLevelProp( x: 650, y: 160, w: 38, h: 24.0, ang: -0.65, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+            // stair steps
             StaticLevelProp( x: 970, y: 250, w: 38, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(110.0)),
             StaticLevelProp( x: 875, y: 325, w: 38, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(210.0)),
             StaticLevelProp( x: 785, y: 400, w: 38, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(210.0)),
+            // diagonal stairs bar
             StaticLevelProp( x: 910, y: 325, w: 142, h: 28.0, ang: -0.75, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(410.0)),
 
         // platform with buttons ---------------------------------------
-        StaticLevelProp( x: 525, y: 433, w: 145, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+            StaticLevelProp( x: 505, y: 433, w: 200, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
             z: Some(210.0)),
 
-    Button ( start_enabled: true, x: 450.0, y: 405.0, w: 40.0, h: 10, ang: 0, name: "btna",),
-    DynSprite (x:450, y:402, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btna-light", start_enabled: true),
+            Button ( start_enabled: false, x: 450.0, y: 405.0, w: 40.0, h: 10, ang: 0, name: "btna",),
+            DynSprite (x:450, y:399, sprite: "entities/small-light", z: 300, angle: 0, src: (0,0,1,1), name: "btna-light", start_enabled: false),
 
-    Button ( start_enabled: false, x: 575.0, y: 405.0, w: 40.0, h: 10, ang: 0, name: "btnb",),
-    DynSprite (x:575, y:402, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnb-light", start_enabled: false),
+            Button ( start_enabled: false, x: 575.0, y: 405.0, w: 40.0, h: 10, ang: 0, name: "btnb",),
+            DynSprite (x:575, y:399, sprite: "entities/small-light", z: 300, angle: 0, src: (0,0,1,1), name: "btnb-light", start_enabled: false),
 
-    DynSprite (x:512, y:252, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnab-light", start_enabled: true),
+            DynSprite (x:512, y:252, sprite: "entities/small-light", z: 300, angle: 0, src: (0,0,1,1), name: "btnab-light", start_enabled: false),
 
-    Portal (x:412, y:242, w: 30, name: "ab-portal", destination: "ab-portal", start_enabled: false),
 
-    DynSprite (x:250, y:302, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "c-light", start_enabled: false),
+            // portal enabled light
+            DynSprite (x:250, y:302, sprite: "entities/small-light", z: 300, angle: 0, src: (0,0,1,1), name: "c-light", start_enabled: false,),
+
+        // test button - left side
+        Button ( start_enabled: false, x: 105.0, y: 470.0, w: 40.0, h: 10, ang: 0, name: "btntest",),
+        DynSprite (x:105, y:468, sprite: "entities/small-light", z: 300, angle: 0, src: (0,0,1,1), name: "btnc-light", start_enabled: false,),
+
+        // portal to exit
+        Portal (x:412, y:242, w: 30, name: "ab-portal", destination: "portExit", start_enabled: false),
+
+    // exit
+        Sprite ( x: -200.0, y: 500.0, sprite: "entities/dark-tile-bg", z: 1.0, angle: 0.0, src: (0,0,1.6,1.6), ),
+        Portal ( x: -250.0, y: 460.0, w: 20, name: "portExit", destination: "", start_enabled: false ),
+        Exit ( x: -150.0, y: 540.0, w: 18.0, h: 18.0, name: "", destination: "button_test"),
+        Platform ( x: -200.0, y: 400, w: 110.0, h: 15.0, ang: 0.0),
+        Platform ( x: -300.0, y: 500, w: 110.0, h: 15.0, ang: 1.57),
+        Platform ( x: -100.0, y: 500, w: 110.0, h: 15.0, ang: 1.57),
+        Platform ( x: -200.0, y: 600, w: 110.0, h: 15.0, ang: 0.0),
 
         // end platform --------------------------------------------
 
-            StaticLevelProp( x: 200, y: 630, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+
+
+            StaticLevelProp( x: 100, y: 500, w: 85, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+                z: Some(510.0)),
+
+            StaticLevelProp( x: 260, y: 600, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+                z: Some(510.0)),
+
+            StaticLevelProp( x: 330, y: 675, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(510.0)),
 
             StaticLevelProp( x: 850, y: 620, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(210.0)),
 
-            StaticLevelProp( x: 100, y: 500, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
-                z: Some(510.0)),
-            StaticLevelProp( x: 500, y: 750, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+            StaticLevelProp( x: 500, y: 750, w: 75, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(110.0)),
-            StaticLevelProp( x: 700, y: 750, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+            // empty box 
+            DynEmptyBox ( x: 600.0, y: 650.0, w: 40.0, h: 40.0, ang: 3.14),
+            StaticLevelProp( x: 600, y: 875, w: 64, h: 22.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+                z: Some(210.0)),
+            StaticLevelProp( x: 700, y: 750, w: 75, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(510.0)),
             StaticLevelProp( x: 900, y: 850, w: 64, h: 28.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(210.0)),
@@ -90,34 +158,37 @@ LevelConfig(
                 //Sprite ( x: 720.0, y: 952.0, sprite: "entities/plant_bunch_02", z: 200.0, angle: 0.0, src: (0,0,6,1), ),
 
             // Little dynamic blocks
-            DynStaticLevelProp( x: 550, y: 833, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 150, y: 833, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
-            DynStaticLevelProp( x: 550, y: 823, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 750, y: 323, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
-            DynStaticLevelProp( x: 550, y: 813, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 350, y: 613, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
-            DynStaticLevelProp( x: 550, y: 803, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 450, y: 203, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
-            DynStaticLevelProp( x: 550, y: 793, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 550, y: 493, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
-            DynStaticLevelProp( x: 550, y: 783, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 250, y: 783, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
-            DynStaticLevelProp( x: 550, y: 773, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+            DynStaticLevelProp( x: 750, y: 673, w: 5, h: 5.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
                 z: Some(210.0)),
 
             Ghost ( x: 500.0, y: 500.0 ),
 
         Connection ( from: "btna", to: "btna-light", conn_type: Switch ),
         Connection ( from: "btnb", to: "btnb-light", conn_type: Switch ),
+        Connection ( from: "btntest", to: "btnc-light", conn_type: Switch ),
 
-        Connection ( from: "btna-light", to: "btnab-light", conn_type: Switch ),
-        Connection ( from: "btnb-light", to: "btnab-light", conn_type: Switch ),
+        Connection ( from: "btna", to: "btnab-light", conn_type: Switch ),
+        Connection ( from: "btnb", to: "btnab-light", conn_type: Switch ),
 
-        //Connection ( from: "btnb-light", to: "ab-portal", conn_type: Switch ),
-        Connection ( from: "btna-light", to: "ab-portal", conn_type: Switch ),
+        Connection ( from: "btna", to: "ab-portal", conn_type: Switch ),
+        Connection ( from: "btnb", to: "ab-portal", conn_type: Switch ),
+        Connection ( from: "btntest", to: "ab-portal", conn_type: Switch ),
 
-        Connection ( from: "btnab-light", to: "c-light", conn_type: Switch ),
-        Connection ( from: "ab-portal", to: "c-light", conn_type: Switch ),
+        //Connection ( from: "ab-portal", to: "c-light", conn_type: Switch ),
+        //Connection ( from: "btntest", to: "c-light", conn_type: Switch ),
+        Connection ( from: "ab-portal", to: "portExit", conn_type: Switch ),
 
     ],
 )

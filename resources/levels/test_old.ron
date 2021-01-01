@@ -1,41 +1,74 @@
 LevelConfig(
     name: "test_old",
     bounds: (
-        min_x: -50.0, min_y: -1000.0, max_x: 4500.0, max_y: 6000.0,
+        min_x: -50.0, min_y: 1000.0, max_x: 4500.0, max_y: 3600.0,
         solid_sides: (false, false, false, false),
     ),
     soundtrack: "Suri Title theme.mp3",
     items: [
         Player ( x: 1000.0, y: 2000.0 ),
         //
-        Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-50,-50,100,100), ),
-        Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-18,-28,38,56), ),
+        Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/electric-bg", z: 10.0, angle: 0.1, src: (-50,-50,100,100), ),
+        Sprite ( x: 2225.0, y: 2300.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-18,-28,38,21), ),
         
-        Platform ( x: 150.0, y: 2000.0, w: 1200.0, h: 100.0, ang: -1.57),
-        Platform ( x: 4000.0, y: 2000.0, w: 1200.0, h: 100.0, ang: 1.57),
+        Platform ( x: 150.0, y: 2300.0, w: 1300.0, h: 100.0, ang: -1.57),
+        Platform ( x: 4000.0, y: 2300.0, w: 1300.0, h: 100.0, ang: 1.57),
 
         DynEmptyBox ( x: 400.0, y: 50.0, w: 40.0, h: 40.0, ang: 0.0),
 
         Portal ( x: 300.0, y: 1900.0, w: 30.0, name: "b", destination: "", start_enabled: true ),
 
-        Portal ( x: 2000.0, y: -500.0, w: 30.0, name: "a", destination: "b", start_enabled: true ),
+        Portal ( x: 2050.0, y: 1150.0, w: 80.0, name: "a", destination: "b", start_enabled: true ),
 
         Bowl ( x: 500.0, y: 500.0 ),
 
-        Platform ( x: 400.0, y: 3000.0, w: 400.0, h: 20.0, ang: -0.1),
-        Platform ( x: 25.0, y: 3000.0, w: 400.0, h: 20.0, ang: 0.1),
-        Platform ( x: 1000.0, y: 2750.0, w: 400.0, h: 20.0, ang: 0.0),
-        Platform ( x: 1400.0, y: 3000.0, w: 400.0, h: 20.0, ang: 0.0),
-        Platform ( x: 2400.0, y: 3000.0, w: 100.0, h: 20.0, ang: 0.0),
-        Platform ( x: 3500.0, y: 2900.0, w: 600.0, h: 20.0, ang: -0.15),
+        Platform ( x: 410.0, y: 2900.0, w: 200.0, h: 20.0, ang: 0.2),
+        Sprite ( x: 280.0, y: 2926.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0.2, src: (0,0,1,1), ),
+        Sprite ( x: 465.0, y: 2963.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0.2, src: (0,0,1,1), ),
+
+        // MAIN PLATFORMS -----------------------
+        //Platform ( x: 25.0, y: 3000.0, w: 400.0, h: 20.0, ang: 0.1),
+        Platform ( x: 1000.0, y: 2700.0, w: 300.0, h: 20.0, ang: 0.0),
+        Sprite ( x: 825.0, y: 2740.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0, src: (0,0,1,1), ),
+        Sprite ( x: 1000.0, y: 2750.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0, src: (0,0,1,1), ),
+        Sprite ( x: 1175.0, y: 2740.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0, src: (0,0,1,1), ),
+
+        Platform ( x: 1400.0, y: 2200.0, w: 120.0, h: 20.0, ang: 0.0),
+        Sprite ( x: 1400.0, y: 2250.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0, src: (0,0,1,1), ),
+
+        Platform ( x: 2400.0, y: 3500.0, w: 250.0, h: 20.0, ang: 0.0),
+        Sprite ( x: 2290.0, y: 3550.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0, src: (0,0,1,1), ),
+        Sprite ( x: 2510.0, y: 3550.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0, src: (0,0,1,1), ),
+
+        Platform ( x: 3550.0, y: 2900.0, w: 550.0, h: 20.0, ang: -0.15),
+        Sprite ( x: 3150.0, y: 3010.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
+        Sprite ( x: 3360.0, y: 2975.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
+        Sprite ( x: 3570.0, y: 2940.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
+        Sprite ( x: 3780.0, y: 2905.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
+        //Sprite ( x: 3950.0, y: 2895.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
+
+
+        //-------------------------------------------
         Ghost ( x: 300.0, y: 2900.0 ),
+
+
+        Platform ( x: 3000.0, y: 1200.0, w: 600.0, h: 20.0, ang: -0.12),
+        Platform ( x: 3150.0, y: 1620.0, w: 550.0, h: 20.0, ang: -0.03),
+        Platform ( x: 3730.0, y: 1725.0, w: 220.0, h: 20.0, ang: 0.55),
+        Platform ( x: 3100.0, y: 2000.0, w: 550.0, h: 20.0, ang: 0.15),
+        Platform ( x: 3600.0, y: 2250.0, w: 450.0, h: 20.0, ang: -0.05),
+        Portal ( x: 3845.0, y: 1720.0, w: 30.0, name: "c", destination: "a", start_enabled: true ),
+
 
         Sprite ( x: 3505.0, y: 2455.0, sprite: "entities/white-tile-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
 
         // platforms are "roof" over exit to avoid exit that way
         Platform ( x: 3400.0, y: 2380.0, w: 103.0, h: 15.0, ang: -0.16),
+            Sprite ( x: 3418.0, y: 2423.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
         Platform ( x: 3600.0, y: 2380.0, w: 103.0, h: 15.0, ang: 0.16),
-        Exit (x: 3500.0, y: 2450.0, w: 20.0, h: 20.0, name: "exit", destination: "start" ) ,
+            Sprite ( x: 3582.0, y: 2423.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0.15, src: (0,0,1,1), ),
+        Exit (x: 3500.0, y: 2450.0, w: 20.0, h: 20.0, name: "exit", destination: "logic" ) ,
         Platform ( x: 3500.0, y: 2520.0, w: 80.0, h: 15.0, ang: 0),
+        
     ],
 )

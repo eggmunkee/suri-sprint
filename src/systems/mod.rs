@@ -18,10 +18,15 @@ pub mod input;
 //   including actor physics, damage, effects, etc.
 pub mod interactor;
 pub mod logic;
+// animation generic system
+pub mod animation;
+pub mod particles;
 
 // Re-export the input and interactor system items into this module
 pub use crate::systems::input::*;
 pub use crate::systems::interactor::*;
+pub use crate::systems::animation::*;
+pub use crate::systems::particles::*;
 
 /**** SYSTEMS *********************************/
 

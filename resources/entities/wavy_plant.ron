@@ -1,0 +1,27 @@
+AnimSpriteConfig (
+    spritesheet: false,
+    path: "/wavy_plant.png",
+    scale: (1.0, 1.0),
+    z_order: 100.0,
+    alpha: 1.0,
+    angle: 0.0,
+    src: (0.0, 0.0, 1.0, 1.0),
+    grid_layout: Some( AnimGridLayout(
+        cols: 4,
+        rows: 1, 
+    )),
+    animations: Some([
+        AnimationDef(
+            name: "default",
+            frames: [
+                (0,0.2),(1,0.2),(2,0.2),(3,0.2), //(2,0.2),(1,0.2),
+            ],
+            looped: true,
+            reverse: false,
+            end_anim: None
+        ),
+    ]),
+    start_animation: Some([
+        "default"
+    ]),
+)

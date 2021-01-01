@@ -3,7 +3,7 @@ SpriteConfig(
     path: "/ghost-1-r.png",
     scale: (1.2, 1.2),
     z_order: 100.0,
-    alpha: 0.4,
+    alpha: 0.75, //0.4,
     angle: 0.0,
     src: (0.0, 0.0, 1.0, 1.0),
 )

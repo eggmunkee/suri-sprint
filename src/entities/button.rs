@@ -54,7 +54,7 @@ impl ButtonBuilder {
 
         let body_handle_clone = collision.body_handle.clone();
 
-        let logic = LogicComponent::new(name, start_enabled);
+        let logic = LogicComponent::new(name, start_enabled, None);
         //logic.
 
         let button_entity = world.create_entity()
@@ -212,12 +212,14 @@ impl ButtonBuilder {
                 // b2::Vec2 { x: 0.5 * coll_w, y: -0.5 * coll_h + off_y },
 
                 b2::Vec2 { x: 0.25 * coll_w, y: -0.2 * coll_h },
+                b2::Vec2 { x: 0.15 * coll_w, y: -1.0 * coll_h }, // new midpoint
                 b2::Vec2 { x: 0.05 * coll_w, y: -1.2 * coll_h },
                 b2::Vec2 { x: -0.05 * coll_w, y: -1.2 * coll_h },
+                b2::Vec2 { x: -0.15 * coll_w, y: -1.0 * coll_h }, // new midpoint
                 b2::Vec2 { x: -0.25 * coll_w, y: -0.2 * coll_h },
                 //b2::Vec2 { x: -0.1 * coll_w, y: 0.5 * coll_h },
-                b2::Vec2 { x: -0.6 * coll_w, y: 1.1 * coll_h },
-                b2::Vec2 { x: 0.6 * coll_w, y: 1.1 * coll_h },
+                b2::Vec2 { x: -0.6 * coll_w, y: 0.7 * coll_h }, // OLD Y = 1.1 * coll_h
+                b2::Vec2 { x: 0.6 * coll_w, y: 0.7 * coll_h },
             ];
 
             // Bottom of box shape and fixture
@@ -236,12 +238,12 @@ impl ButtonBuilder {
         
         let joint_def = b2::PrismaticJointDef {
             enable_limit: true,
-            lower_translation: create_size(height* 0.0),
+            lower_translation: create_size(height* 0.3),
             upper_translation: create_size(height*0.8),
             local_axis_a: b2::Vec2 { x: 0.0, y: -1.0 }, 
             enable_motor: true,
-            max_motor_force: 2.5,
-            motor_speed: 10.0,
+            max_motor_force: 1.0,   //2.5,
+            motor_speed: 2.0,  //10.0,
             .. b2::PrismaticJointDef::new(button_body_handle.clone(), trigger_body_handle.clone())
         };
         let joint_handle = world.create_joint_with(&joint_def, ());

@@ -43,7 +43,7 @@ impl ButtonComponent {
     }
 
     pub fn is_active(&self) -> bool {
-        if self.is_pressed {
+        if self.triggered {
             true
         }
         else {
@@ -57,7 +57,7 @@ impl ButtonComponent {
 
     pub fn update(&mut self, delta_time: f32, collision: &mut Collision, physics_world: &mut PhysicsWorld) {
 
-        self.triggered = false;
+        //self.triggered = false;
         self.is_pressed = false;
 
         if let Some(handle) = collision.body_handle {
@@ -100,16 +100,28 @@ impl ButtonComponent {
 
             if self.timer == DOWN_TO_TRIGGER {
                 self.triggered = true;
-                self.timer = self.trigger_cooldown;
+                if self.repeat_trigger == false {
+                    self.timer = self.trigger_cooldown;
+                }
+            }
+            else {
+                self.triggered = false;
             }
             
         }
         // non-pressed cool down timer to zero
-        else if self.timer > 0.0 {
-            self.timer -= delta_time;
+        else {
+            if self.triggered {
+                self.triggered = false;
+                self.timer = self.trigger_cooldown;
+            }
+
+            if self.timer > 0.0 {
+                self.timer -= delta_time;
     
-            if self.timer < 0.0 { self.timer = 0.0; }
-        }
+                if self.timer < 0.0 { self.timer = 0.0; }
+            }
+        } 
     
     }
 

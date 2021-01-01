@@ -13,6 +13,8 @@ use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::components::player::{CharacterDisplayComponent};
+use crate::components::logic::{LogicComponent,LogicOpType};
+use crate::entities::level_builder::{ItemLogic};
 use crate::systems::*;
 use crate::physics::{PhysicsWorld,CollisionCategory};
 
@@ -31,11 +33,26 @@ impl PlatformBuilder {
             "entities/box".to_string(), 48.0, 48.0)
     }
 
+    pub fn build_w_logic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+        width: f32, height: f32, angle: f32, z_order: f32, logic: Option<ItemLogic>) -> Entity {
+        
+        PlatformBuilder::build_w_image_logic(world, ctx, physics_world, x, y, width, height, angle, z_order, 
+            "entities/box".to_string(), 48.0, 48.0, logic)
+    }
+
     pub fn build_w_image(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
         width: f32, height: f32, angle: f32, z_order: f32, image: String, img_w: f32, img_h: f32) -> Entity {
+        PlatformBuilder::build_w_image_logic(world, ctx, physics_world, x, y, width, height, angle, z_order, image, img_w, img_h, None)
+    }
+
+    pub fn build_w_image_logic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+            width: f32, height: f32, angle: f32, z_order: f32, image: String, img_w: f32, img_h: f32, logic: Option<ItemLogic>) -> Entity {
 
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, image);
+        if let Some(_) = logic {
+            sprite.toggleable = true;
+        }
 
         let half_img_w = img_w / 2.0;
         let half_img_h = img_h / 2.0;
@@ -57,15 +74,30 @@ impl PlatformBuilder {
         collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Etherial);
 
+        if let Some(_) = logic {
+            collision.toggleable = true;
+        }
+
         collision.create_static_body_box(physics_world);
         let body_handle_clone = collision.body_handle.clone();
 
-        let entity = world.create_entity()
+        let mut entity_build = world.create_entity()
         .with(Position { x: x, y: y })
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
-        .with(collision)
-        .build();
+        .with(collision);
+
+        if let Some(item_logic) = logic {
+            let mut logic = LogicComponent::new(item_logic.name.clone(), item_logic.start_enabled, item_logic.logic_op);
+            //logic.
+            if let Some(log_type) = item_logic.logic_type {
+                logic.logic_type = log_type;
+            }
+            
+            entity_build = entity_build.with(logic);
+        }
+
+        let entity = entity_build.build();
 
         let entity_id = entity.id();
         if let Some(body_handle) = body_handle_clone {

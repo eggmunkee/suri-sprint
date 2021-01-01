@@ -1,5 +1,5 @@
 LevelConfig(
-    name: "Button Test",
+    name: "Button Testing Room",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 700.0, max_y: 600.0,
         solid_sides: (false, true, false, true),
@@ -8,45 +8,72 @@ LevelConfig(
     items: [
         Player ( x: 80.0, y: 150.0 ),
 
+        Platform ( x: 350.0, y: -1000, w: 350.0, h: 15.0, ang: 0.0),
+
+        Platform ( x: -12.0, y: -600, w: 150.0, h: 15.0, ang: -1.57),
+        Platform ( x: 712.0, y: -350, w: 150.0, h: 15.0, ang: 1.57),
+
         Sprite ( x: 350.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
-        Sprite ( x: 350.0, y: 300.0, sprite: "entities/dark-tile-bg", z: 5.0, angle: 0.0, src: (-1.80,-1.35,5.9,5),),
+        Sprite ( x: 350.0, y: 175.0, sprite: "entities/dark-tile-bg", z: 5.0, angle: 0.0, src: (-1.80,-1.35,5.9,7),), // -1.35
         DynSprite ( x: 350.0, y: 300.0, sprite: "entities/white-tile-bg-overlay", z: 6.0, angle: 0.0, src: (-2.95,-2.5,5.9,5),
             name:"tileswitch0", start_enabled: false),
         DynSprite ( x: 350.0, y: 150.0, sprite: "entities/spotlight", z: 25.0, angle: 0.0, src: (0,0,1,1), 
-            name:"tileswitch", start_enabled: true),
+            name:"tileswitch", start_enabled: false),
 
         Button ( start_enabled: false, x: 30.0, y: 355.0, w: 32.0, h: 7.5, ang: 1.57, name: "btna",),
-        DynSprite (x:30, y:335, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btna-light", start_enabled: true),
+        DynSprite (x:30, y:335, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btna-light", start_enabled: false),
         Platform ( x: 60.0, y: 400.0, w: 75.0, h: 15.0, ang: 0.0),
 
-        Button ( start_enabled: false, x: 450.0, y: 231.0, w: 60.0, h: 15.0, ang: 0.0, name: "btnb",),
-        DynSprite (x:450, y:231, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnb-light", start_enabled: true),
-        Platform ( x: 450.0, y: 250.0, w: 75.0, h: 15.0, ang: 0.0),
+        Button ( start_enabled: false, x: 480.0, y: 185.0, w: 50.0, h: 9.0, ang: 0.0, name: "btnb",),
+        DynSprite (x:450, y:181, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnb-light", start_enabled: false),
+        Platform ( x: 350.0, y: 200.0, w: 200.0, h: 15.0, ang: 0.0),
 
         Button ( start_enabled: false, x: 290.0, y: 581.0, w: 30.0, h: 6.0, ang: 0.0, name: "btnc",),
-        DynSprite (x:290, y:581, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnc-light", start_enabled: true),
+        DynSprite (x:290, y:581, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btnc-light", start_enabled: false),
 
-        Platform ( x: 275.0, y: 599.0, w: 125.0, h: 15.0, ang: 0.0),
+        Platform ( x: 250.0, y: 599.0, w: 100.0, h: 15.0, ang: 0.0),
 
         Platform ( x: 600.0, y: 599.0, w: 100.0, h: 15.0, ang: 0.0),
 
         //DynEmptyBox ( x: 200.0, y: 300.0, w: 50.0, h: 50.0, ang: 0.0),
 
-        Exit ( x: 500.0, y: 500.0, w: 25.0, h: 25.0, name: "", destination: "a"),
+        // BOX CAGE
+        Platform ( x: 600.0, y: -190, w: 70.0, h: 12.0, ang: 0.0),
+        Platform ( x: 525.0, y: -120, w: 80.0, h: 12.0, ang: 1.57),
+        Platform ( x: 675.0, y: -120, w: 80.0, h: 12.0, ang: -1.57),
+
+        DynStaticLevelProp ( x: 600.0, y: -120.0, w: 36.0, h: 36.0, ang:0.0, image: "entities/closed_box", img_w: 96.0, img_h: 96.0 ),
+        Platform ( x: 600.0, y: 90, w: 70.0, h: 12.0, ang: 0.0, logic: Some( 
+            ItemLogic( name: "box_door", start_enabled: true, logic_type: Some(SwitchOnce)  ))),
+        Platform ( x: 600.0, y: -50, w: 70.0, h: 12.0, ang: 0.0, logic: Some( 
+            ItemLogic( name: "box_door2", start_enabled: true, logic_type: Some(SwitchOnce)))),
+        Platform ( x: 525.0, y: 20, w: 80.0, h: 12.0, ang: 1.57),
+        Platform ( x: 675.0, y: 20, w: 80.0, h: 12.0, ang: -1.57),
+        //Portal ( x: 210.0, y: 30.0, w: 20, name: "portA", destination: "portB", start_enabled: false ),
+
+        // EXIT CAGE
+
+        Portal ( x: 555.0, y: 425.0, w: 20, name: "portExit", destination: "portB", start_enabled: false ),
+        Exit ( x: 620.0, y: 540.0, w: 18.0, h: 18.0, name: "", destination: "start"),
+        Platform ( x: 600.0, y: 375, w: 100.0, h: 15.0, ang: 0.0),
+        Platform ( x: 515.0, y: 490, w: 110.0, h: 15.0, ang: 1.57),
+
+        // END CAGE
 
         Ghost ( x: 200.0, y: 100.0 ),
 
-        Portal ( x: 290.0, y: 540.0, w: 20, name: "portA", destination: "portB", start_enabled: true ),
+        //Portal ( x: 290.0, y: 540.0, w: 20, name: "portA", destination: "portB", start_enabled: false ),
 
-        Portal ( x: 450.0, y: 100.0, w: 20, name: "portB", destination: "", start_enabled: true ),
+        Portal ( x: 575.0, y: 200.0, w: 20, name: "portB", destination: "portExit", start_enabled: false ),
 
-        Connection ( from: "btna", to: "mouse", conn_type: Switch ),
-        Connection ( from: "btnb", to: "tileswitch0", conn_type: Switch ),
-        Connection ( from: "btnb", to: "tileswitch", conn_type: Switch ),
-        //Connection ( from: "btnc", to: "portA", conn_type: Switch ),
-        Connection ( from: "btnb", to: "portA", conn_type: Switch ),
-        Connection ( from: "portA", to: "portB", conn_type: Switch ),
-
+        //Connection ( from: "btna", to: "mouse", conn_type: Switch ),
+        Connection ( from: "btnc", to: "tileswitch0", conn_type: Switch ),
+        Connection ( from: "btnc", to: "tileswitch", conn_type: Switch ),
+        //Connection ( from: "btnc", to: "portExit", conn_type: Switch ),
+        Connection ( from: "btna", to: "box_door", conn_type: Switch ),
+        Connection ( from: "btnb", to: "portB", conn_type: Switch ),
+        Connection ( from: "btnb", to: "portExit", conn_type: Switch ),
+        Connection ( from: "btnc", to: "box_door2", conn_type: Switch ),
 
         Connection ( from: "btna", to: "btna-light", conn_type: Switch ),
         Connection ( from: "btnb", to: "btnb-light", conn_type: Switch ),

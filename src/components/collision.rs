@@ -10,6 +10,7 @@ use rand::prelude::*;
 
 use crate::entities::level_builder::{LevelBounds};
 use crate::physics;
+use crate::physics::*;
 use crate::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyType, PhysicsBodyHandle, EntityType, CollisionCategory, CollideType};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
@@ -45,7 +46,9 @@ pub struct Collision {
     // collision status
     // body contacts list  (entity_id, collide_type)
     pub body_contacts: Vec::<(i32, CollideType)>,
-    
+    pub toggleable: bool,
+    pub is_obstructing: bool,
+    pub flag_obstruction: bool,
 }
 
 impl Collision {
@@ -75,6 +78,9 @@ impl Collision {
             since_warp: 0.2,
             enable_warp: false,            
             body_contacts: vec![],
+            toggleable: false,
+            is_obstructing: true,
+            flag_obstruction: false,
         }
     }
     pub fn new_specs(density: f32, restitution: f32, dim_1: f32, dim_2: f32) -> Collision {
@@ -102,6 +108,9 @@ impl Collision {
             since_warp: 0.2,
             enable_warp: false,
             body_contacts: vec![],
+            toggleable: false,
+            is_obstructing: true,
+            flag_obstruction: false,
         }
     }
 
@@ -213,6 +222,14 @@ impl Collision {
         self.body_handle = Some(body_handle);
     }
 
+    pub fn set_obstructing(&mut self, obstructing: bool) {
+        if self.is_obstructing != obstructing {
+            self.is_obstructing = obstructing;
+            self.flag_obstruction = true;
+            println!("[COLLISION] FLAGGED - OBSTRUCTING: {}", &self.is_obstructing);
+        }
+    }
+
     pub fn can_use_portal(&self) -> bool {
         if self.since_warp < 0.5 {
             false
@@ -229,6 +246,10 @@ impl Collision {
 
         let mut rng = rand::thread_rng();
 
+        if self.flag_obstruction {
+            self.update_body_obstruction(physics_world, self.is_obstructing);
+        }
+
         self.body_contacts.clear();
 
         self.since_warp += time_delta;
@@ -238,19 +259,22 @@ impl Collision {
 
             self.clear_pre_physics_state();
 
+            let mut movement_applied = false;
             if let Some(character) = opt_character {
                 // have character handle applying inputs to collision body
-                character.apply_movement(&mut body);
+                character.apply_movement(&mut body, time_delta);
 
                 character.in_exit = false;
                 character.in_portal = false;
                 character.exit_id = -1;
                 character.portal_id = -1;
+
+                movement_applied = true
             }
 
-            if let Some(npc) = opt_npc {
+            if let (Some(npc), false) = (opt_npc, movement_applied ) {
                 // have character handle applying inputs to collision body
-                npc.apply_movement(&mut body);
+                npc.apply_movement(&mut body, time_delta);
 
             }
 
@@ -349,6 +373,40 @@ impl Collision {
             self.vel.x = velocity.x;
             self.vel.y = velocity.y;
             body.set_linear_velocity(&b2::Vec2{x: self.vel.x, y: self.vel.y});
+        }
+    }
+
+    pub fn update_body_obstruction(&mut self, physics_world: &mut PhysicsWorld, is_obstruction: bool) {
+
+        if let Some(body_handle) = self.body_handle {
+            let mut body = physics_world.body_mut(body_handle);
+
+            let mut first_fixture : Option<b2::FixtureHandle> = None;
+
+            for (fixture, meta) in body.fixtures() {
+                //println!("Meow collision has body handle with a fixture");
+                first_fixture = Some(fixture);
+                break;
+            }
+
+            let category_bits = match is_obstruction {
+                true => self.collision_category.to_bits(),
+                false => 0
+            };
+            let mask_bits = match is_obstruction {
+                true => (&self.collision_mask).to_bits(),
+                false => 0
+            };
+
+            if let Some(fixture) = first_fixture {
+                //fixture.set_filter_data();
+                let mut obj_fixture = body.fixture_mut(fixture);
+                obj_fixture.set_filter_data(&b2::Filter {
+                    category_bits: category_bits,
+                    mask_bits: mask_bits,
+                    group_index: 0,
+                });
+            }
         }
     }
     

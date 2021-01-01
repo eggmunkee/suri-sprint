@@ -23,11 +23,11 @@ impl BowlBuilder {
     //     vec!["/dirty-box-1.png".to_string()]
     // }
 
-    pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32) -> Entity {
+    pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32) -> Entity {
 
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/bowl".to_string());
-        sprite.z_order = SpriteLayer::Entities.to_z();
+        sprite.z_order = z;
 
         let mut collision = Collision::new_specs(3.0,0.25, 10.0, 2.5);
         collision.pos.x = x;

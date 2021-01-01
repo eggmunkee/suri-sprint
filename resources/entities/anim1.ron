@@ -1,0 +1,47 @@
+AnimSpriteConfig (
+    spritesheet: false,
+    path: "/anim1.png",
+    scale: (1.0, 1.0),
+    z_order: 100.0,
+    alpha: 1.0,
+    angle: 0.0,
+    src: (0.0, 0.0, 1.0, 1.0),
+    grid_layout: Some( AnimGridLayout(
+        cols: 4,
+        rows: 4, 
+    )),
+    animations: Some([
+        AnimationDef(
+            name: "default",
+            frames: [
+                /*(0, 0.05),
+                (1, 0.05),
+                (2, 0.05),
+                (3, 0.05),
+                (4, 0.05),
+                (5, 0.05),
+                (6, 0.05),
+                (7, 0.05),*/
+                (8, 0.1),
+                (9, 0.1),
+                (10, 0.1),
+                (11, 0.1),
+                (12, 0.1),
+                (13, 0.1),
+                (14, 0.2),
+                //(15, 0.2),
+                (14, 0.2),
+                (13, 0.1),
+                (12, 0.1),
+                (11, 0.1),
+                (10, 0.1),
+            ],
+            looped: true,
+            reverse: false,
+            end_anim: None
+        ),
+    ]),
+    start_animation: Some([
+        "default"
+    ]),
+)

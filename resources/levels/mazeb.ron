@@ -1,18 +1,133 @@
 
 LevelConfig(
-    name: "mazeb",
+    name: "Block Maze 2",
     bounds: (
-        min_x: 0.0, min_y: 0.0, max_x: 500.0, max_y: 500.0,
-        solid_sides: (false, true, false, true),
+        min_x: 0.0, min_y: -80.0, max_x: 500.0, max_y: 500.0,
+        solid_sides: (false, false, false, false),
     ),
     soundtrack: "Suri Title theme.mp3",
     items: [
-        Player ( x: 100.0, y: 400.0 ),
+        Player ( x: 250.0, y: 0.0 ),
+        //Player ( x: 100.0, y: -3700.0 ),
 
         Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0, src: (-1,-1,2,2), ),
 
-        Sprite ( x: 250.0, y: 250.0, sprite: "entities/white-tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), ),
+        Sprite ( x: 0.0, y: -1700.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 1.57, src: (0,0,35,1), ),
+        Sprite ( x: 500.0, y: -1700.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 1.57, src: (0,0,35,1), ),
 
-        Portal ( x: 250, y: 250, w: 35, name: "portal1", destination: "portal1", start_enabled: true ),
+        Sprite ( x: 250.0, y: -300.0, sprite: "entities/yellow-arrow", z: 20.0, angle: 0.0, src: (0,0,1,1), ),
+
+        Platform ( x: 0.0, y: 250.0, w: 50.0, h: 7.0, ang: 1.0,),
+        Platform ( x: 500.0, y: 250.0, w: 50.0, h: 7.0, ang: -1.0,),
+
+        StaticLevelProp( x: 250, y: 50.0, w: 50.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        StaticLevelProp( x: 250, y: -150.0, w: 80.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        StaticLevelProp( x: 450, y: -325.0, w: 60.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        StaticLevelProp( x: 210, y: -635.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 50, y: -550.0, w: 60.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 150, y: -595.0, w: 75.0, h: 24.0, ang: -0.76, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        StaticLevelProp( x: 270, y: -935.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 60, y: -800.0, w: 70.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 190, y: -865.0, w: 110.0, h: 24.0, ang: -0.76, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        Sprite ( x: 400.0, y: -1150.0, sprite: "entities/yellow-arrow", z: 20.0, angle: 0.8, src: (0,0,1,1), ),
+
+        StaticLevelProp( x: 250, y: -1250.0, w: 300.0, h: 12.0, ang: -0.30, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        //StaticLevelProp( x: -250, y: -1250.0, w: 300.0, h: 12.0, ang: -0.30, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        
+        StaticLevelProp( x: 250, y: -1375.0, w: 300.0, h: 24.0, ang: -0.30, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        //StaticLevelProp( x: -250, y: -1375.0, w: 300.0, h: 24.0, ang: -0.30, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        
+        StaticLevelProp( x: 250, y: -1560.0, w: 300.0, h: 12.0, ang: -0.40, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        //StaticLevelProp( x: -250, y: -1560.0, w: 300.0, h: 12.0, ang: -0.40, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        
+        StaticLevelProp( x: 200, y: -1640.0, w: 250.0, h: 24.0, ang: -0.40, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        
+        StaticLevelProp( x: 0, y: -1720.0, w: 48.0, h: 24.0, ang: 0.33, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 0, y: -1680.0, w: 48.0, h: 12.0, ang: -0.4, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        
+        StaticLevelProp( x: 250, y: -1800.0, w: 300.0, h: 24.0, ang: 0.33, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        //StaticLevelProp( x: -250, y: -1800.0, w: 300.0, h: 24.0, ang: 0.33, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        Button ( x: 400.0, y: -1917, w: 40, h: 8, ang: 0, name: "btn_exit", start_enabled: false),
+        DynSprite (x:400, y: -1917, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btn_exit_light", start_enabled: false),
+        StaticLevelProp( x: 450, y: -1890.0, w: 92.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 270, y: -1925.0, w: 92.0, h: 18.0, ang: 0.35, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        StaticLevelProp( x: 270, y: -2100.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 30, y: -2200.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 470, y: -2200.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 170, y: -2300.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 20,  y: -2400.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 370, y: -2500.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 270, y: -2600.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 70, y: -2700.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 170, y: -2800.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 370, y: -3000.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 270, y: -3100.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 70, y: -3300.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 170, y: -3450.0, w: 32.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        Button ( x: 400.0, y: -3582, w: 40, h: 8, ang: 0, name: "btn_box", start_enabled: false),
+        DynSprite (x:400, y: -3582, sprite: "entities/small-light", z: 100, angle: 0, src: (0,0,1,1), name: "btn_box_light", start_enabled: false),
+        StaticLevelProp( x: 400, y: -3550.0, w: 64.0, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        // box release cage
+        Platform ( x: 100.0, y: -3950, w: 70.0, h: 12.0, ang: 0.0),
+        Platform ( x: 25.0, y: -3880, w: 80.0, h: 12.0, ang: 1.57),
+        Platform ( x: 175.0, y: -3880, w: 80.0, h: 12.0, ang: -1.57),
+        DynStaticLevelProp ( x: 100.0, y: -3900.0, w: 36.0, h: 36.0, ang:0.0, image: "entities/closed_box", img_w: 96.0, img_h: 96.0 ),
+        Platform ( x: 100.0, y: -3810, w: 70.0, h: 12.0, ang: 0.0, logic: Some( 
+            ItemLogic( name: "box_door", start_enabled: true, logic_type: Some(SwitchOnce)  ))),
+        // box reset portal
+        Portal ( x: 100, y: -3920, w: 35, name: "box_portal_restart", destination: "", start_enabled: true ),
+        Portal ( x: 50, y: -1250, w: 35, name: "box_reset", destination: "box_portal_restart", start_enabled: true ),
+
+
+        // exit cage
+        Platform ( x: 400.0, y: -3950, w: 70.0, h: 12.0, ang: 0.0),
+        Platform ( x: 325.0, y: -3880, w: 80.0, h: 12.0, ang: 1.57),
+        Platform ( x: 475.0, y: -3880, w: 80.0, h: 12.0, ang: -1.57),
+        Exit ( x: 400.0, y: -3880.0, w: 25.0, h: 25.0, name: "", destination: "logic"),
+        Platform ( x: 400.0, y: -3810, w: 70.0, h: 12.0, ang: 0.0, logic: Some( 
+            ItemLogic( name: "exit_door", start_enabled: true, logic_type: Some(Switch)  ))),
+
+        Sprite ( x: 250.0, y: -3700.0, sprite: "entities/tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), ),
+
+        //StaticLevelProp( x: 250, y: 538.0, w: 250.0, h: 24.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+
+        Portal ( x: 250, y: 200, w: 35, name: "portal1", destination: "portal7", start_enabled: true ),
+
+        Portal ( x: 125, y: -50, w: 35, name: "portal2", destination: "portal4", start_enabled: true ),
+
+        Portal ( x: 125, y: 365, w: 35, name: "portal3", destination: "portal5", start_enabled: true ),
+
+        Portal ( x: 375, y: -50, w: 35, name: "portal4", destination: "portal3", start_enabled: true ),
+
+        Portal ( x: 250, y: 325, w: 35, name: "portal5", destination: "portal6", start_enabled: true ),
+
+        Portal ( x: 375, y: 365, w: 35, name: "portal6", destination: "portal2", start_enabled: true ),
+
+        Portal ( x: 50, y: 490, w: 40, name: "portal7", destination: "portal10", start_enabled: true ),
+        //Portal ( x: 100, y: 480, w: 25, name: "portal12", destination: "portal12", start_enabled: true ),
+        Portal ( x: 150, y: 490, w: 50, name: "portal8", destination: "portal9", start_enabled: true ),
+        //Portal ( x: 200, y: 480, w: 25, name: "portal13", destination: "portal13", start_enabled: true ),
+        Portal ( x: 250, y: 490, w: 40, name: "portal9", destination: "portal7", start_enabled: true ),
+        //Portal ( x: 300, y: 480, w: 25, name: "portal14", destination: "portal14", start_enabled: true ),
+        Portal ( x: 350, y: 490, w: 50, name: "portal10", destination: "portal8", start_enabled: true ),
+        //Portal ( x: 400, y: 480, w: 25, name: "portal15", destination: "portal15", start_enabled: true ),
+        Portal ( x: 450, y: 490, w: 40, name: "portal11", destination: "portal1", start_enabled: true ),
+
+
+        Connection ( from: "btn_exit", to: "btn_exit_light", conn_type: Switch ),
+        Connection ( from: "btn_exit", to: "exit_door", conn_type: Switch ),
+
+        Connection ( from: "btn_box", to: "btn_box_light", conn_type: Switch ),
+        Connection ( from: "btn_box", to: "box_door", conn_type: Switch ),
+        Connection ( from: "box_door", to: "box_reset", conn_type: Switch ),
     ]
 )       

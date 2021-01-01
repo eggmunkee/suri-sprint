@@ -17,14 +17,14 @@ pub struct ExitBuilder;
 
 impl ExitBuilder {
 
-    pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+    pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32,
         width: f32, height: f32, name: String, destination: String) -> Entity {
 
-        ExitBuilder::build_w_image(world, ctx, physics_world, x, y, width, height, name, destination,
+        ExitBuilder::build_w_image(world, ctx, physics_world, x, y, z, width, height, name, destination,
             "entities/exit".to_string(), 48.0, 48.0)
     }
 
-    pub fn build_w_image(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
+    pub fn build_w_image(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32, 
         width: f32, height: f32, name: String, destination: String, image: String, img_w: f32, img_h: f32) -> Entity {
 
         let exit = ExitComponent::new(name, destination);
@@ -35,7 +35,7 @@ impl ExitBuilder {
         let mut sprite = SpriteConfig::create_from_config(world, ctx, image);
         sprite.scale.x = width / half_img_w;
         sprite.scale.y = height / half_img_h;
-        sprite.z_order = SpriteLayer::BGNear.to_z();
+        sprite.z_order = z;
 
         let mut collision = Collision::new_specs(0.1,0.72, width * 0.7, height * 0.7);
         // collision.dim_1 = width;

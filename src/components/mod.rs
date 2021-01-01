@@ -13,6 +13,8 @@ pub mod meow;
 pub mod npc;
 pub mod portal;
 pub mod exit;
+pub mod anim_sprite;
+pub mod particle_sys;
 // DEFINE COMMON COMPONENTS
 
 #[derive(Debug)]
@@ -70,4 +72,6 @@ pub fn register_components(world: &mut World) {
     self::portal::register_components(world);
     self::button::register_components(world);
     self::exit::register_components(world);
+    self::anim_sprite::register_components(world);
+    self::particle_sys::register_components(world);
 }

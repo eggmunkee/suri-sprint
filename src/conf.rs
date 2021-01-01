@@ -13,6 +13,7 @@ pub struct ConfigData {
     pub start_level: String,
     pub music_volume: f32,
     pub audio_volume: f32,
+    pub gravity: f32,
 }
 
 pub fn get_ron_config<'a,T>(config_path: String) -> Option<T> 
@@ -62,6 +63,7 @@ pub fn get_game_config() -> Option<ConfigData> {
             start_level: "start".to_string(),
             music_volume: 0.1,
             audio_volume: 0.1,
+            gravity: 45.0,
         })
     };
 

@@ -22,7 +22,7 @@ impl MeowComponent {
 
         let mut meow = MeowComponent {
             meow_time: 0.0,
-            meow_radius: 20.0,
+            meow_radius: 1.0, //20.0,
         };
         // calculate radius from time to start
         meow.meow_radius = meow.calc_radius();
@@ -35,13 +35,13 @@ impl MeowComponent {
     }
 
     fn calc_radius(&self) -> f32 {
-        let size_ratio = 0.5 - self.meow_time;
+        let size_ratio = 0.81 - self.meow_time * 2.0;
 
-        250.0 * size_ratio.max(0.1)
+        125.0 * size_ratio.max(0.01)
     }
 
     pub fn update(&mut self, delta_time: f32, collision: &mut Collision, sprite: &mut SpriteComponent, physics_world: &mut PhysicsWorld) {
-        self.meow_time -= delta_time;
+        self.meow_time -= delta_time * 1.3;
 
         let new_radius = self.calc_radius();
         let new_physics_radius = physics::create_size(new_radius);

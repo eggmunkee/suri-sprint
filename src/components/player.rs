@@ -89,6 +89,8 @@ const SIT_FRAMES : u32 = 5;
 
 #[derive(Debug)]
 pub struct CharacterDisplayComponent {
+    pub player_number: i32,
+    pub is_controlled: bool,
     // image path
     pub spritesheet_path: String,
     // movement status
@@ -141,6 +143,8 @@ impl CharacterDisplayComponent {
         //let image = Image::new(ctx, char_img.clone()).unwrap();
 
         CharacterDisplayComponent {
+            player_number: 0,
+            is_controlled: true,
             //image: image,
             spritesheet_path: char_img.clone(),
             going_left: false,
@@ -196,6 +200,9 @@ impl CharacterDisplayComponent {
         self.in_jump = true;
         self.jump_duration = 0.0;
         self.since_stand = 50.0;
+        if self.jump_lift_time < self.jump_lift_time_min {
+            self.jump_lift_time = self.jump_lift_time_min;             
+        }
     }
 
     pub fn process_jump(&mut self, time_delta: f32) {
@@ -211,6 +218,22 @@ impl CharacterDisplayComponent {
             // self.jump_duration = 0.0;
             // self.since_stand = 0.0;
             //println!("Start fall! {}", &self.jump_duration);
+        }
+    }
+
+    fn process_jump_animation(&mut self, _body_movement: na::Vector2::<f32>, time_delta: f32) {
+        self.anim_frame_time += time_delta * 10.0;
+
+        if self.anim_frame_time > 2.0 {
+            self.anim_frame += 1;
+            if self.anim_frame > JUMP_FRAMES - 1 {
+                self.start_fall();
+                self.anim_frame = JUMP_FRAMES - 1;
+                //self.anim_set = 2;
+                //self.anim_frame = 3;
+                //self.fall_anim_dir = -1;
+            }
+            self.anim_frame_time = 0.0;
         }
     }
 
@@ -247,6 +270,32 @@ impl CharacterDisplayComponent {
         }
     }
 
+    fn process_fall_animation(&mut self, _body_movement: na::Vector2::<f32>, time_delta: f32) {
+        self.anim_frame_time += time_delta * 10.0;
+
+        if self.fall_anim_dir < 0 {
+            if self.anim_frame_time > 1.3 {
+                self.anim_frame -= 1;
+                if self.anim_frame <= 3 {
+                    self.anim_frame = 3;
+                    self.fall_anim_dir = 1;
+                }
+                self.anim_frame_time = 0.0;
+            }
+        }
+        else {
+            if self.anim_frame_time > 2.0 {
+                self.anim_frame += 1;
+                if self.anim_frame >= JUMP_FRAMES - 1 {
+                    self.anim_frame = JUMP_FRAMES - 1;
+                    //self.fall_anim_dir = -1;
+                }
+                self.anim_frame_time = 0.0;
+            }
+        }
+    }
+
+
 
     // STAND ------------------------------
     pub fn start_walk(&mut self) {
@@ -264,7 +313,7 @@ impl CharacterDisplayComponent {
         if self.going_up {
             if self.jump_duration >= 0.0 && self.recent_stand() {
                 //println!("Start jump! {}", &self.jump_duration);
-                self.jump_lift_time *= 1.20;
+                self.jump_lift_time *= 1.33;
                 if self.jump_lift_time > self.jump_lift_time_max {
                     self.jump_lift_time = self.jump_lift_time_max;
                 }
@@ -283,10 +332,38 @@ impl CharacterDisplayComponent {
         {
             self.going_up = false;
             if self.jump_duration >= 0.0 {
-                self.jump_lift_time = self.jump_lift_time_min;
+                self.jump_lift_time = 0.0;
             }
         }
     }
+
+    fn process_walk_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, facing_right: bool) {
+        self.anim_set = WALK_SET;
+            self.anim_frame = self.anim_frame % WALK_FRAMES;
+            let move_anim_amt = 0.5 * body_movement.x.abs().max(2.0).min(30.0);
+            self.anim_frame_time += time_delta * 10.0 * move_anim_amt;
+            if self.anim_frame_time > 1.5 {
+                self.anim_frame_time = 0.0;
+                // flip animation direction if going against facing direction
+                if (body_movement.x < 0.0 && facing_right) || 
+                    (body_movement.x > 0.0 && !facing_right) {
+                    // Advance frame backward
+                    if self.anim_frame == 0 {
+                        self.anim_frame = WALK_FRAMES - 1;
+                    }
+                    else {
+                        self.anim_frame -= 1;
+                    }
+                }
+                else {
+                    // Advance frame forward
+                    self.anim_frame += 1;
+                    if self.anim_frame > WALK_FRAMES - 1 {
+                        self.anim_frame = 0;
+                    }
+                }
+            }
+    }    
 
     // IDLE -----------------------------------------------
 
@@ -310,7 +387,7 @@ impl CharacterDisplayComponent {
                 // if self.jump_lift_time > self.jump_lift_time_max {
                 //     self.jump_lift_time = self.jump_lift_time_max;
                 // }
-                self.jump_lift_time = self.jump_lift_time_min;
+                self.jump_lift_time = 0.0;
                 self.start_jump();
 
             }
@@ -323,6 +400,75 @@ impl CharacterDisplayComponent {
             }
         }
     }
+
+
+    fn process_idle_animation(&mut self, _body_movement: na::Vector2::<f32>, time_delta: f32, _facing_right: bool) {
+        let mut rng = thread_rng();
+
+        self.since_move += time_delta;
+        // After a wait time, go into idle animation
+        if self.since_move >= 1.0 {
+            // If just starting idle, pick idle or sit animation set
+            if self.anim_set != IDLE_SET && self.anim_set != SIT_SET {
+                self.start_idle();
+                if rng.gen::<f32>() < 0.66 {
+                    self.anim_set = IDLE_SET;
+                }
+                else {
+                    self.anim_set = SIT_SET;
+                }
+            }
+
+            //self.anim_frame = self.anim_frame % 5;
+            self.anim_frame_time += time_delta * 10.0;
+
+            // time to advance frame
+            if self.anim_frame_time > 2.0 {
+                if self.anim_set == SIT_SET && self.fall_anim_dir == -1 {
+                    if self.anim_frame > 0 {
+                        self.anim_frame -= 1;
+                    }
+                    else {
+                        self.anim_set = IDLE_SET;
+                        self.fall_anim_dir = 1;
+                    }
+                    // random frame time within range 2.0 to 3.0
+                    self.anim_frame_time = rng.gen::<f32>() * -1.0;
+                }
+                else {
+                    self.anim_frame += 1;
+                    // random frame time within range 2.0 to 5.5
+                    self.anim_frame_time = rng.gen::<f32>() * -3.5;
+                }
+                
+                // Maybe skip blink frame
+                if self.anim_set == IDLE_SET && self.anim_frame == 2 {
+                    if rng.gen::<f32>() > 0.4 {
+                        self.anim_frame += 1;
+                    }
+                }
+                // wrap around idle animation
+                if self.anim_set == IDLE_SET && self.anim_frame > IDLE_FRAMES - 1 {
+                    self.anim_frame = 0;
+                    // Maybe go into sit
+                    if rng.gen::<f32>() > 0.95 {
+                        self.anim_set = SIT_SET;
+                        //self.since_move = 1.0; // "reset" since move after idle switch
+                    }
+                }
+                else if self.anim_set == SIT_SET && self.anim_frame > SIT_FRAMES - 1 {
+                    self.anim_frame = SIT_FRAMES - 1;
+                    self.anim_frame_time = rng.gen::<f32>() * -7.5;
+
+                    if rng.gen::<f32>() > 0.95 {
+                        self.fall_anim_dir = -1;
+                        //self.since_move = 1.0; // "reset" since move after idle switch
+                    }
+                }
+            }
+
+        }
+    }    
 
     pub fn recent_stand(&self) -> bool {
         // if actually standing, or since stand counter is low
@@ -362,9 +508,7 @@ impl CharacterDisplayComponent {
         //self.apply_inputs(coll);
     }
 
-    fn update_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
-        let mut rng = thread_rng();
-
+    fn process_facing_moving(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) -> (bool, bool) {
         let mut is_moving = false;
         if self.going_left {
             self.facing_right = false;
@@ -378,149 +522,63 @@ impl CharacterDisplayComponent {
             self.since_move = 0.0;
         }
 
-        // JUMP/FALL ANIMATION
-        if self.in_jump || self.in_fall {            
+        (self.facing_right, is_moving)
+    }
 
-            self.anim_frame_time += time_delta * 10.0;
+    fn process_in_move_anim(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, is_moving: bool) -> bool {
+        is_moving || body_movement.x.abs() > 0.5
+    }
 
-            match self.in_jump {
-                true => {
-                    if self.anim_frame_time > 2.0 {
-                        self.anim_frame += 1;
-                        if self.anim_frame > JUMP_FRAMES - 1 {
-                            self.start_fall();
-                            self.anim_frame = JUMP_FRAMES - 1;
-                            //self.anim_set = 2;
-                            //self.anim_frame = 3;
-                            //self.fall_anim_dir = -1;
-                        }
-                        self.anim_frame_time = 0.0;
-                    }
-                },
-                false => {
-                    if self.fall_anim_dir < 0 {
-                        if self.anim_frame_time > 1.3 {
-                            self.anim_frame -= 1;
-                            if self.anim_frame <= 3 {
-                                self.anim_frame = 3;
-                                self.fall_anim_dir = 1;
-                            }
-                            self.anim_frame_time = 0.0;
-                        }
-                    }
-                    else {
-                        if self.anim_frame_time > 2.0 {
-                            self.anim_frame += 1;
-                            if self.anim_frame >= JUMP_FRAMES - 1 {
-                                self.anim_frame = JUMP_FRAMES - 1;
-                                //self.fall_anim_dir = -1;
-                            }
-                            self.anim_frame_time = 0.0;
-                        }
+
+
+
+    fn update_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
+
+        let (facing_right, is_moving) = self.process_facing_moving(body_movement, time_delta);
+        //let anim_moving = self.process_in_move_anim(body_movement, time_delta, is_moving);
+
+        match self {
+            Self { in_jump: true , .. } => {
+                self.process_jump_animation(body_movement, time_delta);
+            },
+            Self { in_fall: true , .. } => {
+                self.process_fall_animation(body_movement, time_delta);
+            },
+            Self { .. } => {
+                match self.process_in_move_anim(body_movement, time_delta, is_moving) {
+                    true => {
+                        self.process_walk_animation(body_movement, time_delta, facing_right);
+                    },
+                    false => {
+                        self.process_idle_animation(body_movement, time_delta, facing_right);
                     }
                 }
-            }
 
-        }
-        // WALKING ANIMATION
-        else if is_moving || body_movement.x.abs() > 0.5 {
-            self.anim_set = WALK_SET;
-            self.anim_frame = self.anim_frame % WALK_FRAMES;
-            let move_anim_amt = 0.5 * body_movement.x.abs().max(2.0).min(30.0);
-            self.anim_frame_time += time_delta * 10.0 * move_anim_amt;
-            if self.anim_frame_time > 1.5 {
-                self.anim_frame_time = 0.0;
-                // flip animation direction if going against facing direction
-                if (body_movement.x < 0.0 && self.facing_right) || 
-                    (body_movement.x > 0.0 && !self.facing_right) {
-                    // Advance frame backward
-                    if self.anim_frame == 0 {
-                        self.anim_frame = WALK_FRAMES - 1;
-                    }
-                    else {
-                        self.anim_frame -= 1;
-                    }
-                }
-                else {
-                    // Advance frame forward
-                    self.anim_frame += 1;
-                    if self.anim_frame > WALK_FRAMES - 1 {
-                        self.anim_frame = 0;
-                    }
-                }
             }
         }
-        // IDLE ANIMATION
-        else {
-            self.since_move += time_delta;
-            // After a wait time, go into idle animation
-            if self.since_move >= 1.0 {
-                // If just starting idle, pick idle or sit animation set
-                if self.anim_set != IDLE_SET && self.anim_set != SIT_SET {
-                    self.start_idle();
-                    if rng.gen::<f32>() < 0.66 {
-                        self.anim_set = IDLE_SET;
-                    }
-                    else {
-                        self.anim_set = SIT_SET;
-                    }
-                }
 
-                //self.anim_frame = self.anim_frame % 5;
-                self.anim_frame_time += time_delta * 10.0;
+        // // JUMP/FALL ANIMATION
+        // if self.in_jump || self.in_fall {            
 
-                // time to advance frame
-                if self.anim_frame_time > 2.0 {
-                    if self.anim_set == SIT_SET && self.fall_anim_dir == -1 {
-                        if self.anim_frame > 0 {
-                            self.anim_frame -= 1;
-                        }
-                        else {
-                            self.anim_set = IDLE_SET;
-                            self.fall_anim_dir = 1;
-                        }
-                        // random frame time within range 2.0 to 3.0
-                        self.anim_frame_time = rng.gen::<f32>() * -1.0;
-                    }
-                    else {
-                        self.anim_frame += 1;
-                        // random frame time within range 2.0 to 5.5
-                        self.anim_frame_time = rng.gen::<f32>() * -3.5;
-                    }
-                    
-                    // Maybe skip blink frame
-                    if self.anim_set == IDLE_SET && self.anim_frame == 2 {
-                        if rng.gen::<f32>() > 0.4 {
-                            self.anim_frame += 1;
-                        }
-                    }
-                    // wrap around idle animation
-                    if self.anim_set == IDLE_SET && self.anim_frame > IDLE_FRAMES - 1 {
-                        self.anim_frame = 0;
-                        // Maybe go into sit
-                        if rng.gen::<f32>() > 0.95 {
-                            self.anim_set = SIT_SET;
-                            //self.since_move = 1.0; // "reset" since move after idle switch
-                        }
-                    }
-                    else if self.anim_set == SIT_SET && self.anim_frame > SIT_FRAMES - 1 {
-                        self.anim_frame = SIT_FRAMES - 1;
-                        self.anim_frame_time = rng.gen::<f32>() * -7.5;
+        //     match self.in_jump {
+        //         true => {
+        //             self.process_jump_animation(body_movement, time_delta);
+        //         },
+        //         false => {
+        //             self.process_fall_animation(body_movement, time_delta);
+        //         }
+        //     }
 
-                        if rng.gen::<f32>() > 0.95 {
-                            self.fall_anim_dir = -1;
-                            //self.since_move = 1.0; // "reset" since move after idle switch
-                        }
-                    }
-                }
-    
-            }
+        // }
+        // // WALKING ANIMATION
+        // else if self.process_in_move_anim(body_movement, time_delta, is_moving) { // is_moving || body_movement.x.abs() > 0.5
+        //     self.process_walk_animation(body_movement, time_delta, facing_right);
+        // }
+        // // IDLE ANIMATION
+        // else {
+        //     self.process_idle_animation(body_movement, time_delta, facing_right);
 
-
-            //self.anim_set = 0;
-            //self.anim_frame = 0;
-            //self.anim_frame_time = 0.0;
-        }
+        // }
 
     }
 
@@ -543,7 +601,7 @@ impl CharacterDisplayComponent {
     //     // }
     // }
 
-    pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody) {
+    pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody, _time_delta: f32) {
         let move_amt = 15.0; //1300.0;
         let up_mult = 3.0;
         if self.going_right {
@@ -571,6 +629,60 @@ impl CharacterDisplayComponent {
         if self.going_down {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt}, true);
+            //println!("applied down force");
+        }
+    }
+
+    pub fn apply_movement_new(&mut self, body: &mut physics::PhysicsBody, time_delta: f32) {
+        let mut lateral_move_amt = 15.0; // 15.0;
+        let mut vertical_move_amt = 75.0; //75 // 45.0;
+        //let mut move_amt = 15.0; //1300.0;
+        //let up_mult = 3.0;
+        let x_vel = body.linear_velocity().x;
+        let y_vel = body.linear_velocity().y;
+
+        if self.recent_stand() == false {
+            lateral_move_amt *= 0.5;
+        }
+
+        // if self.jump_duration > 0.33 * self.jump_lift_time {
+        //     vertical_move_amt *= 0.66;
+        // }
+        // if self.jump_duration > 0.66 * self.jump_lift_time {
+        //     vertical_move_amt *= 0.33;
+        // }
+
+        if self.going_right {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            if x_vel < 12.0 {
+                body.apply_force_to_center(&physics::PhysicsVec {x:lateral_move_amt,y: 0.0}, true);
+            }
+            
+            //println!("applied right force");
+        }
+        if self.going_left {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            if x_vel > -12.0 {
+                body.apply_force_to_center(&physics::PhysicsVec {x:-lateral_move_amt,y: 0.0}, true);
+            }
+                //println!("applied left force");
+        }
+        if self.going_up {
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            //if body.linear_velocity().y > -25.0 {
+                //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -vertical_move_amt - y_vel * 0.1}, true);
+                body.set_linear_velocity(&physics::PhysicsVec {x:x_vel,y: -10.0
+                    + 5.0 * (1.0 - self.jump_duration * 10.0).max(0.0)
+                    + ((-5.0 + self.jump_duration * 10.0) * 2.0).max(0.0).min(9.9)});
+            //}
+            //println!("applied up force");
+        }
+        if self.going_down {
+            if y_vel < 0.0 {
+                body.set_linear_velocity(&physics::PhysicsVec {x: x_vel, y: y_vel + 5.0 * time_delta});
+            }
+            //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
+            body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: 0.5 * vertical_move_amt}, true);
             //println!("applied down force");
         }
     }

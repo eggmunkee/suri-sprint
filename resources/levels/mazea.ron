@@ -1,12 +1,13 @@
 LevelConfig(
-    name: "mazea",
+    name: "Block Maze with Milo",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 2000.0, max_y: 1000.0,
         solid_sides: (true, false, true, false),
     ),
     soundtrack: "Suri Theme 1.mp3",
     items: [
-        Player ( x: 500.0, y: 800.0 ),
+        Player ( x: 500.0, y: 700.0 ),
+        Player ( x: 1300.0, y: 600.0 ),
         
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-1,-1,2,2), ),
 
@@ -14,19 +15,28 @@ LevelConfig(
         DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/white-tile-bg-overlay", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg2", start_enabled: false ),
         DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "main-bg", start_enabled: true ),
 
-        StaticLevelProp( x: 300, y: 915.0, w: 100.0, h: 32.0, ang: -0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
-        StaticLevelProp( x: 550, y: 900.0, w: 100.0, h: 32.0, ang: 0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
-        StaticLevelProp( x: 800, y: 850.0, w: 100.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 50, y: 950.0, w: 100.0, h: 32.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 1950, y: 955.0, w: 100.0, h: 32.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
 
-        DynStaticLevelProp( x: 100, y: 650.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
-        DynStaticLevelProp( x: 200, y: 750.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 1600, y: 665.0, w: 24.0, h: 24.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        Button ( start_enabled: false, x: 1600.0, y: 640.0, w: 35.0, h: 10, ang: 0, name: "btn_milo",),
+
+        StaticLevelProp( x: 300, y: 915.0, w: 140.0, h: 32.0, ang: -0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 550, y: 900.0, w: 140.0, h: 32.0, ang: 0.1, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        StaticLevelProp( x: 840, y: 915.0, w: 154.0, h: 72.0, ang: 0.0, image: "entities/box", img_w: 48.0, img_h: 48.0),
+
+        DynStaticLevelProp( x: 300, y: 650.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/box", img_w: 48.0, img_h: 48.0),
+        DynStaticLevelProp( x: 600, y: 750.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/box", img_w: 48.0, img_h: 48.0),
 
         DynSprite ( x: 504.0, y: 451.0, sprite: "entities/white-tile-bg", z: 15.0, angle: 0.0, src: (-2,-2,4,4), name: "center-bg", start_enabled: true ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/tile-bg", z: 16.0, angle: 0.78, src: (-1.5,-1.5,2.75,2.75), ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/white-tile-bg", z: 17.0, angle: 1.57, src: (-1,-1,2,2), ),
         Sprite ( x: 504.0, y: 451.0, sprite: "entities/tile-bg", z: 18.0, angle: 2.35, src: (-0.5,-0.5,1,1), ),
 
-        Sprite ( x: 504.0, y: 451.0, sprite: "entities/pyramids", z: 19.0, angle: 0.0, src: (0,0,1,1), ),
+        DynSprite ( x: 504.0, y: 451.0, sprite: "entities/pyramids", z: 19.0, angle: 0.0, src: (0,0,1,1),
+            name: "pyramids", start_enabled: false ),
+        DynSprite ( x: 504.0, y: 252.0, sprite: "entities/spotlight", z: 600.0, angle: 0.0, src: (0,0,1,1), 
+            name:"tileswitch1", start_enabled: false),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, name: "portal_b", destination: ""),
 
@@ -50,19 +60,55 @@ LevelConfig(
 
         // button platform above portal
         Button ( start_enabled: false, x: 300.0, y: 230.0, w: 35.0, h: 7, ang: 0, name: "btna",),
-        Platform ( x: 300.0, y: 250.0, w: 150.0, h: 20.0, ang: 0.0),
-        Portal ( x: 930.0 , y: 100.0, w: 35.0, name: "top_left_out", destination: "", start_enabled: true),
+        Platform ( x: 300.0, y: 250.0, w: 150.0, h: 20.0, ang: 0.0 ),
+        Portal ( x: 930.0 , y: 300.0, w: 35.0, name: "top_left_out", destination: "lower_right_out", start_enabled: true),
+
+        StaticLevelProp( x: 850, y: 200.0, w: 24.0, h: 24.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        Button ( start_enabled: false, x: 850.0, y: 175.0, w: 35.0, h: 10, ang: 0, name: "btn_milo2",),
+
 
         // platform from mid-left to mid-right
         Platform ( x: 240.0, y: 600.0, w: 260.0, h: 20.0, ang: 0.0),
         // mid-right platform - tilt upward to left
-        Platform ( x: 1705.0, y: 550.0, w: 315.0, h: 20.0, ang: 0.16,),
+        Platform ( x: 1710.0, y: 550.0, w: 320.0, h: 20.0, ang: 0.17,),
+
+        // link from top to bottom left - button closed
+        StaticLevelProp ( x: 590.0, y: 540.0, w: 80.0, h: 20.0, ang: -0.2,  image: "entities/box", img_w: 48.0, img_h: 48.0,
+            logic: Some( ItemLogic( name: "left_bridge", start_enabled: false, logic_type: Some(Switch))) ),
+
+        // second suri compartment
+        Sprite ( x: 1200.0, y: 600.0, sprite: "entities/dark-tile-bg", z: 15.0, angle: 0.0, src: (0,0,3,1.3), ),
+        Sprite ( x: 1355.0, y: 600.0, sprite: "entities/white-tile-bg-overlay", z: 18.0, angle: 0.0, src: (0,0,0.6,1.3), ),
+        //DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/white-tile-bg-overlay", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg2", start_enabled: false ),
+
+        Platform ( x: 1200.0, y: 700.0, w: 200.0, h: 20.0, ang: 0.0 ),
+        //Platform ( x: 1400.0, y: 600.0, w: 100.0, h: 20.0, ang: 1.57 ),
+        StaticLevelProp ( x: 1350.0, y: 600.0, w: 100.0, h: 10.0, ang: -1.57, z: Some(80.0),
+            image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0, 
+            logic: Some( ItemLogic( name: "milo_door2", start_enabled: true, logic_type: Some(SwitchOnce))) ),
+        StaticLevelProp ( x: 1400.0, y: 600.0, w: 100.0, h: 10.0, ang: -1.57, z: Some(80.0),
+            image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0, 
+            logic: Some( ItemLogic( name: "milo_door", start_enabled: true, logic_type: Some(SwitchOnce))) ),
+
+        /*
+            Platform ( x: 600.0, y: 90, w: 70.0, h: 12.0, ang: 0.0, logic: Some( 
+            ItemLogic( name: "box_door", start_enabled: true, logic_type: Some(SwitchOnce)  ))),
+        */
+
+
+        
         Portal ( x: 1450.0 , y: 450.0, w: 35.0, name: "mid_right_in", destination: "mid_right_out", start_enabled: true),
-        Platform ( x: 1755.0, y: 200.0, w: 250.0, h: 20.0, ang: 0.0,),
+        Platform ( x: 1710.0, y: 200.0, w: 315.0, h: 20.0, ang: 0.0,),
+        Platform ( x: 0, y: 200.0, w: 25.0, h: 20.0, ang: 0.0,),
         Portal ( x: 1650.0 , y: 100.0, w: 35.0, name: "mid_right_out", destination: "", start_enabled: true),
 
         Portal ( x: 1070.0, y: 920, w: 35.0, name: "lower_right", destination: "top_left_out", start_enabled: true),
+        Portal ( x: 1350.0, y: 750, w: 28.0, name: "lower_right_out", destination: "", start_enabled: true),
+
         Portal ( x: 1192.0, y: 277, w: 35.0, name: "exit_room_out", destination: "lower_left", start_enabled: false),
+
+        // button to close off gap in top left
+        Button ( start_enabled: false, x: 1250.0, y: 975.0, w: 35.0, h: 8, ang: 0, name: "btn_bridge",),
 
         Platform ( x: 1385.0, y: 270.0, w: 250.0, h: 15.0, ang: -1.57),
         Platform ( x: 1025.0, y: 500.0, w: 350.0, h: 20.0, ang: 0.0),
@@ -77,11 +123,11 @@ LevelConfig(
         DynSprite ( x: 1192.0, y: 202.0, sprite: "entities/spotlight", z: 25.0, angle: 0.0, src: (0,0,1,1), 
             name:"tileswitch", start_enabled: false),
 
-        Exit ( x: 1200.0, y: 400.0, w: 25.0, h: 25.0, name: "", destination: "test"),
+        Exit ( x: 1200.0, y: 400.0, w: 25.0, h: 25.0, name: "", destination: "mazeb"),
 
         Ghost ( x: 1600.0, y: 300.0 ),
 
-
+        /*
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
@@ -123,7 +169,7 @@ LevelConfig(
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
-        Ghost ( x: 1600.0, y: 300.0 ),
+        Ghost ( x: 1600.0, y: 300.0 ),*/
 
 
         //Connection ( from: "btna", to: "btnb", conn_type: Switch),
@@ -135,5 +181,11 @@ LevelConfig(
         Connection ( from: "btna", to: "alt-bg", conn_type: Switch),
         Connection ( from: "btna", to: "alt-bg2", conn_type: Switch),
         Connection ( from: "btna", to: "center-bg", conn_type: Switch),
+        Connection ( from: "btna", to: "tileswitch1", conn_type: Switch),
+        Connection ( from: "btna", to: "pyramids", conn_type: Switch),
+        Connection ( from: "btn_milo", to: "milo_door", conn_type: Switch),
+        Connection ( from: "btn_milo2", to: "milo_door2", conn_type: Switch),
+        Connection (from: "btn_bridge", to: "left_bridge", conn_type: Switch),
+
     ],
 )

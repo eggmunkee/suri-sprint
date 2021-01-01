@@ -1,5 +1,5 @@
 LevelConfig(
-    name: "start",
+    name: "Start Area",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 750.0,
         solid_sides: (false, true, true, true),
@@ -9,9 +9,9 @@ LevelConfig(
         Player ( x: 80.0, y: -500.0 ),
         Player ( x: 120.0, y: -500.0 ),
         PlayerNamed ( x: 300.0, y: 560.0, name: "a" ),
-        //Portal ( x: 300.0, y: 600.0, w: 25.0, h: 25.0, name: "portal_a", destination: "", start_enabled: false),
+        PlayerNamed ( x: 350.0, y: 580.0, name: "a" ),
         PlayerNamed ( x: 900.0, y: 270.0, name: "b" ),
-        //Portal ( x: 900.0, y: 400.0, w: 25.0, h: 25.0, name: "portal_c", destination: "", start_enabled: false),
+        PlayerNamed ( x: 850.0, y: 290.0, name: "b" ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/pyramids", z: -1.0, angle: 0.0, src: (0,0,2.0,2.0),),
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), shader: Some("overlay") ),

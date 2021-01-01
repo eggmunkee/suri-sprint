@@ -1,0 +1,8 @@
+SpriteConfig(
+    spritesheet: false,
+    path: "/platform_shadow_1.png",
+    scale: (1.0, 1.0),
+    z_order: 90.0,
+    alpha: 1.0,
+    src: (0.0, 0.0, 1.0, 1.0),
+)

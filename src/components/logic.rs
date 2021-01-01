@@ -24,7 +24,7 @@ impl Default for ConnectionType {
     }
 }
 
-#[derive(Debug,Clone,Deserialize,Serialize)]
+#[derive(Debug,Copy,Clone,Deserialize,Serialize)]
 pub enum LogicOpType {
     And,
     Or,
@@ -64,6 +64,7 @@ pub struct LogicComponent {
     // Static Logic Inputs
     pub initial_value: bool, // base value
     pub logic_op: LogicOpType,
+    pub logic_type: ConnectionType,
 
     // Dynamic Values
     pub input_value: Option<bool>, // If the external input has a signal and its value
@@ -75,15 +76,20 @@ pub struct LogicComponent {
     pub last_input: Option<bool>,
     pub last_active: bool,
     pub change_count: i32,
+    pub frozen: bool,
 }
 
 impl LogicComponent {
-    pub fn new(id: String, is_enabled: bool) -> LogicComponent {
+    pub fn new(id: String, is_enabled: bool, logic_op_opt: Option<LogicOpType>) -> LogicComponent {
 
         let mut logic = LogicComponent {
             id: id,
             initial_value: is_enabled,
-            logic_op: LogicOpType::And,
+            logic_op: match logic_op_opt {
+                Some(logic_op_val) => logic_op_val,
+                _ => LogicOpType::And, // default to and
+            },
+            logic_type: ConnectionType::default(),
             input_value: None,
             value: is_enabled,
             is_active: false,
@@ -91,6 +97,7 @@ impl LogicComponent {
             last_active: false,
             last_input: None,
             change_count: 0,
+            frozen: false,
         };
 
         logic
@@ -130,6 +137,7 @@ impl LogicComponent {
 
     pub fn set_input_value(&mut self, input_value: bool) -> bool {
         //println!("Set input value on id {}, input_val: {}", &self.id, &input_value);
+        
         self.input_value = Some(input_value);
         self.calc_value();
         //println!("Result value: {}", &self.value);

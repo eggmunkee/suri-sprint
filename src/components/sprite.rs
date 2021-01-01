@@ -83,6 +83,7 @@ impl SpriteConfig {
 
         let config = maybe_config.expect(&format!("Invalid SpriteConfig at {}", &config_path));
 
+        println!("Loading Sprite from config: {:?}", &config.path);
         Self::init_images(world, ctx, config.path.clone());
 
         let mut sprite = SpriteComponent::new(ctx, &config.path, config.z_order);
