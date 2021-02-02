@@ -10,8 +10,8 @@ use specs::{World};
 use ggez::nalgebra as na;
 // -------------------------
 
-use crate::physics::{PhysicsWorld};
-use crate::entities::level_builder::{LevelBounds};
+use crate::core::physics::{PhysicsWorld,create_physics_world_2d_grav};
+use crate::entities::level_builder::{LevelBounds,LevelType};
 
 mod image;
 mod connection;
@@ -30,6 +30,7 @@ pub struct GameStateResource {
     pub level_world_seconds: f32,
     pub game_run_seconds: f32,
     pub level_bounds: LevelBounds,
+    pub level_type: LevelType,
 
     // global player stats
     pub player_count: i32,
@@ -37,6 +38,8 @@ pub struct GameStateResource {
 
     // ai info
     pub player_target_loc: (f32, f32),
+
+    //pub phys_word: PhysicsWorldResource,
 }
 
 #[derive(Debug)]
@@ -159,6 +162,7 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
     shaders.load_shader("suri_shader".to_string(), "shaders/suri_shader".to_string(), ctx);
     shaders.load_shader("meow_shader".to_string(), "shaders/meow_shader".to_string(), ctx);
     shaders.load_shader("suri_shadow".to_string(), "shaders/suri_shadow".to_string(), ctx);
+    shaders.load_shader("milo_shadow".to_string(), "shaders/milo_shadow".to_string(), ctx);
 
     world.insert(shaders);
 

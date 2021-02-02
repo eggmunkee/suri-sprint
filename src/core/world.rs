@@ -12,7 +12,7 @@ use crate::entities::ghost::{GhostBuilder};
 use crate::entities::ui::{UIBuilder};
 use crate::systems::*;
 use crate::systems::interactor::{InterActorSys};
-use crate::physics::{PhysicsWorld};
+use crate::core::{PhysicsWorld};
 
 // Initialize world entities and state
 fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld) {
@@ -158,20 +158,20 @@ pub fn create_world<'a>(ctx: &mut Context, game_state_res: GameStateResource, ph
 }
 
 // Create the dispatcher for the world systems
-pub fn create_dispatcher<'a>() -> Dispatcher<'a,'a> {
-    // build disptacher by including all needed systems
-    let dispatcher = DispatcherBuilder::new()
-    // apply inputs to entities that are player controlled
-    .with(InputSystem::new(), "input_system", &[])
-    // apply gravity to entities
-    //.with(GravSys, "grav_sys", &["input_system"])
-    // handle entity interactions
-    //.with(InterActorSys::new::<'a>(physics_world), "interactor_sys", &["grav_sys"])
-    // update entity positions by velocity
-    //.with(UpdatePos { t_delta: core::time::Duration::new(1,0) }, "update_pos", &["grav_sys"])
-    // reports entity status
-    //.with(SumSys, "sum_sys", &["update_pos"])
-    .build();
+// pub fn create_dispatcher<'a>() -> Dispatcher<'a,'a> {
+//     // build disptacher by including all needed systems
+//     let dispatcher = DispatcherBuilder::new()
+//     // apply inputs to entities that are player controlled
+//     .with(InputSystem::new(), "input_system", &[])
+//     // apply gravity to entities
+//     //.with(GravSys, "grav_sys", &["input_system"])
+//     // handle entity interactions
+//     //.with(InterActorSys::new::<'a>(physics_world), "interactor_sys", &["grav_sys"])
+//     // update entity positions by velocity
+//     //.with(UpdatePos { t_delta: core::time::Duration::new(1,0) }, "update_pos", &["grav_sys"])
+//     // reports entity status
+//     //.with(SumSys, "sum_sys", &["update_pos"])
+//     .build();
 
-    dispatcher
-}
+//     dispatcher
+// }

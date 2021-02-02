@@ -12,7 +12,7 @@ use crate::resources::{GameStateResource,ImageResources};
 use crate::components::{Position};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
-use crate::physics::*;
+use crate::core::physics::*;
 
 pub struct MouseBuilder;
 
@@ -73,7 +73,7 @@ impl MouseBuilder {
 
         // create body - getting handle
         let fixed_rot = false;
-        let b_handle = create_body(world, PhysicsBodyType::Dynamic, &collision.pos, collision.angle, EntityType::Button, collision.collision_category, fixed_rot);
+        let b_handle = create_body(world, PhysicsBodyType::Dynamic, &collision.pos, collision.angle, EntityType::None, collision.collision_category, fixed_rot);
 
         //world.create_body_with(&def, body_data);
         {

@@ -10,7 +10,9 @@ use crate::components::*;
 use crate::components::collision::{Collision};
 use crate::components::player::*;
 use crate::components::npc::{NpcComponent};
-use crate::physics::{CollisionCategory};
+use crate::components::button::{ButtonComponent};
+use crate::entities::level_builder::{LevelType};
+use crate::core::physics::{CollisionCategory,PhysicsWorld};
 
 // handle input state to control Players
 // every frame, operate on velocity of player components
@@ -30,27 +32,34 @@ impl InputSystem {
     }
 
     fn handle_npc_input<'a>(&mut self, v: &mut (&mut Collision, &mut NpcComponent, Entity), input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
+        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32, level_type: &LevelType) {
         let (coll, npc, _e) = v;
 
         let x = coll.pos.x;
         let y = coll.pos.y;
         let body_movement = coll.get_movement();
         // Call npc update handler with current status
-        npc.update(body_movement, time_delta, x, y);
+        //npc.update(body_movement, time_delta, x, y);
+
+        match level_type {
+            LevelType::Platformer => {
+                npc.update_overhead(body_movement, time_delta, x, y);
+            },
+            LevelType::Overhead => {
+                npc.update_overhead(body_movement, time_delta, x, y);
+            },
+        };
         
     }
 
     // handle input updates from an entity
     fn handle_player_input<'a>(&mut self, v: &mut (&mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32) {
+        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32, level_type: &LevelType) {
         let (coll, character, _e) = v;
 
         let body_movement = coll.get_movement();
         let char_x = coll.pos.x;
         let char_y = coll.pos.y;
-
-
 
         let mut up_pressed = false;
         let mut left_pressed = false;
@@ -86,8 +95,15 @@ impl InputSystem {
             // Don't apply actual inputs, because player is not player controlled right now
         }
        
-
-        character.update(body_movement, time_delta);
+        match level_type {
+            LevelType::Platformer => {
+                character.update(body_movement, time_delta);
+            },
+            LevelType::Overhead => {
+                character.update_overhead(body_movement, time_delta);
+            },
+        };
+        
 
         if character.meowing {
             let mut x = coll.pos.x;
@@ -174,14 +190,16 @@ impl<'a> System<'a> for InputSystem {
     type SystemData = (WriteStorage<'a, Collision>,
                         WriteStorage<'a, CharacterDisplayComponent>,
                         WriteStorage<'a, NpcComponent>,
+                        WriteStorage<'a, ButtonComponent>,
                         Write<'a, GameStateResource>,
                         Read<'a, InputResource>,
                         Entities<'a>,
                         Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (mut coll, mut char_display, mut npc, mut game_state, mut input, mut ent, lazy): Self::SystemData) {
+    fn run(&mut self, (mut coll, mut char_display, mut npc, mut buttons, mut game_state, mut input, mut ent, lazy): Self::SystemData) {
 
         let time_delta = game_state.delta_seconds;
+        let level_type = game_state.level_type.clone();
 
         let mut rng = rand::thread_rng();
 
@@ -212,7 +230,7 @@ impl<'a> System<'a> for InputSystem {
             
 
             // call npc input step
-            self.handle_npc_input(inn_v, &*input, &ent, &lazy, time_delta);
+            self.handle_npc_input(inn_v, &*input, &ent, &lazy, time_delta, &level_type);
         }  
         drop(list);
 
@@ -251,7 +269,7 @@ impl<'a> System<'a> for InputSystem {
         for inn_v in list.iter_mut() { 
             let char_player_num = (*inn_v.1).player_number;
 
-            self.handle_player_input(inn_v, &*input, &ent, &lazy, time_delta);
+            self.handle_player_input(inn_v, &*input, &ent, &lazy, time_delta, &level_type);
             
             if player_1_char_num == char_player_num {
 
@@ -272,7 +290,13 @@ impl<'a> System<'a> for InputSystem {
 
         drop(list);
 
-       
+        // Can't incorporate physics world into specs system so far
+        // if let Some(ref mut phys_world) = self.phys_world {
+        //     for (button, coll, _ent) in (&mut buttons, &mut coll, &ent).join() {
+        //         // update button components
+        //         button.update(time_delta, coll, phys_world);
+        //     }
+        // }
 
     }
 }

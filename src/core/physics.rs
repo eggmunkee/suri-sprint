@@ -10,14 +10,16 @@ use wrapped2d::dynamics::body::{MetaBody};
 use wrapped2d::dynamics::contacts::{Contact};
 
 //======================
-use crate::resources::{GameStateResource};
-use crate::components::{Position,CharLevelInteractor};
-use crate::components::collision::{Collision};
-use crate::components::logic::{LogicComponent};
-use crate::components::exit::{ExitComponent};
-use crate::components::portal::{PortalComponent};
-use crate::components::player::{CharacterDisplayComponent};
-use crate::components::npc::{NpcComponent};
+// use crate::resources::{GameStateResource};
+// use crate::components::{Position,CharLevelInteractor};
+// use crate::components::collision::{Collision};
+// use crate::components::logic::{LogicComponent};
+// use crate::components::exit::{ExitComponent};
+// use crate::components::portal::{PortalComponent};
+// use crate::components::pickup::{PickupComponent};
+// use crate::components::player::{CharacterDisplayComponent};
+// use crate::components::npc::{NpcComponent};
+// use crate::entities::level_builder::{LevelType};
 
 #[derive(Default,Copy,Clone)]
 pub struct GameStateBodyData {
@@ -52,8 +54,17 @@ pub enum CollideType {
     Npc_Portal,
     Collider_Portal,
     Ghost_Meow,
+    Meow_Level,
+    Player_Point,
+    Collider_Collider, //generic physical touch
     Other,
 }
+
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum PickupItemType {
+    Point,
+}
+
 
 #[derive(Copy,Clone,Debug,PartialEq)]
 pub enum EntityType {
@@ -65,6 +76,7 @@ pub enum EntityType {
     Portal,
     Exit,
     Button,
+    PickupItem(PickupItemType),
     None
 }
 
@@ -116,11 +128,114 @@ impl CollisionBit for Vec::<CollisionCategory> {
     }
 }
 
+// Struct which holds body/fixture physics query results
+pub struct PhysicsQueryInfo {
+    pub hit_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
+}
+
+impl PhysicsQueryInfo {
+    pub fn new() -> Self {
+        Self {
+            hit_info: vec![],
+        }
+    }
+}
+impl b2::QueryCallback for PhysicsQueryInfo {
+
+    fn report_fixture(
+        &mut self, 
+        body: b2::BodyHandle, 
+        fixture: b2::FixtureHandle
+    ) -> bool {
+        //println!()
+
+        self.hit_info.push((body.clone(), fixture.clone()));
+
+        true
+    }
+}
+
+pub struct ContactFilterConfig {
+    pub ghost_player_contact: bool
+}
+
+impl ContactFilterConfig {
+    pub fn new(ghost_player_contact: bool) -> Self {
+        Self {
+            ghost_player_contact: ghost_player_contact
+        }
+    }
+}
+
+impl wrapped2d::dynamics::world::callbacks::ContactFilter<GameStatePhysicsData> for ContactFilterConfig {
+    fn should_collide(
+        &mut self,
+        body_a: wrapped2d::dynamics::world::callbacks::BodyAccess<'_, GameStatePhysicsData>,
+        fixture_a: wrapped2d::dynamics::world::callbacks::FixtureAccess<'_, GameStatePhysicsData>,
+        body_b: wrapped2d::dynamics::world::callbacks::BodyAccess<'_, GameStatePhysicsData>,
+        fixture_b: wrapped2d::dynamics::world::callbacks::FixtureAccess<'_, GameStatePhysicsData>
+    ) -> bool {
+
+        let a_phys_type = body_a.body_type();
+        let b_phys_type = body_a.body_type();
+        let a_type = &body_a.user_data().entity_type;
+        let b_type = &body_b.user_data().entity_type;
+        let filt_a = fixture_a.filter_data();
+        let fixt_a_cat = filt_a.category_bits;
+        let fixt_a_mask = filt_a.mask_bits;
+        let filt_b = fixture_b.filter_data();
+        let fixt_b_cat = filt_b.category_bits;
+        let fixt_b_mask = filt_b.mask_bits;
+        let cat_mask_match = (fixt_a_cat & fixt_b_mask) | (fixt_b_cat & fixt_b_mask);
+
+        if a_phys_type == PhysicsBodyType::Dynamic || a_phys_type == PhysicsBodyType::Kinematic ||
+            b_phys_type == PhysicsBodyType::Dynamic || b_phys_type == PhysicsBodyType::Kinematic {
+            // println!("Should collide?");
+            // println!(" A: {:?}, body type: {:?}", a_type, &a_phys_type);
+            // println!(" B: {:?}, body type: {:?}", b_type, &b_phys_type);
+            // println!(" A cat/mask ({}/{})", &fixt_a_cat, &fixt_a_mask);
+            // println!(" B cat/mask ({}/{})", &fixt_b_cat, &fixt_b_mask);
+            // println!(" Cat/Mask match: {}", &cat_mask_match);
+        }
+
+        
+
+        let collide = match a_type {
+            EntityType::Button => match b_type {
+                EntityType::Ghost => false,
+                EntityType::Platform => true,
+                _ => true
+            },
+            EntityType::Platform => match b_type {
+                EntityType::Button => true,
+                _ => true
+            },
+            EntityType::Ghost => match b_type {
+                EntityType::Player => self.ghost_player_contact,
+                EntityType::Button => false,
+                _ => true
+            },
+            EntityType::Player => match b_type {
+                EntityType::Ghost => self.ghost_player_contact,
+                _ => true
+            },
+            _ => true
+        };
+
+        if a_phys_type == PhysicsBodyType::Dynamic || a_phys_type == PhysicsBodyType::Kinematic ||
+            b_phys_type == PhysicsBodyType::Dynamic || b_phys_type == PhysicsBodyType::Kinematic {
+            //println!(" Collide: {}", &collide);
+        }
+
+        cat_mask_match > 0 && collide
+    }
+}
 
 pub fn create_physics_world(gravity_amount: f32) -> PhysicsWorld {
 
     let gravity = PhysicsVec { x: 0.0, y: gravity_amount}; //25.0
     let world = PhysicsWorld::new(&gravity);
+    //world.set_contact_filter(Box<>)
 
     world
 }
@@ -148,14 +263,35 @@ pub fn dot_product(v1: &PhysicsVec, v2: &PhysicsVec) -> f32 {
     v1.x * v2.x + v1.y * v2.y
 }
 
-pub fn get_contact_floor_dot(contact: &Contact) -> f32 {
+pub fn get_contact_floor_dot(contact: &Contact, flip: bool) -> f32 {
     let manifold = contact.world_manifold();
     let contact_normal = manifold.normal;
-    let down_normal = b2::Vec2{  x:0.0, y:1.0 };
+    let down_normal = match flip {
+        false => b2::Vec2{  x:0.0, y:1.0 },
+        true => b2::Vec2{  x:0.0, y:-1.0 },
+    };
     let dot = self::dot_product(&contact_normal,&down_normal);
 
     dot
 }
+
+pub fn debug_contact_floor_dot(contact: &Contact, flip: bool) {
+    let l_manifold = contact.manifold();
+    let manifold = contact.world_manifold();
+    let norm_c_normal = l_manifold.local_normal;
+    let contact_normal = manifold.normal;
+    let down_normal = match flip {
+        false => b2::Vec2{  x:0.0, y:1.0 },
+        true => b2::Vec2{  x:0.0, y:-1.0 },
+    };
+    let dot = self::dot_product(&contact_normal,&down_normal);
+
+    let local_dot = self::dot_product(&norm_c_normal, &down_normal);
+    //println!("Flipped? {}", &flip);
+    //println!("W: Dot product of {:?} {:?} = {}", &contact_normal, &down_normal, &dot);
+    //println!("L: Dot product of {:?} {:?} = {}", &norm_c_normal, &down_normal, &local_dot);
+}
+
 
 pub fn create_pos(pos: &Point2<f32>) -> PhysicsVec {
     let x = pos.x / WORLD_SCALE;
@@ -202,6 +338,7 @@ pub fn create_body(world: &mut PhysicsWorld, body_type: PhysicsBodyType, pos: &P
         angle: angle,
         linear_velocity: b2::Vec2 { x: 0.0, y: 0.0 },
         linear_damping: 0.8,
+        angular_damping: 0.8,
         fixed_rotation: fixed_rot,
         .. b2::BodyDef::new()
     };
@@ -224,6 +361,7 @@ pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, ve
         position: self::create_pos(pos),
         linear_velocity: b2::Vec2 { x: vel.x, y: vel.y},
         linear_damping: 0.8,
+        angular_damping: 0.8,
         fixed_rotation: fixed_rot,
         .. b2::BodyDef::new()
     };
@@ -257,7 +395,7 @@ pub fn add_kinematic_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, ve
 }
 
 
-pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, 
+pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: &Vector2<f32>, angle: f32,
     body_width: f32, body_height: f32,    
     density: f32, restitution: f32, entity_type: EntityType,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool, is_sensor: bool) 
@@ -265,8 +403,10 @@ pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: 
     let def = b2::BodyDef {
         body_type: PhysicsBodyType::Kinematic,
         position: self::create_pos(pos),
+        angle: angle,
         linear_velocity: b2::Vec2 { x: vel.x, y: vel.y},
         linear_damping: 0.8,
+        angular_damping: 0.8,
         fixed_rotation: fixed_rot,
         .. b2::BodyDef::new()
     };
@@ -300,7 +440,7 @@ pub fn add_kinematic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, vel: 
 }
 
 
-pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_width: f32, body_height: f32,
+pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, angle: f32, body_width: f32, body_height: f32,
     density: f32, restitution: f32, entity_type: EntityType,
     collision_category: CollisionCategory, collision_mask: &Vec<CollisionCategory>, fixed_rot: bool) 
         -> b2::BodyHandle {
@@ -315,7 +455,7 @@ pub fn add_dynamic_body_box(world: &mut PhysicsWorld, pos: &Point2<f32>, body_wi
     // let body_data = GameStateBodyData { entity_id: 0, collider_type: collision_category };
 
     // create body - getting handle
-    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, 0.0, entity_type, collision_category, fixed_rot);
+    let b_handle = create_body(world, PhysicsBodyType::Dynamic, pos, angle, entity_type, collision_category, fixed_rot);
 
     //world.create_body_with(&def, body_data);
     // get mut ref to body
@@ -460,305 +600,4 @@ pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_
     b_handle
 }
 
-
-
-pub fn advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
-
-    // Run Physics setup process - address any inputs to physics system
-    self::pre_advance_physics(world, physics_world, delta_seconds);
-
-    //println!("Running physics engine... delta={}", delta_seconds);
-    self::advance_physics_system(world, physics_world, delta_seconds);
-
-    // Run Physics post-run process - address any outputs of physics system to game world
-    self::post_advance_physics(world, physics_world, delta_seconds);
-
-}
-
-// Handle any component state which affects the physics - ex. player input applied forces
-fn pre_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
-    let state_reader = world.fetch::<GameStateResource>();
-    let mut phys_writer = world.write_storage::<Collision>();
-    let mut char_writer = world.write_storage::<CharacterDisplayComponent>();
-    let mut npc_writer = world.write_storage::<NpcComponent>();
-    let entities = world.entities();
-
-    let level_bounds = &state_reader.level_bounds;
-    //println!("Pre-advance-physics, level bounds: {:?}", level_bounds);
-
-    // Make sure collision body has update itself from game loop
-    for (mut collision, mut character, mut npc, ent) in (&mut phys_writer, (&mut char_writer).maybe(),(&mut npc_writer).maybe(), &entities).join() {
-        
-        // update collision body from character
-        collision.pre_physics_hook(physics_world, delta_seconds, character, npc, level_bounds);
-
-    }
-}
-
-pub fn handle_contact(coll_type_1: &CollisionCategory, coll_type_2: &CollisionCategory) -> Option<CollideType> {
-    // flip order if player id #2
-    if coll_type_1 != &CollisionCategory::Player && coll_type_2 == &CollisionCategory::Player {
-        return handle_contact(coll_type_2, coll_type_1);
-    }
-    match coll_type_1 {
-        CollisionCategory::Player => match coll_type_2 {
-            CollisionCategory::Portal => Some(CollideType::Collider_Portal),
-            CollisionCategory::Level => Some(CollideType::Player_Level),
-            _ => None
-        },
-        CollisionCategory::Etherial => match coll_type_2 {
-            CollisionCategory::Portal => Some(CollideType::Collider_Portal),
-            CollisionCategory::Sound => Some(CollideType::Ghost_Meow),
-            _ => None,
-        },
-        CollisionCategory::Level => match coll_type_2 {
-            CollisionCategory::Portal => {
-                //println!("Got level-portal collide");
-                Some(CollideType::Collider_Portal)
-            },
-            _ => None,
-        },
-        CollisionCategory::Portal => match coll_type_2 {
-            CollisionCategory::Player => Some(CollideType::Collider_Portal),
-            CollisionCategory::Etherial => Some(CollideType::Collider_Portal),
-            CollisionCategory::Level => {
-                //println!("Got level-portal collide");
-                Some(CollideType::Collider_Portal)
-            },
-            _ => None,
-        },
-        CollisionCategory::Sound => match coll_type_2 {
-            CollisionCategory::Etherial => Some(CollideType::Ghost_Meow),
-            _ => None,
-        }
-        _ => None
-    }
-}
-
-pub fn set_standing_status(interactor: &mut CharLevelInteractor, is_standing: bool) {
-    interactor.set_standing(is_standing);
-}
-
-pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
-
-    // update the physics world
-    physics_world.step(delta_seconds, 5, 5);
-
-    // Keep list of collider entities that need to be destroyed
-    let mut delete_entity_list : Vec::<u32> = Vec::new();
-
-    let mut wake_body_list : Vec::<PhysicsBodyHandle> = Vec::new();
-
-
-
-    //println!("After physics world step ---------------------------------------------");
-
-    // iterate bodies
-    for (body_handle, _) in physics_world.bodies() {
-        // get physics body
-        let body = physics_world.body(body_handle);
-        // get physics body type
-        let body_type = body.body_type();
-
-        if body_type == PhysicsBodyType::Static { continue; }
-
-        // get body metadata
-        let body_data = &*body.user_data();
-        // get game collider type
-        let primary_collider_type = body_data.collider_type;
-
-        // get world entity id
-        let primary_id = body_data.entity_id;
-        // get world entity
-        let entity_1 = world.entities().entity(primary_id);
-
-        // Get world data writers - Collision, Character, etc.
-        let mut coll_res = world.write_storage::<Collision>();
-        let mut char_disp_comp_res = world.write_storage::<CharacterDisplayComponent>();
-        let mut npc_comp_res = world.write_storage::<NpcComponent>();
-
-        // extract body 1 position from collision component
-        let mut existing_portal = -1;
-        let mut body_1_pos : na::Point2::<f32> = na::Point2::new(0.0,0.0);
-        if let Some(collision) = coll_res.get_mut(entity_1) {
-            body_1_pos.x = collision.pos.x;
-            body_1_pos.y = collision.pos.y;
-            existing_portal = collision.portal_id;
-        }
-        
-        let mut any_stand_contact = false;
-
-        for (other_body_handle, contact) in body.contacts() {
-
-            // Only consider touching contacts
-            if contact.is_touching() == false { continue; }
-
-            let dot = get_contact_floor_dot(&contact);
-            if dot > 0.2 {
-                any_stand_contact = true;
-            }
-
-            let other_body = physics_world.body(other_body_handle);
-            let other_body_data = &*other_body.user_data();
-                
-            //let b = other_meta_body.body;
-            //let other_body_data = (21,); //other_meta_body.();
-            //let otherbody = &mut *other_meta_body;
-            let other_id = other_body_data.entity_id;
-            let other_collider_type = other_body_data.collider_type;
-
-            // Handle entity 
-            let entity_2 = world.entities().entity(other_id);
-
-            let collide_type = handle_contact(&primary_collider_type, &other_collider_type);
-
-            // Handle contact collide type info
-            match &collide_type {
-                Some(collide_t) => {
-
-                    // HANDLE SPECIAL COLLIDE TYPES HERE IF NEEDED
-                    // Handle ghost meow collide
-                    if collide_t == &CollideType::Ghost_Meow {
-                        if primary_collider_type == CollisionCategory::Etherial {
-                            delete_entity_list.push(primary_id);
-                        }
-                        else {
-                            delete_entity_list.push(other_id);
-                        }
-                    }                        
-                    else if collide_t == &CollideType::Collider_Portal {
-                        match primary_collider_type {
-                            CollisionCategory::Etherial | CollisionCategory::Player 
-                            | CollisionCategory::Level => {
-                                if let Some(collision) = coll_res.get_mut(entity_1) {
-                                   
-                                    let mut portal_enabled = false;
-                                    let portal_res = world.read_storage::<PortalComponent>();
-                                    if let Some(portal) = portal_res.get(entity_2) {
-                                        portal_enabled = portal.is_enabled;
-                                    }
-                                    if portal_enabled {
-                                        let portal_id = other_id as i32;
-                                        collision.in_portal = true;
-                                        collision.portal_id = portal_id;
-                                    }
-
-                                    if body.is_awake() == false {
-                                        wake_body_list.push(body_handle);
-                                    }
-                                }
-                            },
-                            _ => {}
-                        }
-
-                        match other_collider_type {
-                            CollisionCategory::Etherial | CollisionCategory::Player
-                            | CollisionCategory::Level => {
-                                if let Some(collision) = coll_res.get_mut(entity_2) {
-                                    let mut portal_enabled = false;
-                                    let portal_res = world.read_storage::<PortalComponent>();
-                                    if let Some(portal) = portal_res.get(entity_1) {
-                                        portal_enabled = portal.is_enabled;
-                                    }
-                                    if portal_enabled {
-                                        let portal_id = primary_id as i32;
-                                        collision.in_portal = true;
-                                        collision.portal_id = portal_id;
-                                    }
-
-                                    if other_body.is_awake() == false {
-                                        wake_body_list.push(other_body_handle);
-                                    }
-                                }
-                            },
-                            _ => {}
-                        }
-
-                    }
-
-                    // Add generic body contact to collider
-                    if let Some(collision) = coll_res.get_mut(entity_1) {
-                        collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
-                    }
-
-                },
-                _ => {}
-            }
-
-            // handle character exit =====================================================
-            if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
-                // If character is touching exit component, set exit flag and id
-                let exit_res = world.read_storage::<ExitComponent>();
-                if let Some(_) = exit_res.get(entity_2) {
-                    //exit_id = other_id as i32;
-                    character.in_exit = true;
-                    character.exit_id = other_id as i32;
-                }
-
-            }
-
-        }
-
-        // If entity
-        if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
-            //character.set_standing(any_stand_contact);
-            set_standing_status(character, any_stand_contact);
-        }
-        else if let Some(npc) = npc_comp_res.get_mut(entity_1) {
-            //npc.set_standing(any_stand_contact);
-            set_standing_status(npc, any_stand_contact);
-        }
-
-
-    }
-
-    for &body_handle in &wake_body_list {
-        let mut body = physics_world.body_mut(body_handle);
-        body.set_awake(true);
-    }
-
-    // Delete any entities on the list
-    for &entity_id in &delete_entity_list {
-        let entity = world.entities().entity(entity_id);
-
-        if entity.gen().is_alive() {
-
-            // Call destroy body on any collision component of entity
-            let mut collision_res = world.write_storage::<Collision>();
-            if let Some(collision) = collision_res.get_mut(entity) {
-                // Destroy collision body
-                collision.destroy_body(physics_world);
-
-            }
-
-            // Destroy world entity
-            world.entities().delete(entity);
-
-        }
-    }
-
-}
-
-// Handle physics changes by updating component state
-fn post_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
-    let mut phys_writer = world.write_storage::<Collision>();
-    let mut pos_writer = world.write_storage::<Position>();
-    let logic_reader = world.read_storage::<LogicComponent>();
-    let entities = world.entities();
-
-    // Update collision components after physics runs
-    for (mut collision, mut pos, ent) in (&mut phys_writer, &mut pos_writer, &entities).join() {
-        collision.post_physics_hook(physics_world);
-        // update position from collision position
-        pos.x = collision.pos.x;
-        pos.y = collision.pos.y;
-    }
-
-    for (mut collision, logic, ent) in (&mut phys_writer, &logic_reader, &entities).join() {
-        
-        // check for logic value
-        let active = logic.value;
-        collision.update_body_obstruction(physics_world, active);
-    }
-}
 

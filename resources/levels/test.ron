@@ -1,5 +1,5 @@
 LevelConfig(
-    name: "Haunted Jump",
+    name: "Haunted Jump (Testing 0)",
     bounds: (
         min_x: 0.0, min_y: 0.0, max_x: 3000.0, max_y: 1000.0,
         solid_sides: (false, false, false, true),
@@ -10,7 +10,7 @@ LevelConfig(
         
         Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
 
-        Sprite ( x: 2645.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-2.75,-3.9,5.5,7.8), ),
+        Sprite ( x: 2645.0, y: 500.0, sprite: "entities/grid_structure", z: 5.0, angle: 0.0, src: (-2.75,-3.9,5.5,7.8), ),
 
         Sprite ( x: 2265.0, y: 222.0, sprite: "entities/white-tile-bg", z: 6.0, angle: 0.1, src: (0,-1.95,1.0,3.9), ),
         Sprite ( x: 2265.0, y: 775.0, sprite: "entities/white-tile-bg", z: 6.0, angle: 0.0, src: (0,-1.75,1.0,3.5), ),
@@ -24,8 +24,8 @@ LevelConfig(
 
         Portal ( x: 250.0, y: 800.0, w: 30.0, name: "portal_a", destination: "portal_b", start_enabled: false),
 
-        DynPlatform ( x: 150.0, y: 320.0, w: 80.0, h: 15.0, ang: 0.0),
-        DynPlatform ( x: 250.0, y: 370.0, w: 80.0, h: 15.0, ang: 0.0),
+        DynPlatform ( x: 150.0, y: 300.0, w: 80.0, h: 15.0, ang: 0.3),
+        DynPlatform ( x: 500.0, y: 410.0, w: 80.0, h: 15.0, ang: 0.4),
 
         Button ( start_enabled: false, x: 800.0, y: 330.0, w: 35.0, h: 7, ang: 0, name: "btna",),
 

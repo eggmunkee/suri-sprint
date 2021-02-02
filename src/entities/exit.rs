@@ -11,7 +11,7 @@ use crate::components::{Position};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::exit::{ExitComponent};
-use crate::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
 
 pub struct ExitBuilder;
 
@@ -45,6 +45,7 @@ impl ExitBuilder {
         collision.vel.x = 0.0;
         collision.vel.y = 0.0;
         collision.is_sensor = true;
+        collision.entity_type = EntityType::Exit;
         collision.collision_category = CollisionCategory::Portal;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);

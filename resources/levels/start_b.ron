@@ -17,7 +17,8 @@ LevelConfig(
         DynStaticLevelProp ( x: 330.0, y: 630.0, w: 64.0, h: 64.0, ang:0.0, image: "entities/closed_box", img_w: 96.0, img_h: 96.0 ),
         Exit ( x: 350.0, y: 650.0, w: 25.0, h: 25.0, name: "", destination: "a"),
 
-
+        Button ( start_enabled: false, x: 650.0, y: 175.0, w: 35.0, h: 7, ang: 0, name: "btna",),
+        DynSprite ( x: 400.0, y: 500.0, sprite: "entities/spotlight", z: 125.0, angle: 0, src: (0,0,1,1), name: "spot_2", start_enabled: false ),
 
         EmptyBox ( x: 700.0, y: 675.0, w: 120.0, h: 60.0, ang: 3.1415),
 
@@ -29,9 +30,12 @@ LevelConfig(
 
         Exit ( x: 900.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "start:b"),
 
-        
+      
 
         Ghost ( x: 200.0, y: 100.0 ),
+
+        Connection ( from: "btna", to: "spot_2", conn_type: Switch ),
+
 
     ],
 )

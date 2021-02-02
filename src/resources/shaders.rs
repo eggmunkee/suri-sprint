@@ -11,7 +11,7 @@ use ggez::conf::{WindowMode};
 use specs::{World};
 // -------------------------
 
-use crate::physics::{PhysicsWorld};
+use crate::core::physics::{PhysicsWorld};
 use crate::components::sprite::{ShaderConfig};
 use crate::conf::{get_ron_config};
 
@@ -43,7 +43,7 @@ impl ShaderResources {
     }
 
     pub fn shader_factory(&self, name: String, path: String, ctx: &mut Context) -> Option<Shader<ShaderInputs>> {
-        println!("SHADER=FACTORY$> {}, {}", &name, &path);
+        //println!("SHADER=FACTORY$> {}, {}", &name, &path);
         if let Some(shader_config) = get_ron_config::<ShaderConfig>(path) {
             let data = ShaderInputs { game_time: 0.0f32 };
             let vert_path = shader_config.vert_path;
@@ -70,10 +70,10 @@ impl ShaderResources {
                 blend_mode_option = Some(blend_modes.as_slice());
             }
 
-            println!("Shader Factory paths: {}, {}", &vert_path, &frag_path);
+            //println!("Shader Factory paths: {}, {}", &vert_path, &frag_path);
 
             if let Ok(shader) = Shader::<ShaderInputs>::new(ctx, vert_path, frag_path, data, name, blend_mode_option) {
-                println!("Shader: {:?}", &shader);
+                //println!("Shader: {:?}", &shader);
                 Some(shader)
             }
             else {
@@ -91,15 +91,15 @@ impl ShaderResources {
     #[allow(dead_code)]
     pub fn load_shader(&mut self, name: String, path:String, ctx: &mut Context) -> GameResult<()> {
         let entry = self.shader_lookup.entry(name.clone());
-        println!("Shader ref {}", &name);
+        //println!("Shader ref {}", &name);
         if let Entry::Vacant(_) = entry {
             //let image = Image::new(ctx, path.clone())?;
             //let new_idx = self.images.len();
-            println!("Shader vacant");
+            //println!("Shader vacant");
             if let Some(shader) = self.shader_factory(name.clone(), path.clone(), ctx) {
                 let new_idx = self.shaders.len();
                 self.shaders.push(shader);
-                println!("Shader added at index: {}", &new_idx);
+                //println!("Shader added at index: {}", &new_idx);
                 self.shader_lookup.insert(name.clone(), new_idx);
             }
             //()

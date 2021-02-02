@@ -16,7 +16,7 @@ use crate::components::player::{CharacterDisplayComponent};
 use crate::components::logic::{LogicComponent,LogicOpType};
 use crate::entities::level_builder::{ItemLogic};
 use crate::systems::*;
-use crate::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
 
 pub struct PlatformBuilder;
 
@@ -68,6 +68,7 @@ impl PlatformBuilder {
         collision.pos.x = x;
         collision.pos.y = y;
         collision.angle = angle;
+        collision.entity_type = EntityType::Platform;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
@@ -140,6 +141,7 @@ impl PlatformBuilder {
         collision.pos.y = y;
         collision.density = 0.25;
         collision.angle = angle;
+        collision.entity_type = EntityType::Platform;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);

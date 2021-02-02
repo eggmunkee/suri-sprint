@@ -13,6 +13,7 @@ use serde::{Deserialize,de::DeserializeOwned};
 
 //use crate::game_state::{GameState};
 use crate::components::collision::{Collision};
+use crate::components::sprite::{SpriteConfig};
 use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource};
 use crate::conf::*;
 
@@ -65,8 +66,8 @@ impl AnimSpriteConfig {
 
         Self::init_images(world, ctx, config.path.clone());
 
-        println!("Loaded AnimSpriteComponent from config");
-        println!("{:?}", &config);
+        //println!("Loaded AnimSpriteComponent from config");
+        //println!("{:?}", &config);
 
         let mut sprite = AnimSpriteComponent::new(ctx, &config.path, config.z_order);
 
@@ -78,6 +79,32 @@ impl AnimSpriteConfig {
         sprite.grid_layout = config.grid_layout;
         sprite.animations = config.animations;
         sprite.start_animation = config.start_animation;
+
+        sprite
+    }
+
+    pub fn create_from_sprite_config(world: &mut World, ctx: &mut Context, config_path: String) -> AnimSpriteComponent {
+
+        let maybe_config = get_ron_config::<SpriteConfig>(config_path.to_string());
+
+        let config = maybe_config.expect(&format!("Invalid SpriteConfig at {}", &config_path));
+
+        Self::init_images(world, ctx, config.path.clone());
+
+        //println!("Loaded AnimSpriteComponent from config");
+        //println!("{:?}", &config);
+
+        let mut sprite = AnimSpriteComponent::new(ctx, &config.path, config.z_order);
+
+        sprite.scale.x = config.scale.0;
+        sprite.scale.y = config.scale.1;
+        sprite.alpha = config.alpha;
+        sprite.src = Rect::new(config.src.0, config.src.1, config.src.2, config.src.3);
+        sprite.shader = config.shader;
+        sprite.grid_layout = None;
+        sprite.animations = None;
+        sprite.start_animation = None;
+        sprite.is_enabled = false;
 
         sprite
     }
@@ -104,6 +131,8 @@ pub struct AnimSpriteComponent {
     pub frame_index: i32,
     pub frame_timer: f32,
     pub curr_frame_length: f32,
+    pub curr_anim_looped: bool,
+    pub curr_anim_finished: bool,
     pub is_enabled: bool,
     pub pos_dir: bool,
 }
@@ -130,6 +159,8 @@ impl AnimSpriteComponent {
             frame_index: 0,
             frame_timer: 0.0,
             curr_frame_length: 0.0,
+            curr_anim_looped: true,
+            curr_anim_finished: false,
             is_enabled: true,
             pos_dir: true,
         }
@@ -160,11 +191,18 @@ impl AnimSpriteComponent {
 
         let num_frames = self.get_num_frames();
         let mut new_frame = self.frame + offset;
+        let mut can_advance = true;
         if new_frame >= num_frames || new_frame < 0 {
             new_frame = new_frame % num_frames;
+            if !self.curr_anim_looped {
+                can_advance = false;
+                self.curr_anim_finished = true;
+            }
         }
 
-        self.set_frame(new_frame);
+        if can_advance {
+            self.set_frame(new_frame);
+        }        
 
     }
 
@@ -172,10 +210,13 @@ impl AnimSpriteComponent {
         self.frame = frame;
         let mut new_frame_idx = -1;
         let mut new_frame_len = -1.0;
+        let mut new_anim_looped = self.curr_anim_looped;
         if let Some(anims) = &self.animations {
             for anim_def in anims.iter() {
                 // correct animation name
                 if anim_def.name == self.curr_animation {
+                    //println!("Set Frame {} - LOOP: {} CURR LOOP: {}", &frame, &anim_def.looped, &self.curr_anim_looped);
+                    new_anim_looped = anim_def.looped;
                     //new_frame_len = anim_def
                     let mut frame_idx = 0;
                     // find correct frame definition with time
@@ -193,6 +234,9 @@ impl AnimSpriteComponent {
             self.frame_index = new_frame_idx;
             self.frame_timer = 0.0;
             self.curr_frame_length = new_frame_len;
+            self.curr_anim_looped = new_anim_looped;
+            self.curr_anim_finished = false;
+            //println!("  * set vals: Fr.Idx: {} CURR LOOP: {}", &new_frame_idx, &self.curr_anim_looped);
         }
     }
 
@@ -240,6 +284,9 @@ impl AnimSpriteComponent {
             res.2 = 1.0 / max_cols as f32;
             res.3 = 1.0 / max_rows as f32;
         }
+        else {
+            res = (self.src.x, self.src.y, self.src.w, self.src.h);
+        }
 
         //println!("AnimSprite Frame [{}:{}] Src: {:?}", &self.frame, &self.frame_index, &res);
 
@@ -253,14 +300,19 @@ impl AnimSpriteComponent {
         }
 
         if self.curr_frame_length > 0.0 {
-            self.frame_timer += delta_time;
+            if !self.curr_anim_finished {
+                self.frame_timer += delta_time;
 
-            if self.frame_timer >= self.curr_frame_length {
-                let frame_offset = match &self.pos_dir {
-                    true => 1,
-                    false => 2
-                };
-                self.advance_frame_offset(frame_offset);
+                if self.frame_timer >= self.curr_frame_length {
+                    let frame_offset = match &self.pos_dir {
+                        true => 1,
+                        false => 2
+                    };
+                    self.advance_frame_offset(frame_offset);
+                }
+            }
+            else {
+                //println!(" *@@@ ANIMATION FINISHED @@@*");
             }
         }
         else {
@@ -270,11 +322,19 @@ impl AnimSpriteComponent {
                         self.curr_animation = defaults[0].clone();
                     }
                 }
+                else {
+                    self.is_enabled = false;
+                    self.set_frame(0);
+                    return;
+                }
 
                 let num_f = self.get_num_frames() as u32;
                 let mut rng = rand::thread_rng();
-                let init_frame = (rng.next_u32() % num_f) as i32;
-                println!("Init frame {}", &init_frame);
+                let mut init_frame = 0;
+                if num_f > 0 {
+                    init_frame = (rng.next_u32() % num_f) as i32;
+                }
+                //println!("Init frame {}", &init_frame);
                 self.set_frame(init_frame);
 
             }
@@ -285,7 +345,7 @@ impl AnimSpriteComponent {
 
 
 impl super::RenderTrait for AnimSpriteComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, _item_index: usize) {
         if !self.visible { return; }
 
         let mut rng = rand::thread_rng();
@@ -350,6 +410,41 @@ impl super::RenderTrait for AnimSpriteComponent {
             println!("Couldn't get sprite texture: {}", &self.path);
         }
 
+    }
+}
+
+
+#[derive(Debug,Component)]
+#[storage(DenseVecStorage)]
+pub struct MultiAnimSpriteComponent {
+    //pub image: Image, // component owns image
+    pub sprites: Vec<AnimSpriteComponent>,
+    //pub debug_font: graphics::Font,
+}
+
+impl MultiAnimSpriteComponent {
+    pub fn new(ctx: &mut Context) -> MultiAnimSpriteComponent {
+        
+        MultiAnimSpriteComponent {
+            //image: image,
+            sprites: vec![],
+        }
+    }
+}
+
+
+impl super::RenderTrait for MultiAnimSpriteComponent {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
+        //println!("BallRender...");
+        let mut rng = rand::thread_rng();
+
+        if item_index >= 0 && item_index < self.sprites.len() {
+
+            if let Some(sprite) = self.sprites.get(item_index) {
+                sprite.draw(ctx, world, ent, pos, 0);
+
+            }
+        }
     }
 }
 

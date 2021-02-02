@@ -10,7 +10,7 @@ use ggez::conf::{WindowMode};
 use specs::{World};
 // -------------------------
 
-use crate::physics::{PhysicsWorld};
+use crate::core::physics::{PhysicsWorld};
 use crate::components::logic::{LogicOpType};
 
 

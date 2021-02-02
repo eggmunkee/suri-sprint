@@ -1,0 +1,35 @@
+LevelConfig(
+    name: "Blocks B",
+    bounds: (
+        min_x: 0.0, min_y: 0.0, max_x: 750.0, max_y: 750.0,
+        solid_sides: (true, true, true, true),
+    ),
+    soundtrack: "pirates/track-09.mp3",
+    items: [
+        Player ( x: 80.0, y: 700.0 ),
+
+        PortalSide ( x: 20.0, y: 680.0, z: Some(190), ang: 0.0, w: 50, h: 100, color: "purple", name: "portalA", destination: "portalA3", start_enabled: true, normal: (1.0,0.0) ),
+        PortalSide ( x: 730.0, y: 680.0, z: Some(660), ang: 0.0, w: 50, h: 100, color: "purple", name: "portalB", destination: "portalA", start_enabled: true, normal: (-1.0,0.0) ),
+
+        StaticLevelProp( x: 375, y: 550.0, w: 150, h: 32.0, ang: 1.57, image: "entities/box", img_w: 48.0, img_h: 48.0,
+                z: Some(100.0) ),
+
+        PortalSide ( x: 395.0, y: 490.0, z: Some(190), ang: 0.0, w: 50, h: 100, color: "purple", name: "portalA3", destination: "portalB", start_enabled: true, normal: (1.0,0.0) ),
+
+        PortalSide ( x: 250.0, y: 718.0, z: Some(460), ang: -1.57, w: 50, h: 100, color: "red", name: "portalB5", destination: "portalB3", start_enabled: true, normal: (0.0,1.0) ),
+        PortalSide ( x: 250.0, y: 30.0, z: Some(460), ang: 1.57, w: 50, h: 100, color: "red", name: "portalB3", destination: "portalB5", start_enabled: true, normal: (0.0,-1.0) ),
+
+
+        PortalSide ( x: 150.0, y: 718.0, z: Some(460), ang: -1.57, w: 50, h: 100, color: "red", name: "portalB7", destination: "portalB8", start_enabled: true, normal: (0.0,1.0) ),
+        PortalSide ( x: 450.0, y: 718.0, z: Some(460), ang: -1.57, w: 50, h: 100, color: "red", name: "portalB8", destination: "portalB7", start_enabled: true, normal: (0.0,1.0) ),
+
+        Sprite ( x: 375.0, y: 375.0, sprite: "entities/grid_structure", z: 1.0, angle: 0.0, src: (-4,-3,6,6), ),
+
+
+
+        //Exit ( x: 565.0, y: 52.0, z: Some(30.0), w: 28.0, h: 28.0, name: "", destination: "c"),
+        
+        Ghost ( x: 200.0, y: 100.0 ),
+
+    ],
+)

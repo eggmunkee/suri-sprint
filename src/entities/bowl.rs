@@ -10,10 +10,11 @@ use crate::game_state::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
 use crate::components::{Position};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
+use crate::components::anim_sprite::{AnimSpriteComponent,AnimSpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::*;
-use crate::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory};
 
 pub struct BowlBuilder;
 
@@ -26,8 +27,9 @@ impl BowlBuilder {
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32) -> Entity {
 
         // Create sprite from config
-        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/bowl".to_string());
+        let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, "entities/bowl".to_string());
         sprite.z_order = z;
+        //sprite.set_frame(1);
 
         let mut collision = Collision::new_specs(3.0,0.25, 10.0, 2.5);
         collision.pos.x = x;

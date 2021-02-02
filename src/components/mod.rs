@@ -15,6 +15,7 @@ pub mod portal;
 pub mod exit;
 pub mod anim_sprite;
 pub mod particle_sys;
+pub mod pickup;
 // DEFINE COMMON COMPONENTS
 
 #[derive(Debug)]
@@ -46,12 +47,12 @@ pub trait CharLevelInteractor {
 
 
 pub trait RenderTrait {    
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32);
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize);
 }
 
 
 impl RenderTrait for &dyn RenderTrait {
-    fn draw(&self, _ctx: &mut Context, _world: &World, _ent: Option<u32>, _pos: na::Point2::<f32>, _item_index: u32) {
+    fn draw(&self, _ctx: &mut Context, _world: &World, _ent: Option<u32>, _pos: na::Point2::<f32>, _item_index: usize) {
 
     }
 }
@@ -74,4 +75,5 @@ pub fn register_components(world: &mut World) {
     self::exit::register_components(world);
     self::anim_sprite::register_components(world);
     self::particle_sys::register_components(world);
+    self::pickup::register_components(world);    
 }

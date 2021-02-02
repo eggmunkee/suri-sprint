@@ -9,7 +9,7 @@ pub struct Audio {
     pub base_music_volume: f32,
     pub dimmed_mult: f32,
     pub is_dimmed: bool,
-    pub jump_source: Option<Source>,
+    pub meow_source: Option<Source>,
 }
 
 
@@ -17,18 +17,18 @@ impl Audio {
     pub fn new(ctx: &mut Context) -> Self {
         let default_vol = 0.05;
 
-        let mut jump : Option<Source> = None;
-        let jump_path = "/audio/8bitgame3-jump.ogg";        
-        if let Ok(mut source) = Source::new(ctx, jump_path.clone()) {
-            source.set_volume(default_vol * 0.1);
+        let mut meow : Option<Source> = None;
+        let meow_path = "/audio/suri-meow-2.ogg";        
+        if let Ok(mut source) = Source::new(ctx, meow_path.clone()) {
+            source.set_volume(default_vol * 1.0);
             //println!("Loading sound? {}", &source.playing());
             source.set_repeat(false);
             //source.play();
 
-            jump = Some(source);
+            meow = Some(source);
         }
         else {
-            println!("Could not load sound effect: {}", &jump_path);
+            println!("Could not load sound effect: {}", &meow_path);
         }
 
         Audio {
@@ -37,7 +37,7 @@ impl Audio {
             base_music_volume: default_vol, // .3
             dimmed_mult: 0.5,
             is_dimmed: false,
-            jump_source: jump
+            meow_source: meow
         }
     }
 
@@ -70,8 +70,8 @@ impl Audio {
             source.set_volume(vol * 0.05 );
         }
 
-        if let Some(ref mut jump) = &mut self.jump_source {
-            jump.set_volume(vol * 0.1 )
+        if let Some(ref mut meow) = &mut self.meow_source {
+            meow.set_volume(vol * 1.0 )
         }
     }
 
@@ -130,10 +130,10 @@ impl Audio {
         }
     }
 
-    pub fn play_jump(&mut self) {
-        if let Some(ref mut jump) = &mut self.jump_source {
-            if !jump.playing() {
-                jump.play();
+    pub fn play_meow(&mut self) {
+        if let Some(ref mut meow) = &mut self.meow_source {
+            if !meow.playing() {
+                meow.play();
             }
             
         }

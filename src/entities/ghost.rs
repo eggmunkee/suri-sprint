@@ -9,7 +9,7 @@ use crate::components::{Position};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::resources::{ImageResources};
-use crate::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
 
 
 pub struct GhostBuilder;
@@ -20,7 +20,7 @@ impl GhostBuilder {
 
         //Self::init_images(world, ctx);
 
-        let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/ghost".to_string());
+        let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, "entities/ghost_anim".to_string());
         sprite.z_order = SpriteLayer::Entities.to_z();
 
         //let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, "entities/lemming".to_string());
@@ -38,10 +38,11 @@ impl GhostBuilder {
         collision.vel.x = vx;
         collision.vel.y = vy;
         collision.enable_warp = true;
+        collision.entity_type = EntityType::Ghost;
         collision.collision_category = CollisionCategory::Etherial;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
-        //collision.collision_mask.push(CollisionCategory::Player);
+        collision.collision_mask.push(CollisionCategory::Player);
         collision.collision_mask.push(CollisionCategory::Etherial);
         collision.collision_mask.push(CollisionCategory::Portal);
         collision.collision_mask.push(CollisionCategory::Sound);

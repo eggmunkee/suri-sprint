@@ -1,0 +1,47 @@
+AnimSpriteConfig(
+    spritesheet: false,
+    path: "/red-portal-front.png",
+    scale: (1.0, 1.0),
+    z_order: 100.0,
+    alpha: 1.0,
+    angle: 0.0,
+    src: (0.0, 0.0, 1.0, 1.0),
+    grid_layout: Some(AnimGridLayout(
+        rows: 1, cols: 5,
+    )),
+    animations: Some([
+        AnimationDef(
+            name: "default",
+            frames: [
+                (0,.1),(1,.1),(2,.1),(3,.1),
+                (0,.1),(1,.1),(2,.1),(3,.1),
+                (0,.1),(1,.1),(2,.1),(3,.1),
+                (4,1.0)
+            ],
+            looped: true,
+            reverse: false,
+            end_anim: None
+        ),
+        AnimationDef(
+            name: "on",
+            frames: [
+                (0,.05),(1,.05),(2,.05),(3,.05),
+            ],
+            looped: true,
+            reverse: false,
+            end_anim: None
+        ),
+        AnimationDef(
+            name: "off",
+            frames: [
+                (4,1.0)
+            ],
+            looped: false,
+            reverse: false,
+            end_anim: None
+        )
+    ]),
+    start_animation: Some([
+        "default"
+    ]),
+)

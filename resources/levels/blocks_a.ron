@@ -1,0 +1,86 @@
+LevelConfig(
+    name: "Blocks A",
+    bounds: (
+        min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 750.0,
+        solid_sides: (true, true, true, true),
+    ),
+    soundtrack: "pirates/track-09.mp3",
+    items: [
+        Player ( x: 80.0, y: 700.0 ),
+
+        //PortalSide ( x: 608.0, y: 570.0, z: Some(190), w: 50, color: "purple", name: "portalA", destination: "portalB", start_enabled: true, normal: (1.0,0.0) ),
+        //PortalSide ( x: 417.0, y: 495.0, z: Some(660), w: 50, color: "red", name: "portalB", destination: "portalA", start_enabled: true, normal: (-1.0,0.0) ),
+
+        PortalSide ( x: 20.0, y: 680.0, z: Some(190), ang: 0.0, w: 50, h: 100, color: "purple", name: "portalA", destination: "portalA3", start_enabled: true, normal: (1.0,0.0) ),
+        PortalSide ( x: 980.0, y: 680.0, z: Some(660), ang: 0.0, w: 50, h: 100, color: "purple", name: "portalB", destination: "portalA", start_enabled: true, normal: (-1.0,0.0) ),
+
+        //PortalSide ( x: 50.0, y: 590.0, z: Some(190), w: 50, color: "red", name: "portalA2", destination: "portalB2", start_enabled: true, normal: (1.0,0.0) ),
+        //PortalSide ( x: 950.0, y: 590.0, z: Some(660), w: 50, color: "red", name: "portalB2", destination: "portalA2", start_enabled: true, normal: (-1.0,0.0) ),
+
+        StaticLevelProp( x: 500, y: 600.0, w: 250, h: 32.0, ang: 1.57, image: "entities/box", img_w: 48.0, img_h: 48.0,
+                z: Some(100.0) ),
+
+        StaticLevelProp( x: 400, y: 650, w: 64, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+        PortalSide ( x: 520.0, y: 490.0, z: Some(190), ang: 0.0, w: 50, h: 100, color: "purple", name: "portalA3", destination: "portalB", start_enabled: true, normal: (1.0,0.0) ),
+        PortalSide ( x: 730.0, y: 718.0, z: Some(660), ang: -1.57, w: 50, h: 100, color: "red", name: "portalB5", destination: "portalB3", start_enabled: true, normal: (0.0,-1.0) ),
+        PortalSide ( x: 400.0, y: 618.0, z: Some(660), ang: -1.57, w: 50, h: 100, color: "red", name: "portalB3", destination: "portalB5", start_enabled: true, normal: (0.0,-1.0) ),
+
+        //PortalSide ( x: 50.0, y: 390.0, z: Some(190), w: 50, color: "red", name: "portalA4", destination: "portalB4", start_enabled: true, normal: (1.0,0.0) ),
+        //PortalSide ( x: 950.0, y: 390.0, z: Some(660), w: 50, color: "red", name: "portalB4", destination: "portalA4", start_enabled: true, normal: (-1.0,0.0) ),
+
+        //Portal ( x: 150.0, y: 500.0, w: 40, name: "portalC", destination: "portalD", start_enabled: true ),
+        //Portal ( x: 850.0, y: 500.0, w: 40, name: "portalD", destination: "portalC", start_enabled: true ),
+        
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/grid_structure", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+
+        StaticLevelProp( x: 664, y: 228, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+        /*
+        StaticLevelProp( x: 0, y: 256, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+        StaticLevelProp( x: 128, y: 256, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+        StaticLevelProp( x: 192, y: 256, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+        StaticLevelProp( x: 256, y: 256, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+        StaticLevelProp( x: 320, y: 320, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+        StaticLevelProp( x: 384, y: 384, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),
+        StaticLevelProp( x: 480, y: 480, w: 64, h: 64.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(650.0) ),
+        StaticLevelProp( x: 544, y: 544, w: 64, h: 64.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(180.0) ),
+
+        StaticLevelProp( x: 640, y: 640, w: 32, h: 32.0, ang: 0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0,
+                z: Some(100.0) ),*/
+
+        ParticleSys ( x: 563, y: 55, z: 400.0, config: "entities/psys/psys1" ),
+        //ParticleSys ( x: 565, y: 245, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 570, y: 52, z: 600.0, config: "entities/psys/psys-watersplash" ),
+
+        ParticleSys ( x: 563, y: 117, z: 400.0, config: "entities/psys/psys1" ),
+        
+        ParticleSys ( x: 548, y: 245, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 578, y: 245, z: 400.0, config: "entities/psys/psys1" ),
+
+
+        ParticleSys ( x: 538, y: 373, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 563, y: 373, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 588, y: 373, z: 400.0, config: "entities/psys/psys1" ),
+
+        ParticleSys ( x: 535, y: 444, z: 185.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 562, y: 464, z: 600.0, config: "entities/psys/psys-watersplash" ),
+
+        Exit ( x: 565.0, y: 52.0, z: Some(30.0), w: 28.0, h: 28.0, name: "", destination: "blocks_b"),
+        
+        Ghost ( x: 200.0, y: 100.0 ),
+
+    ],
+)

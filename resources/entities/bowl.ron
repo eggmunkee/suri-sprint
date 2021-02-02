@@ -1,4 +1,4 @@
-SpriteConfig(
+AnimSpriteConfig(
     spritesheet: false,
     path: "/food_bowl.png",
     scale: (1.0, 1.0),
@@ -6,4 +6,29 @@ SpriteConfig(
     alpha: 1.0,
     angle: 0.0,
     src: (0.0, 0.0, 1.0, 1.0),
+    grid_layout: Some( AnimGridLayout(
+        cols: 2,
+        rows: 1, 
+    )),
+    animations: Some([
+        AnimationDef(
+            name: "default",
+            frames: [
+                (0,.5),
+            ],
+            looped: true,
+            reverse: false,
+            end_anim: None
+        ),
+        AnimationDef(
+            name: "filled",
+            frames: [
+                (1,.5),
+            ],
+            looped: true,
+            reverse: false,
+            end_anim: None
+        ),
+    ]),
+    start_animation: Some(["filled"]),
 )

@@ -6,14 +6,16 @@ use wrapped2d::b2;
 
 
 use crate::components::sprite::{SpriteComponent};
+use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::components::collision::{Collision};
-use crate::physics;
-use crate::physics::{PhysicsWorld};
+use crate::core::physics;
+use crate::core::physics::{PhysicsWorld};
 
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
 pub struct PortalComponent {
     pub normal: na::Vector2::<f32>,
+    pub screen_facing: bool,
     pub name: String,
     pub destination: String,
     pub anim_timer: f32,
@@ -25,6 +27,7 @@ impl PortalComponent {
 
         let mut portal = PortalComponent {
             normal: na::Vector2::new(0.0, -1.0),
+            screen_facing: true,
             name: portal_name,
             destination: destination_name,
             anim_timer: 0.0,
@@ -34,7 +37,7 @@ impl PortalComponent {
         portal
     }
 
-    pub fn update(&mut self, delta_time: f32, collision: &mut Collision, sprite: &mut SpriteComponent, physics_world: &mut PhysicsWorld) {
+    pub fn update_sprite(&mut self, delta_time: f32, collision: &mut Collision, sprite: &mut SpriteComponent, physics_world: &mut PhysicsWorld) {
 
         if !self.is_enabled { 
             if sprite.alpha != 0.25 { sprite.alpha = 0.25; }
@@ -63,6 +66,26 @@ impl PortalComponent {
         //println!("New portal angle: {}", &sprite_angle);
         //collision.angle = sprite_angle;
         collision.update_body_angle(physics_world, sprite_angle);
+
+        //let mut sprite_alpha = sprite.alpha;
+
+    }
+
+    pub fn update_anim_sprite(&mut self, delta_time: f32, collision: &mut Collision, sprite: &mut AnimSpriteComponent, physics_world: &mut PhysicsWorld) {
+
+        if !self.is_enabled { 
+            if sprite.curr_animation != "off" {
+                sprite.curr_animation = "off".to_string();
+                sprite.set_frame(0);
+            }
+            return; 
+        }
+
+        if sprite.curr_animation != "on" {
+            sprite.curr_animation = "on".to_string();
+            sprite.set_frame(0);
+        }
+        
 
         //let mut sprite_alpha = sprite.alpha;
 

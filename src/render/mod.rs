@@ -55,7 +55,7 @@ impl Renderer {
 
     pub fn render_frame(&mut self, game_state: &mut GameState, ctx: &mut Context) -> GameResult {
         let world: &World = &game_state.world;
-        let mut render_objects : Vec<(u32,na::Point2<f32>,f32,u32)> = vec![];
+        let mut render_objects : Vec<(u32,na::Point2<f32>,f32,usize)> = vec![];
         //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
 
         let mut char_in_warp = false;
@@ -104,10 +104,21 @@ impl Renderer {
             let anim_sprite_disp = game_state.world.read_storage::<AnimSpriteComponent>();
             let particle_sys_disp = game_state.world.read_storage::<ParticleSysComponent>();
             let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
-            for (opt_sprite_disp,opt_char_disp,opt_multi_sprite,opt_anim_sprite,opt_particle_sys,pos,ent) in 
-                ((&sprite_disp).maybe(), (&char_disp).maybe(), (&multi_sprite_disp).maybe(), 
-                (&anim_sprite_disp).maybe(), (&particle_sys_disp).maybe(),                
-                &pos,&entities).join() {
+            for (
+                opt_sprite_disp,
+                opt_char_disp,
+                opt_multi_sprite,
+                opt_anim_sprite,
+                opt_particle_sys,
+                pos,
+                ent) in 
+                (
+                    (&sprite_disp).maybe(),
+                    (&char_disp).maybe(),
+                    (&multi_sprite_disp).maybe(), 
+                    (&anim_sprite_disp).maybe(),
+                    (&particle_sys_disp).maybe(),                
+                    &pos,&entities).join() {
                 // Check for any of the display components
                 match opt_char_disp {
                     Some(character) => {
@@ -132,10 +143,10 @@ impl Renderer {
                         },
                         _ => match opt_multi_sprite {
                             Some(multi_sprite) => {
-                                let mut index : u32 = 0;
+                                let mut index : usize = 0;
                                 for sprite in &multi_sprite.sprites {
                                     let z_order = sprite.z_order;
-    
+
                                     render_objects.push(
                                         (ent.id(),na::Point2::new(pos.x, pos.y), z_order, index)
                                     );
@@ -238,13 +249,16 @@ impl Renderer {
         self.pre_render_list(game_state, ctx, world);
 
         // RENDER OBJECT LIST -----------------------------------------------------------------
-        for (ent, pt, _, item_index) in render_objects.iter() {
-            // Get entity by id
-            let entity = game_state.world.entities().entity(ent.clone());
-            // If entity is still alive, render it
-            if entity.gen().is_alive() {
-                // Call generic renderer, which calls on render component to draw
-                Self::call_renderer(ctx, world, entity, pt, *item_index);
+        if let State::Running | State::Paused = &game_state.current_state {
+            
+            for (ent, pt, _, item_index) in render_objects.iter() {
+                // Get entity by id
+                let entity = game_state.world.entities().entity(ent.clone());
+                // If entity is still alive, render it
+                if entity.gen().is_alive() {
+                    // Call generic renderer, which calls on render component to draw
+                    Self::call_renderer(ctx, world, entity, pt, *item_index);
+                }
             }
         }
 
@@ -468,7 +482,7 @@ impl Renderer {
 
         {
             let gs_res = game_state.world.fetch::<GameStateResource>();
-            let game_time = gs_res.game_run_seconds;
+            let game_time = gs_res.level_world_seconds;
             DialogRenderer::render_at(game_state, ctx, format!("{}", &game_time), 
                 0.075, 0.05, 0.15, 0.1, Color::new(0.0, 0.0, 0.0, 0.1), Color::new(0.5, 0.5, 0.5, 0.2) );
 
@@ -486,7 +500,7 @@ impl Renderer {
         Ok(())
     }
 
-    fn call_renderer(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>, item_index: u32) {
+    fn call_renderer(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>, item_index: usize) {
         
         {
             // Try reading CharacterDisplayComponent to render
@@ -537,7 +551,7 @@ impl Renderer {
         
     }
 
-    fn render_item(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>, item_index: u32, render_item: &RenderTrait) {
+    fn render_item(ctx: &mut Context, world: &World, entity: Entity, pt: &na::Point2<f32>, item_index: usize, render_item: &RenderTrait) {
         render_item.draw(ctx, &world, Some(entity.id()), pt.clone(), item_index);
     }
 

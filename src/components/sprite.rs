@@ -83,7 +83,7 @@ impl SpriteConfig {
 
         let config = maybe_config.expect(&format!("Invalid SpriteConfig at {}", &config_path));
 
-        println!("Loading Sprite from config: {:?}", &config.path);
+        //println!("Loading Sprite from config: {:?}", &config.path);
         Self::init_images(world, ctx, config.path.clone());
 
         let mut sprite = SpriteComponent::new(ctx, &config.path, config.z_order);
@@ -137,7 +137,7 @@ impl SpriteComponent {
 
 
 impl super::RenderTrait for SpriteComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, _item_index: usize) {
         if !self.visible { return; }
 
         let mut rng = rand::thread_rng();
@@ -223,58 +223,17 @@ impl MultiSpriteComponent {
 
 
 impl super::RenderTrait for MultiSpriteComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
         //println!("BallRender...");
         let mut rng = rand::thread_rng();
 
-        if item_index >= 0 && (item_index as usize) < self.sprites.len() {
+        if item_index >= 0 && item_index < self.sprites.len() {
 
-            if let Some(sprite) = self.sprites.get(item_index as usize) {
+            if let Some(sprite) = self.sprites.get(item_index) {
                 sprite.draw(ctx, world, ent, pos, 0);
-                // // get sprite base angle
-                // let mut angle = sprite.angle;
-                // // Override angle with collision angle
-                // if let Some(ent_id) = ent {
-                //     let collision_reader = world.read_storage::<Collision>();
-                //     let entity = world.entities().entity(ent_id);
-                //     if let Some(coll) = collision_reader.get(entity) {
-                //         angle = coll.angle;
-                //     }
 
-                // }
-
-                // let mut images = world.fetch_mut::<ImageResources>();
-                // let texture_ref = images.image_ref(sprite.path.clone());
-
-                // let mut _draw_ok = true;
-                // // get centered draw position based on image dimensions
-                // //let draw_pos = na::Point2::<f32>::new(pos.x - (w as f32 / 2.0), pos.y - (h as f32 / 2.0));
-                // let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
-                // // color part:  ,Color::new(1.0,0.7,0.7,1.0)
-                // if let Ok(mut texture) = texture_ref {
-                //     let w = texture.width();
-                //     let h = texture.height();
-                //     texture.set_wrap(WrapMode::Tile, WrapMode::Tile);
-                //     if let Err(_) = ggez::graphics::draw(ctx, texture, (
-                //                 draw_pos.clone(),
-                //                 angle, //rotation
-                //                 na::Point2::new(0.5f32,0.5f32),
-                //                 sprite.scale,
-                //                 Color::new(1.0,1.0,1.0,sprite.alpha))) { 
-                //         _draw_ok = false;
-                //         println!("Failed to render sprite image");
-                //     }
-                // }
-                // else {
-                //     println!("Couldn't get sprite texture: {}", &sprite.path);
-                // }
             }
-
-            
         }
-
-        
-
     }
 }
 

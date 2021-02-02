@@ -12,7 +12,7 @@ use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::meow::{MeowComponent};
 use crate::systems::*;
-use crate::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
 
 pub struct MeowBuilder;
 
@@ -23,14 +23,6 @@ impl MeowBuilder {
 
         let mut meow = MeowComponent::new();
         meow.meow_time = 0.4;
-        // let vx = (vx * 2.0).min(5.0).max(-5.0);
-        // let vy = (vy * 2.0).min(5.0).max(-5.0);
-
-        // if vx == 0.0 && vy == 0.0 {
-        //     vx = 1.5; vy = -0.5;
-        // }
-        // vx = 0.0;
-        // vy = 0.0;
 
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/meow".to_string());
         sprite.scale.x = width / 24.0;
@@ -46,6 +38,7 @@ impl MeowBuilder {
         collision.vel.x = vx;
         collision.vel.y = vy;
         collision.is_sensor = true;
+        collision.entity_type = EntityType::Meow;
         collision.collision_category = CollisionCategory::Sound;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Etherial);
@@ -72,30 +65,4 @@ impl MeowBuilder {
         entity
     }
 
-    // pub fn build_from_ent<'a>(entities: Entities<'a>, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,
-    //     width: f32, height: f32) -> Entity {
-
-
-    //     let mut collision = Collision::new_specs(0.1,0.72, width, height);
-    //     // collision.dim_1 = width;
-    //     // collision.dim_2 = height;
-    //     collision.pos.x = x;
-    //     collision.pos.y = y;
-    //     collision.collision_category = CollisionCategory::Sound;
-    //     collision.collision_mask.clear();
-    //     collision.collision_mask.push(CollisionCategory::Etherial);
-
-    //     collision.create_dynamic_body_circle(physics_world);
-
-    //     let entity = entities.build_entity()
-    //     .with(Position { x: x, y: y })
-    //     .with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
-    //     .with(BallDisplayComponent::new(ctx, &"/dirty-box-1.png".to_string(), false))
-    //     .with(collision)
-    //     .build();
-
-    //     //let entId = entity.id();
-
-    //     entity
-    // }
 }

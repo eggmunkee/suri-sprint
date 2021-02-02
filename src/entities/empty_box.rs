@@ -15,7 +15,7 @@ use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::systems::*;
-use crate::physics::*;
+use crate::core::physics::*;
 
 pub struct BoxBuilder;
 

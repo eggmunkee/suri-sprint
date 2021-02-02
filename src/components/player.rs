@@ -11,8 +11,10 @@ use rand::prelude::*;
 use crate::resources::{ImageResources,ShaderResources,GameStateResource};
 use crate::components::collision::{Collision};
 use crate::components::{Velocity};
-use crate::physics;
-use crate::physics::{PhysicsBody};
+use crate::entities::suri::{SuriPlayer};
+use crate::entities::level_builder::{LevelType};
+use crate::core::physics;
+use crate::core::physics::{PhysicsBody};
 
 // #[derive(Debug,Copy,Clone)]
 // pub enum AnimState {
@@ -90,9 +92,12 @@ const SIT_FRAMES : u32 = 5;
 #[derive(Debug)]
 pub struct CharacterDisplayComponent {
     pub player_number: i32,
+    pub suri_player: SuriPlayer,
     pub is_controlled: bool,
     // image path
     pub spritesheet_path: String,
+    pub spritesheet_cols: f32,
+    pub spritesheet_rows: f32,
     // movement status
     pub going_left: bool,
     pub going_right: bool,
@@ -139,7 +144,7 @@ impl Component for CharacterDisplayComponent {
 }
 
 impl CharacterDisplayComponent {
-    pub fn new(ctx: &mut Context, char_img: &String) -> CharacterDisplayComponent {
+    pub fn new(ctx: &mut Context, char_img: &String, suri_player: SuriPlayer) -> CharacterDisplayComponent {
         //let image = Image::new(ctx, char_img.clone()).unwrap();
 
         CharacterDisplayComponent {
@@ -147,6 +152,15 @@ impl CharacterDisplayComponent {
             is_controlled: true,
             //image: image,
             spritesheet_path: char_img.clone(),
+            spritesheet_cols: match &suri_player {
+                SuriPlayer::Suri => 10.0,
+                SuriPlayer::Milo => 8.0,
+            },
+            spritesheet_rows: match &suri_player {
+                SuriPlayer::Suri => 10.0,
+                SuriPlayer::Milo => 10.0,
+            },
+            suri_player: suri_player,
             going_left: false,
             going_right: false,
             going_up: false,
@@ -266,7 +280,7 @@ impl CharacterDisplayComponent {
             self.start_jump();
         }
         else {
-            self.going_up = false;
+            //self.going_up = false;
         }
     }
 
@@ -337,10 +351,23 @@ impl CharacterDisplayComponent {
         }
     }
 
-    fn process_walk_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, facing_right: bool) {
+    pub fn process_walk_overhead(&mut self, time_delta: f32) {
+        if !self.in_walk && !self.in_idle {
+            self.start_walk();
+        }
+    }
+
+    fn process_walk_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, facing_right: bool, level_type: &LevelType) {
         self.anim_set = WALK_SET;
             self.anim_frame = self.anim_frame % WALK_FRAMES;
-            let move_anim_amt = 0.5 * body_movement.x.abs().max(2.0).min(30.0);
+            let move_anim_amt = match level_type {
+                LevelType::Platformer => {
+                    0.5 * body_movement.x.abs().max(2.0).min(30.0)
+                },
+                LevelType::Overhead => {
+                    0.5 * (body_movement.x.abs() + body_movement.y.abs()).max(2.0).min(30.0)
+                }
+            };
             self.anim_frame_time += time_delta * 10.0 * move_anim_amt;
             if self.anim_frame_time > 1.5 {
                 self.anim_frame_time = 0.0;
@@ -402,7 +429,7 @@ impl CharacterDisplayComponent {
     }
 
 
-    fn process_idle_animation(&mut self, _body_movement: na::Vector2::<f32>, time_delta: f32, _facing_right: bool) {
+    fn process_idle_animation(&mut self, _body_movement: na::Vector2::<f32>, time_delta: f32, _facing_right: bool, _level_type: &LevelType) {
         let mut rng = thread_rng();
 
         self.since_move += time_delta;
@@ -502,7 +529,28 @@ impl CharacterDisplayComponent {
 
         //self.interp_breath(0.08);
 
-        self.update_animation(body_movement, time_delta);
+        self.update_animation(body_movement, time_delta, &LevelType::Platformer);
+
+
+        //self.apply_inputs(coll);
+    }
+
+    pub fn update_overhead(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
+
+        self.since_meow += time_delta;
+        if self.meowing {
+            if self.since_meow < 0.15 { //0.35
+                self.meowing = false;
+            }
+        }
+        self.since_warp += time_delta;
+
+        // Handle going up based on state
+        self.process_walk_overhead(time_delta);
+
+        //self.interp_breath(0.08);
+
+        self.update_animation(body_movement, time_delta, &LevelType::Overhead);
 
 
         //self.apply_inputs(coll);
@@ -525,14 +573,21 @@ impl CharacterDisplayComponent {
         (self.facing_right, is_moving)
     }
 
-    fn process_in_move_anim(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, is_moving: bool) -> bool {
-        is_moving || body_movement.x.abs() > 0.5
+    fn process_in_move_anim(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, is_moving: bool, level_type: &LevelType) -> bool {
+        match level_type {
+            LevelType::Platformer => {
+                is_moving || body_movement.x.abs() > 0.5
+            },
+            LevelType::Overhead => {
+                is_moving || body_movement.x.abs() > 0.5 || body_movement.y.abs() > 0.5
+            }
+        }
     }
 
 
 
 
-    fn update_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) {
+    fn update_animation(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, level_type: &LevelType) {
 
         let (facing_right, is_moving) = self.process_facing_moving(body_movement, time_delta);
         //let anim_moving = self.process_in_move_anim(body_movement, time_delta, is_moving);
@@ -545,12 +600,12 @@ impl CharacterDisplayComponent {
                 self.process_fall_animation(body_movement, time_delta);
             },
             Self { .. } => {
-                match self.process_in_move_anim(body_movement, time_delta, is_moving) {
+                match self.process_in_move_anim(body_movement, time_delta, is_moving, level_type) {
                     true => {
-                        self.process_walk_animation(body_movement, time_delta, facing_right);
+                        self.process_walk_animation(body_movement, time_delta, facing_right, level_type);
                     },
                     false => {
-                        self.process_idle_animation(body_movement, time_delta, facing_right);
+                        self.process_idle_animation(body_movement, time_delta, facing_right, level_type);
                     }
                 }
 
@@ -601,35 +656,127 @@ impl CharacterDisplayComponent {
     //     // }
     // }
 
-    pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody, _time_delta: f32) {
-        let move_amt = 15.0; //1300.0;
+    pub fn get_base_x_move_amount(&self) -> f32 {
+        match self.suri_player {
+            SuriPlayer::Suri => 10.0, //15.0,
+            SuriPlayer::Milo => 10.0, //20.0,
+        }
+    }
+
+    pub fn get_base_y_move_amount(&self) -> f32 {
+        match self.suri_player {
+            SuriPlayer::Suri => 15.0, //15.0,
+            SuriPlayer::Milo => 24.0, //20.0,
+        }
+    }
+
+
+    pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody, time_delta: f32, level_type: &LevelType) {
+        let x_move_amt = self.get_base_x_move_amount(); //1300.0;
+        let y_move_amt = self.get_base_y_move_amount(); //1300.0;
         let up_mult = 3.0;
+        let mut lin_vel = body.linear_velocity().clone();
+        let decr_amt = (1.0 - (1.0 * time_delta)).max(0.0);
+        let loc_cent = body.local_center().clone();
         if self.going_right {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            if body.linear_velocity().x < 12.0 {
-                body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+
+            match level_type {
+                LevelType::Platformer => {
+                    if lin_vel.x < 12.0 {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+                        
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+                    }
+                    
+                    //println!("applied right force");
+                },
+                LevelType::Overhead => {
+                    if lin_vel.x < 5.0 {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt * 0.5 * time_delta,y: 0.0}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
+                    }
+                },
             }
-            
-            //println!("applied right force");
         }
-        if self.going_left {
+        else if self.going_left {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            if body.linear_velocity().x > -12.0 {
-                body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
+            match level_type {
+                LevelType::Platformer => {
+                    if lin_vel.x > -12.0 {
+
+                        //let loc_cent = body.local_center().clone();
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:-x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
+                    }
+                        //println!("applied left force");
+                },
+                LevelType::Overhead => {
+                    if lin_vel.x > -5.0 {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt * 0.5 * time_delta,y: 0.0}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:-x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
+                    }
+                }
             }
-                //println!("applied left force");
+        }
+        else {
+            match level_type {
+                LevelType::Platformer => {},
+                LevelType::Overhead => {
+                    lin_vel.x = lin_vel.x * decr_amt;
+                    body.set_linear_velocity(&physics::PhysicsVec { x: lin_vel.x, y: lin_vel.y });
+                }
+            }
         }
         if self.going_up {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            if body.linear_velocity().y > -12.0 {
-                body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
+            match level_type {
+                LevelType::Platformer => {
+                    if body.linear_velocity().y > -12.0 && self.in_jump {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt * time_delta}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -up_mult * y_move_amt * time_delta}, &loc_cent, true);
+                    }
+                    else if body.linear_velocity().y > 12.0 && self.in_fall {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt * 0.25 * time_delta}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -y_move_amt * 0.25 * time_delta}, &loc_cent, true);
+                    }
+                },
+                LevelType::Overhead => {
+                    if lin_vel.y > -5.0 {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt * time_delta}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -x_move_amt * time_delta}, &loc_cent, true);
+                    }
+                }
             }
             //println!("applied up force");
         }
-        if self.going_down {
+        else if self.going_down {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt}, true);
+            match level_type {
+                LevelType::Platformer => {
+                    //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, true);
+                    body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: y_move_amt * time_delta}, &loc_cent, true);
+                },
+                LevelType::Overhead => {
+                    if lin_vel.y < 5.0 {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: x_move_amt * time_delta}, &loc_cent, true);
+                    }
+                }
+            }
+
             //println!("applied down force");
+        }
+        else {
+            match level_type {
+                LevelType::Platformer => {},
+                LevelType::Overhead => {
+                    lin_vel = body.linear_velocity().clone();
+                    lin_vel.y = lin_vel.y * decr_amt;
+                    body.set_linear_velocity(&physics::PhysicsVec { x: lin_vel.x, y: lin_vel.y });
+                }
+            }
         }
     }
 
@@ -767,7 +914,7 @@ impl super::CharLevelInteractor for CharacterDisplayComponent {
 
 
 impl super::RenderTrait for CharacterDisplayComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
         //println!("PlayerRenderTrait drawing...");
         let time : f32 = {
             let game_state_res = world.fetch::<GameStateResource>();
@@ -827,17 +974,27 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 }
                 else */
                 {
-                    if let Ok(shader_ref) = shader_res.shader_ref("suri_shadow".to_string()) {
-                        _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                    match &self.suri_player {
+                        SuriPlayer::Suri => {
+                            if let Ok(shader_ref) = shader_res.shader_ref("suri_shadow".to_string()) {
+                                _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                            }
+                        },
+                        SuriPlayer::Milo => {
+                            if let Ok(shader_ref) = shader_res.shader_ref("milo_shadow".to_string()) {
+                                _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
+                            }
+                        },
                     }
+                    
                 }
                 
                 // Draw spritesheet texture
                 let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
                 if let Ok(image) = image_ref {
                     // Get starting x/y in spritesheet space (0.0-1.0,0.0-1.0)
-                    let ss_cells = 10.0;
-                    let ss_rows = 10.0;
+                    let ss_cells = self.spritesheet_cols;
+                    let ss_rows = self.spritesheet_rows;
                     let src_x = 0.0 + (self.anim_frame as f32) / ss_cells;
                     let src_y = 0.0 + (self.anim_set as f32) / ss_rows;
                     let (src_w, src_h) = (1.0 / ss_cells, 1.0 / ss_rows);
@@ -876,73 +1033,73 @@ impl super::RenderTrait for CharacterDisplayComponent {
             //     };  
             // }
 
-            if self.since_meow < 0.25 {
-                let font = image_resources.font;
-                let typeText = String::from("*MEOW*");
-                // match &self.in_fall {
-                //     true => {
-                //         typeText.push_str(&format!("FALL {}", &self.anim_frame).to_string());
-                //     },
-                //     false => match &self.in_jump {
-                //         true => {
-                //             typeText.push_str(&format!("JUMP {}", &self.anim_frame).to_string());
-                //         },
-                //         false => {
-                //             typeText.push_str(&format!("STAND {}", &self.anim_frame).to_string());
-                //         }                    
-                //     }
-                // };
+            // if self.since_meow < 0.25 {
+            //     let font = image_resources.font;
+            //     let typeText = String::from("*MEOW*");
+            //     // match &self.in_fall {
+            //     //     true => {
+            //     //         typeText.push_str(&format!("FALL {}", &self.anim_frame).to_string());
+            //     //     },
+            //     //     false => match &self.in_jump {
+            //     //         true => {
+            //     //             typeText.push_str(&format!("JUMP {}", &self.anim_frame).to_string());
+            //     //         },
+            //     //         false => {
+            //     //             typeText.push_str(&format!("STAND {}", &self.anim_frame).to_string());
+            //     //         }                    
+            //     //     }
+            //     // };
                 
-                let curr_transform = ggez::graphics::transform(ctx);
-                ggez::graphics::pop_transform(ctx);
-                ggez::graphics::apply_transformations(ctx);
+            //     let curr_transform = ggez::graphics::transform(ctx);
+            //     ggez::graphics::pop_transform(ctx);
+            //     ggez::graphics::apply_transformations(ctx);
 
-                let mut text = ggez::graphics::Text::new(typeText);
-                text.set_font(font, ggez::graphics::Scale::uniform(18.0));
-                let (width, height) = ggez::graphics::size(ctx);
-                let text_size_x = text.width(ctx) as f32 / 2.0;
-                let text_size_y = text.height(ctx) as f32 / 2.0;
-                if let Err(_) = graphics::draw(ctx, &text,
-                    DrawParam::new()
-                    //.dest(na::Point2::new(20.0, 20.0))   //width*0.5-text_size_x+draw_pos.x, height*0.5-text_size_y+draw_pos.y))
-                    .dest(na::Point2::new(width * 0.4995 - text_size_x, height * 0.5495 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
-                    //.scale(na::Vector2::new(x_scale.abs(), x_scale.abs()))
-                    .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
-                    //.scale(na::Vector2::new(5.0, 5.0))
-                    //.offset(na::Point2::new(text_size_x, text_size_y))
-                    //.scale(na::Vector2::new(x_scale.abs(),x_scale.abs())) 
-                    //.offset(na::Point2::new(text_size_x, text_size_y))
-                ) {
-                    _draw_ok = false;
-                }
+            //     let mut text = ggez::graphics::Text::new(typeText);
+            //     text.set_font(font, ggez::graphics::Scale::uniform(18.0));
+            //     let (width, height) = ggez::graphics::size(ctx);
+            //     let text_size_x = text.width(ctx) as f32 / 2.0;
+            //     let text_size_y = text.height(ctx) as f32 / 2.0;
+            //     if let Err(_) = graphics::draw(ctx, &text,
+            //         DrawParam::new()
+            //         //.dest(na::Point2::new(20.0, 20.0))   //width*0.5-text_size_x+draw_pos.x, height*0.5-text_size_y+draw_pos.y))
+            //         .dest(na::Point2::new(width * 0.4995 - text_size_x, height * 0.5495 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+            //         //.scale(na::Vector2::new(x_scale.abs(), x_scale.abs()))
+            //         .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+            //         //.scale(na::Vector2::new(5.0, 5.0))
+            //         //.offset(na::Point2::new(text_size_x, text_size_y))
+            //         //.scale(na::Vector2::new(x_scale.abs(),x_scale.abs())) 
+            //         //.offset(na::Point2::new(text_size_x, text_size_y))
+            //     ) {
+            //         _draw_ok = false;
+            //     }
 
-                if let Err(_) = graphics::draw(ctx, &text,
-                    DrawParam::new()
-                    .dest(na::Point2::new(width * 0.5005 - text_size_x, height * 0.5495 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
-                    .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
-                ) {
-                    _draw_ok = false;
-                }
+            //     if let Err(_) = graphics::draw(ctx, &text,
+            //         DrawParam::new()
+            //         .dest(na::Point2::new(width * 0.5005 - text_size_x, height * 0.5495 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+            //         .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+            //     ) {
+            //         _draw_ok = false;
+            //     }
 
-                if let Err(_) = graphics::draw(ctx, &text,
-                    DrawParam::new()
-                    .dest(na::Point2::new(width * 0.50 - text_size_x, height * 0.5505 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
-                    .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
-                ) {
-                    _draw_ok = false;
-                }
+            //     if let Err(_) = graphics::draw(ctx, &text,
+            //         DrawParam::new()
+            //         .dest(na::Point2::new(width * 0.50 - text_size_x, height * 0.5505 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+            //         .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+            //     ) {
+            //         _draw_ok = false;
+            //     }
 
-                if let Err(_) = graphics::draw(ctx, &text,
-                    DrawParam::new()
-                    .dest(na::Point2::new(width * 0.5 - text_size_x, height * 0.55 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
-                    //.color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
-                ) {
-                    _draw_ok = false;
-                }
+            //     if let Err(_) = graphics::draw(ctx, &text,
+            //         DrawParam::new()
+            //         .dest(na::Point2::new(width * 0.5 - text_size_x, height * 0.55 - text_size_y )) // - text_size_x, draw_pos.y - text_size_y + 28.0))
+            //         //.color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 1.0))
+            //     ) {
+            //         _draw_ok = false;
+            //     }
 
-                ggez::graphics::push_transform(ctx, Some(curr_transform));
-                ggez::graphics::apply_transformations(ctx);
-            }
+            //     ggez::graphics::push_transform(ctx, Some(curr_transform));
+            //     ggez::graphics::apply_transformations(ctx);
+            // }
             
 
         }

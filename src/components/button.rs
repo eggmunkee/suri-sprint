@@ -6,10 +6,9 @@ use wrapped2d::b2;
 use std::ops::Deref;
 
 
-use crate::components::sprite::{SpriteComponent};
 use crate::components::collision::{Collision};
-use crate::physics;
-use crate::physics::{PhysicsWorld};
+//use crate::core::physics;
+use crate::core::{PhysicsWorld};
 
 const PRESS_RATIO : f32 = 0.70;
 const DOWN_TO_TRIGGER: f32 = 0.2;

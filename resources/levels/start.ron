@@ -7,11 +7,11 @@ LevelConfig(
     soundtrack: "Suri Boogie.mp3",
     items: [
         Player ( x: 80.0, y: -500.0 ),
-        Player ( x: 120.0, y: -500.0 ),
+        Player ( x: 120.0, y: -500.0, player: Some(Milo) ),
         PlayerNamed ( x: 300.0, y: 560.0, name: "a" ),
-        PlayerNamed ( x: 350.0, y: 580.0, name: "a" ),
+        PlayerNamed ( x: 350.0, y: 580.0, name: "a", player: Some(Milo) ),
         PlayerNamed ( x: 900.0, y: 270.0, name: "b" ),
-        PlayerNamed ( x: 850.0, y: 290.0, name: "b" ),
+        PlayerNamed ( x: 850.0, y: 290.0, name: "b", player: Some(Milo) ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/pyramids", z: -1.0, angle: 0.0, src: (0,0,2.0,2.0),),
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), shader: Some("overlay") ),
@@ -28,6 +28,8 @@ LevelConfig(
         Exit ( x: 300.0, y: 500.0, w: 25.0, h: 25.0, name: "", destination: "start_a:a"),
 
         Exit ( x: 900.0, y: 200.0, w: 25.0, h: 25.0, name: "", destination: "start_b:b"),
+
+        Exit ( x: 50.0, y: 50.0, w: 25.0, h: 25.0, name: "", destination: "overview_1"),
 
         Ghost ( x: 200.0, y: 100.0 ),
 

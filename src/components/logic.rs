@@ -8,8 +8,9 @@ use serde::{Deserialize,de::DeserializeOwned,Serialize};
 
 use crate::components::sprite::{SpriteComponent};
 use crate::components::collision::{Collision};
-use crate::physics;
-use crate::physics::{PhysicsWorld};
+use crate::core::physics;
+use crate::core::physics::{PhysicsWorld};
+use crate::entities::level_builder::{ItemLogic};
 
 #[derive(Debug,Clone,Deserialize,Serialize)]
 pub enum ConnectionType {
@@ -90,6 +91,38 @@ impl LogicComponent {
                 _ => LogicOpType::And, // default to and
             },
             logic_type: ConnectionType::default(),
+            input_value: None,
+            value: is_enabled,
+            is_active: false,
+            last_value: is_enabled,
+            last_active: false,
+            last_input: None,
+            change_count: 0,
+            frozen: false,
+        };
+
+        logic
+    }
+
+    pub fn new_logic(id: String, is_enabled: bool, logic_opt: Option<ItemLogic>) -> LogicComponent {
+
+        let mut logic = LogicComponent {
+            id: id,
+            initial_value: is_enabled,
+            logic_op: match &logic_opt {
+                Some(logic) => match &logic.logic_op {
+                    Some(logic_op_value) => logic_op_value.clone(),
+                    _ => LogicOpType::And,
+                },
+                _ => LogicOpType::And, // default to and
+            },
+            logic_type: match &logic_opt {
+                Some(logic) => match &logic.logic_type {
+                    Some(logic_type_value) => logic_type_value.clone(),
+                    _ => ConnectionType::Switch,
+                },
+                _ => ConnectionType::Switch, // default to and
+            },
             input_value: None,
             value: is_enabled,
             is_active: false,

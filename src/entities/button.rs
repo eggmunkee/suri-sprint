@@ -16,7 +16,7 @@ use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::components::logic::{LogicComponent};
 use crate::systems::*;
-use crate::physics::*;
+use crate::core::physics::*;
 
 pub struct ButtonBuilder;
 
@@ -44,6 +44,7 @@ impl ButtonBuilder {
         collision.pos.x = x;
         collision.pos.y = y;
         collision.angle = angle;
+        collision.entity_type = EntityType::Button;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
@@ -90,6 +91,7 @@ impl ButtonBuilder {
         collision.pos.x = x;
         collision.pos.y = y + height * 0.25;
         collision.angle = angle;
+        collision.entity_type = EntityType::Button;
         collision.collision_category = CollisionCategory::Level;
         collision.collision_mask.clear();
         collision.collision_mask.push(CollisionCategory::Level);
@@ -238,12 +240,12 @@ impl ButtonBuilder {
         
         let joint_def = b2::PrismaticJointDef {
             enable_limit: true,
-            lower_translation: create_size(height* 0.3),
-            upper_translation: create_size(height*0.8),
+            lower_translation: create_size(height* 0.3), //.3
+            upper_translation: create_size(height*0.8), //.8
             local_axis_a: b2::Vec2 { x: 0.0, y: -1.0 }, 
             enable_motor: true,
-            max_motor_force: 1.0,   //2.5,
-            motor_speed: 2.0,  //10.0,
+            max_motor_force: 1.0 * ((height * height) / 90.0),   //2.5,
+            motor_speed: 0.5,  //10.0,
             .. b2::PrismaticJointDef::new(button_body_handle.clone(), trigger_body_handle.clone())
         };
         let joint_handle = world.create_joint_with(&joint_def, ());

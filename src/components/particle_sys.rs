@@ -64,13 +64,13 @@ impl ParticleSysConfig {
         let config = maybe_config.expect(&format!("Invalid ParticleSysConfig at {}", &config_path));
 
         if let Some(sprite_path) = &config.sprite {
-            println!("Loading Sprite from config: {:?}", &sprite_path);
+            //println!("Loading Sprite from config: {:?}", &sprite_path);
             SpriteConfig::init_images(world, ctx, sprite_path.clone());
         }
 
 
-        println!("Loaded ParticleSys from config");
-        println!("{:?}", &config);
+        //println!("Loaded ParticleSys from config");
+        //println!("{:?}", &config);
 
         let mut sys = ParticleSysComponent::new(ctx);
         sys.width = config.width;
@@ -257,7 +257,7 @@ impl ParticleSysComponent {
 
 
 impl super::RenderTrait for ParticleSysComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: u32) {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, _item_index: usize) {
         if !self.visible { return; }
 
         let mut rng = rand::thread_rng();
@@ -283,18 +283,18 @@ impl super::RenderTrait for ParticleSysComponent {
             no_texture = false;
         }
 
-        if let Ok(rect) = ggez::graphics::Mesh::new_circle(ctx, 
-            ggez::graphics::DrawMode::Stroke(ggez::graphics::StrokeOptions::default()),
-            na::Point2::<f32>::new(0.0, 0.0),
-            self.width, 0.5,
-            ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
-        ) {
-            ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                .dest(draw_pos.clone())
-                .offset(na::Point2::new(self.width, self.width))
-                .color(Color::new(1.0,0.0,1.0,0.1))
-            );
-        }
+        // if let Ok(rect) = ggez::graphics::Mesh::new_circle(ctx, 
+        //     ggez::graphics::DrawMode::Stroke(ggez::graphics::StrokeOptions::default()),
+        //     na::Point2::<f32>::new(0.0, 0.0),
+        //     self.width, 0.5,
+        //     ggez::graphics::Color::new(1.0, 1.0, 0.0, 0.5)
+        // ) {
+        //     ggez::graphics::draw(ctx, &rect, DrawParam::default()
+        //         .dest(draw_pos.clone())
+        //         .offset(na::Point2::new(self.width, self.width))
+        //         .color(Color::new(1.0,0.0,1.0,0.1))
+        //     );
+        // }
 
         for particle in &self.particles {
             if particle.alive == false {
@@ -326,6 +326,9 @@ impl super::RenderTrait for ParticleSysComponent {
                     if let Ok(ref mut texture) = texture_rep_res {
                         let w = texture.width();
                         let h = texture.height();
+
+                        let scaled_w = 0.0; //(w as f32) * self.scale.0;
+                        let scaled_h = 0.0; //(h as f32) * self.scale.1;
                         //texture.set_wrap(WrapMode::Border, WrapMode::Border);
             
                         // let mut _lock : Option<ggez::graphics::ShaderLock> = None;
@@ -335,7 +338,7 @@ impl super::RenderTrait for ParticleSysComponent {
                         //         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                         //     }
                         // }
-                        let p_draw_pos = na::Point2::new(draw_pos.x + particle.x - (w as f32 * 0.5), draw_pos.y + particle.y - (h as f32 * 0.5));
+                        let p_draw_pos = na::Point2::new(draw_pos.x + particle.x - (scaled_w * 0.5), draw_pos.y + particle.y - (scaled_h * 0.5));
             
                         if let Err(_) = ggez::graphics::draw(ctx, *texture, DrawParam::new()
                                 .src( Rect::new(0.0, 0.0, 1.0, 1.0) )

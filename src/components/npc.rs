@@ -8,8 +8,8 @@ use rand::prelude::*;
 
 use crate::components::sprite::{SpriteComponent};
 use crate::components::collision::{Collision};
-use crate::physics;
-use crate::physics::{PhysicsWorld};
+use crate::core::physics;
+use crate::core::physics::{PhysicsWorld};
 
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
@@ -188,6 +188,160 @@ impl NpcComponent {
         }
 
     }
+
+    pub fn update_overhead(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32, x: f32, y: f32) {
+        let mut rng = rand::thread_rng();
+
+        self.since_stand += time_delta;
+
+        if self.is_enabled { //body_movement.x < 1.0 && body_movement.x > -1.0 {
+            self.dec_timer += time_delta * rng.gen::<f32>() * 2.0;
+            if self.dec_timer > 0.5 {
+                let dec = rng.gen::<f32>();
+                if self.tracking_target {
+                    if x < self.target_position.0 - 100.0 {
+                        if dec < 0.85 {
+                            self.going_right = true;
+                            self.going_left = false;
+                        }
+                        else if dec < 0.89 {
+                            self.going_left = true;
+                            self.going_right = false;
+                        }
+                        else {
+                            self.going_left = false;
+                            self.going_right = false;
+                        }
+
+                    }
+                    else if x > self.target_position.0 + 100.0 {
+                        if dec < 0.85 {
+                            self.going_left = true;
+                            self.going_right = false;
+                        }
+                        else if dec < 0.89 {
+                            self.going_right = true;
+                            self.going_left = false;
+                        }
+                        else {
+                            self.going_left = false;
+                            self.going_right = false;
+                        }
+                    }
+                    else {
+                        if dec < 0.85 {
+                            self.going_left = false;
+                            self.going_right = false;
+                        }
+                        else if dec < 0.87 {
+                            self.going_left = true;
+                            self.going_right = false;
+                        }
+                        else if dec < 0.89 {
+                            self.going_left = false;
+                            self.going_right = true;
+                        }
+                    }
+
+                    if y < self.target_position.1 - 100.0 {
+                        if dec < 0.85 {
+                            self.going_up = false;
+                            self.going_down = true;
+                        }
+                        else if dec < 0.87 {
+                            self.going_down = false;
+                            self.going_up = true;
+                        }
+                        else if dec < 0.89 {
+                            self.going_down = false;
+                            self.going_up = false;
+                        }
+                    }
+                    else if y > self.target_position.1 + 100.0 {
+                        if dec < 0.85 {
+                            self.going_up = true;
+                            self.going_down = false;
+                        }
+                        else if dec < 0.87 {
+                            self.going_down = true;
+                            self.going_up = false;
+                        }
+                        else if dec < 0.89 {
+                            self.going_down = false;
+                            self.going_up = false;
+                        }
+                    }
+                    else {
+                        if dec < 0.85 {
+                            self.going_up = false;
+                            self.going_down = false;
+                        }
+                        else if dec < 0.87 {
+                            self.going_down = true;
+                            self.going_up = false;
+                        }
+                        else if dec < 0.89 {
+                            self.going_down = false;
+                            self.going_up = true;
+                        }
+                    }
+
+                    {
+                        //self.going_up = false;
+                        //self.going_down = false;
+                    }
+                    self.dec_timer = 0.0;
+                }
+                else {
+                    if dec < 0.15 {
+                        self.going_left = true;
+                    }
+                    else if dec < 0.3 {
+                        self.going_right = true;
+                    }
+                    else if dec < 0.4 { //&& (!self.in_jump && !self.in_fall) {
+                        self.going_up = true;
+                        self.going_down = false;
+                        let dec2 = rng.gen::<f32>();
+                        if dec2 < 0.3 {
+                            self.going_left = true;
+                        }
+                        else if dec2 < 0.6 {
+                            self.going_right = true;
+                        }
+                    }
+                    else if dec < 0.5 { //&& (!self.in_jump && !self.in_fall) {
+                        self.going_down = true;
+                        self.going_up = false;
+                        let dec2 = rng.gen::<f32>();
+                        if dec2 < 0.3 {
+                            self.going_left = true;
+                            self.going_right = false;
+                        }
+                        else if dec2 < 0.6 {
+                            self.going_right = true;
+                            self.going_left = false;
+                        }
+                    }
+                    else if dec > 0.7 {
+                        self.going_left = false;
+                        self.going_right = false;
+                        self.going_up = false;
+                        self.going_down = false;
+                    }
+                    self.dec_timer = 0.0;    
+                }
+
+            }
+        }
+        else {
+            /*self.going_left = false;
+            self.going_right = false;
+            self.going_up = false;
+            self.going_down = false;*/
+        }
+
+    }    
 
     pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody, time_delta: f32) {
         let move_amt = 2.0; //1300.0;

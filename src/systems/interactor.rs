@@ -9,8 +9,8 @@ use ggez::nalgebra::{Point2,Vector2,distance,distance_squared};
 use crate::resources::{InputResource,GameStateResource};
 use crate::components::*;
 use crate::components::collision::*;
-use crate::physics;
-use crate::physics::{PhysicsWorld};
+//use crate::core::physics;
+use crate::core::physics::{PhysicsWorld};
 
 
 // handle interactions between interactive actors

@@ -9,24 +9,18 @@ use ggez::{GameResult};
 // ================== ROOT MODULES ========================
 
 mod conf;
-// Builders for entity types
-mod entities;
-// Simple physics module
-mod physics;
+// Core modules like physics, audio, input, events, game system, and world
+mod core;
 // Components available to entities
 mod components;
+// Builders for entity types
+mod entities;
 // Shared world data
 mod resources;
-// Audio module
-mod audio;
 // Systems which process world state updates
 mod systems;
-// Sets up the world
-mod world;
 // Render methods for app
 mod render;
-// Input key mapping from codes to actions, handle actions
-mod input;
 // creates game state with world and dispatcher, handles event loop
 //   Update, Draw, KeyDown KeyUp, etc.
 //   Events are forwarded to specs dispatcher and render/input modules
@@ -60,23 +54,19 @@ pub fn main() -> GameResult {
     // build
     let (ctx, event_loop) = &mut cb.build()?;
 
-    //ggez::graphics::set_window_icon(ctx, Some("/icon.png"))?;
     // create app's state
     let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode, config.music_volume, config.gravity)?;
 
-    //state.set_gravity(80.0);
-    //state.audio.set_volume(config.music_volume);
-
+    // Load start level
     state.load_level(ctx, config.start_level, "".to_string());
-    //{
-        //let mut world = &mut state.world;
-        //let mut phys_world = &mut state.phys_world;
-    //level.build_level(&mut state.world, ctx, &mut state.phys_world);
-
-    // To play default music at start
-    //state.play_music(ctx);
 
     //filesystem::print_all(ctx);
+
     // run event loop
-    event::run(ctx, event_loop, state)
+    println!("Running event loop...");
+    let run_result = event::run(ctx, event_loop, state);
+
+    println!("Quitting...");
+
+    run_result
 }

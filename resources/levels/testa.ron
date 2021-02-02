@@ -1,17 +1,17 @@
 LevelConfig(
-    name: "testa",
+    name: "Testing A",
     bounds: (
-        min_x: -1000.0, min_y: -1000.0, max_x: 4000.0, max_y: 4000.0,
+        min_x: -1000.0, min_y: -1000.0, max_x: 4000.0, max_y: 3000.0,
         solid_sides: (false, true, false, true),
     ),
     soundtrack: "pirates/track-08.mp3",
     items: [
         Player ( x: -950.0, y: -950.0 ),
-        Player ( x: 3700.0, y: -950.0 ), // test entrance by exit
+        Player ( x: 3700.0, y: -550.0, player: Some(Milo) ), // test entrance by exit
 
         //
         Sprite ( x: 1500.0, y: 1500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
-        Sprite ( x: 1500.0, y: 1500.0, sprite: "entities/tile-bg", z: 10.0, angle: 0.0, src: (-20,-20,39,39), ),
+        Sprite ( x: 1500.0, y: 1000.0, sprite: "entities/grid_structure", z: 10.0, angle: 0.0, src: (-20,-20,39,31.5), ),
 
         Sprite ( x: 1950.0, y: 640.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 1.197, src: (0,0,19,1), ),
         
@@ -23,7 +23,7 @@ LevelConfig(
         DynEmptyBox ( x: 400.0, y: 50.0, w: 40.0, h: 40.0, ang: 0.0),
 
 
-        Platform ( x: 1650.0, y: 3999.0, w: 2350.0, h: 20.0, ang: 0.0),
+        Platform ( x: 1750.0, y: 3000.0, w: 2300.0, h: 20.0, ang: 0.0),
 
         Platform ( x: 3500.0, y: -1000.0, w: 500.0, h: 20.0, ang: 0), // top platform for exit
         Exit ( x: 3870.0, y: -920.0, w: 25.0, h: 25.0, name: "exit", destination: "test_small" ),
@@ -57,9 +57,9 @@ LevelConfig(
 
         Portal ( x: 2400.0, y: 1800.0, w: 30.0, name: "b", destination: "a", start_enabled: true),
 
-        Platform ( x: 700.0, y: 2000.0, w: 400.0, h: 20.0, ang: -0.2),
-        Platform ( x: -50.0, y: 2000.0, w: 400.0, h: 20.0, ang: 0.2),
-        Platform ( x: 1000.0, y: 1750.0, w: 400.0, h: 20.0, ang: 0.0),
+        Platform ( x: 700.0, y: 2700.0, w: 400.0, h: 20.0, ang: -0.2),
+        Platform ( x: -50.0, y: 2700.0, w: 400.0, h: 20.0, ang: 0.2),
+        Platform ( x: 1000.0, y: 2450.0, w: 400.0, h: 20.0, ang: 0.0),
         Platform ( x: 1700.0, y: 2000.0, w: 400.0, h: 20.0, ang: 0.0),
         Platform ( x: 1550.0, y: 1000.0, w: 400.0, h: 20.0, ang: 0.15),
         Platform ( x: 1950.0, y: 1300.0, w: 400.0, h: 20.0, ang: -0.375),

@@ -10,5 +10,6 @@ pub mod suri;
 pub mod meow;
 pub mod ui;
 pub mod bowl;
+pub mod point_pickup;
 
 pub mod level_builder;

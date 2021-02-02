@@ -8,7 +8,7 @@ use crate::components::{Position};
 use crate::components::sprite::*;
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
-use crate::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory};
 
 
 pub struct UIBuilder;
