@@ -17,4 +17,6 @@ ParticleSysConfig(
     emit_rate: 0.001,
     max_particles: 7500,
     ttl: 3.5,
+    destroy_on_end: false,
+    world_positions: false,
 )

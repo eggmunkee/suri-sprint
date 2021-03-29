@@ -1,7 +1,7 @@
 LevelConfig(
     name: "Testing Old",
     bounds: (
-        min_x: -50.0, min_y: 1000.0, max_x: 4500.0, max_y: 3600.0,
+        min_x: 150.0, min_y: 1000.0, max_x: 4000.0, max_y: 3600.0,
         solid_sides: (false, false, false, false),
     ),
     soundtrack: "Suri Title theme.mp3",

@@ -5,33 +5,35 @@ use ggez::nalgebra as na;
 use specs::{Builder,Entity,Entities,EntityBuilder,World,WorldExt};
 use wrapped2d::user_data::*;
 
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 //use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::anim_sprite::{AnimSpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::meow::{MeowComponent};
 use crate::components::pickup::{PickupComponent};
+use crate::components::flags::{RenderAnimSpriteFlag};
 use crate::systems::*;
 use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType,PickupItemType};
 
-pub struct PointPickup;
+pub struct PickupBuilder;
 
-impl PointPickup {
+impl PickupBuilder {
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32,
-        width: f32, height: f32) -> Entity {
+        width: f32, height: f32, pickup_type: PickupItemType) -> Entity {
 
-        let pickup = PickupComponent::new();
+        let mut pickup = PickupComponent::new();
+        pickup.pickup_type = pickup_type;
 
         let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, "entities/point_anim1".to_string());
-        sprite.scale.x = width / 24.0;
-        sprite.scale.y = height / 24.0;
+        sprite.scale.x = width / 12.0;
+        sprite.scale.y = height / 12.0;
         sprite.z_order = z;
         //sprite.z_order = sprite.z //SpriteLayer::PlayerBehind.to_z();
         //sprite.shader = Some("meow_shader".to_string());
 
-        let mut collision = Collision::new_specs(0.1,0.72, width, height);
+        let mut collision = Collision::new_specs(0.05,0.750, width, height);
         // collision.dim_1 = width;
         // collision.dim_2 = height;
         collision.pos.x = x;
@@ -51,6 +53,8 @@ impl PointPickup {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderAnimSpriteFlag)
         .build();
 
         let entity_id = entity.id();
@@ -65,18 +69,19 @@ impl PointPickup {
     }
 
     pub fn build_dynamic(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32,
-        width: f32, height: f32) -> Entity {
+        width: f32, height: f32, pickup_type: PickupItemType) -> Entity {
 
-        let pickup = PickupComponent::new();
+        let mut pickup = PickupComponent::new();
+        pickup.pickup_type = pickup_type;
 
         let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, "entities/point_anim1".to_string());
-        sprite.scale.x = width / 24.0;
-        sprite.scale.y = height / 24.0;
+        sprite.scale.x = width / 12.0;
+        sprite.scale.y = height / 12.0;
         sprite.z_order = z;
         //sprite.z_order = sprite.z //SpriteLayer::PlayerBehind.to_z();
         //sprite.shader = Some("meow_shader".to_string());
 
-        let mut collision = Collision::new_specs(0.1,0.72, width, height);
+        let mut collision = Collision::new_specs(0.05,0.750, width, height);
         // collision.dim_1 = width;
         // collision.dim_2 = height;
         collision.pos.x = x;
@@ -97,6 +102,8 @@ impl PointPickup {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderAnimSpriteFlag)
         .build();
 
         let entity_id = entity.id();

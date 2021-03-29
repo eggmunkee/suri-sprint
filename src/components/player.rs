@@ -3,18 +3,22 @@ use ggez::{Context};
 use ggez::graphics;
 use ggez::graphics::{Rect,Image,Color,DrawParam,ShaderLock};
 use ggez::nalgebra as na;
-use specs::{ Component, DenseVecStorage, World, WorldExt };
+use ggez::nalgebra::{Point2};
+use specs::{ Component, DenseVecStorage, World, WorldExt, Entity };
 //use specs::shred::{Dispatcher};
 use rand::prelude::*;
 
-//use crate::game_state::{GameState};
+use crate::core::game_state::{GameState};
 use crate::resources::{ImageResources,ShaderResources,GameStateResource};
 use crate::components::collision::{Collision};
-use crate::components::{Velocity};
-use crate::entities::suri::{SuriPlayer};
+use crate::components::npc::{NpcComponent};
+use crate::components::particle_sys::{ParticleSysComponent};
+use crate::components::{Velocity,PhysicsUpdateTrait};
+use crate::entities::player::{PlayerCharacter};
 use crate::entities::level_builder::{LevelType};
 use crate::core::physics;
-use crate::core::physics::{PhysicsBody};
+use crate::core::physics::{PhysicsBody,PhysicsWorld};
+use crate::render::dialog::{DialogRenderer};
 
 // #[derive(Debug,Copy,Clone)]
 // pub enum AnimState {
@@ -89,11 +93,20 @@ const IDLE_FRAMES : u32 = 4;
 const SIT_SET : u32 = 4;
 const SIT_FRAMES : u32 = 5;
 
+#[derive(Debug,Clone)]
+pub struct AnimSnapshotInfo {
+    pub frame_num: u32,
+    pub anim_set: u32,
+    pub facing_right: bool,
+}
+
+
 #[derive(Debug)]
 pub struct CharacterDisplayComponent {
     pub player_number: i32,
-    pub suri_player: SuriPlayer,
+    pub player_char: PlayerCharacter,
     pub is_controlled: bool,
+    pub is_controllable: bool,
     // image path
     pub spritesheet_path: String,
     pub spritesheet_cols: f32,
@@ -136,31 +149,36 @@ pub struct CharacterDisplayComponent {
     pub exit_id: i32,
     pub portal_id: i32,
     pub since_warp: f32,
+    // character status
+    pub speed_level: i32,
     // input
     pub input_enabled: bool,
+    // animation history
+    pub frame_history: Vec::<AnimSnapshotInfo>,    
 }
 impl Component for CharacterDisplayComponent {
     type Storage = DenseVecStorage<Self>;
 }
 
 impl CharacterDisplayComponent {
-    pub fn new(ctx: &mut Context, char_img: &String, suri_player: SuriPlayer) -> CharacterDisplayComponent {
+    pub fn new(ctx: &mut Context, char_img: &String, player_char: PlayerCharacter) -> CharacterDisplayComponent {
         //let image = Image::new(ctx, char_img.clone()).unwrap();
 
         CharacterDisplayComponent {
             player_number: 0,
             is_controlled: true,
+            is_controllable: true,
             //image: image,
             spritesheet_path: char_img.clone(),
-            spritesheet_cols: match &suri_player {
-                SuriPlayer::Suri => 10.0,
-                SuriPlayer::Milo => 8.0,
+            spritesheet_cols: match &player_char {
+                PlayerCharacter::Suri => 10.0,
+                PlayerCharacter::Milo => 8.0,
             },
-            spritesheet_rows: match &suri_player {
-                SuriPlayer::Suri => 10.0,
-                SuriPlayer::Milo => 10.0,
+            spritesheet_rows: match &player_char {
+                PlayerCharacter::Suri => 10.0,
+                PlayerCharacter::Milo => 10.0,
             },
-            suri_player: suri_player,
+            player_char: player_char,
             going_left: false,
             going_right: false,
             going_up: false,
@@ -190,7 +208,9 @@ impl CharacterDisplayComponent {
             exit_id: -1,
             portal_id: -1,
             since_warp: 0.0,
+            speed_level: 0,
             input_enabled: true,
+            frame_history: vec![],
         }
     }
 
@@ -531,6 +551,15 @@ impl CharacterDisplayComponent {
 
         self.update_animation(body_movement, time_delta, &LevelType::Platformer);
 
+        while self.frame_history.len() >= 50 {
+            self.frame_history.remove(0);
+        }
+        self.frame_history.push(AnimSnapshotInfo {
+            frame_num: self.anim_frame,
+            anim_set: self.anim_set,
+            facing_right: self.facing_right
+        });
+                
 
         //self.apply_inputs(coll);
     }
@@ -554,6 +583,16 @@ impl CharacterDisplayComponent {
 
 
         //self.apply_inputs(coll);
+
+        while self.frame_history.len() >= 50 {
+            self.frame_history.remove(0);
+        }
+        self.frame_history.push(AnimSnapshotInfo {
+            frame_num: self.anim_frame,
+            anim_set: self.anim_set,
+            facing_right: self.facing_right
+        });
+
     }
 
     fn process_facing_moving(&mut self, body_movement: na::Vector2::<f32>, time_delta: f32) -> (bool, bool) {
@@ -656,18 +695,29 @@ impl CharacterDisplayComponent {
     //     // }
     // }
 
-    pub fn get_base_x_move_amount(&self) -> f32 {
-        match self.suri_player {
-            SuriPlayer::Suri => 10.0, //15.0,
-            SuriPlayer::Milo => 10.0, //20.0,
+    pub fn scale_by_speed_level(&self, base: f32) -> f32 {
+        match self.speed_level {
+            3 => base * 1.2,
+            2 => base * 1.1,
+            1 => base * 1.0,
+            _ => base * 0.9,
         }
     }
 
+    pub fn get_base_x_move_amount(&self) -> f32 {
+        let base = match self.player_char {
+            PlayerCharacter::Suri => 10.0, //15.0,
+            PlayerCharacter::Milo => 16.0, //20.0,
+        };
+        self.scale_by_speed_level(base)
+    }
+
     pub fn get_base_y_move_amount(&self) -> f32 {
-        match self.suri_player {
-            SuriPlayer::Suri => 15.0, //15.0,
-            SuriPlayer::Milo => 24.0, //20.0,
-        }
+        let base = match self.player_char {
+            PlayerCharacter::Suri => 15.0, //15.0,
+            PlayerCharacter::Milo => 24.0, //20.0,
+        };
+        self.scale_by_speed_level(base)
     }
 
 
@@ -683,7 +733,7 @@ impl CharacterDisplayComponent {
 
             match level_type {
                 LevelType::Platformer => {
-                    if lin_vel.x < 12.0 {
+                    if lin_vel.x < self.scale_by_speed_level(12.0) {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
                         
                         body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
@@ -693,7 +743,7 @@ impl CharacterDisplayComponent {
                     //println!("applied right force");
                 },
                 LevelType::Overhead => {
-                    if lin_vel.x < 5.0 {
+                    if lin_vel.x < self.scale_by_speed_level(5.0) {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt * 0.5 * time_delta,y: 0.0}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
                     }
@@ -704,7 +754,7 @@ impl CharacterDisplayComponent {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             match level_type {
                 LevelType::Platformer => {
-                    if lin_vel.x > -12.0 {
+                    if lin_vel.x > self.scale_by_speed_level(-12.0) {
 
                         //let loc_cent = body.local_center().clone();
                         body.apply_linear_impulse(&physics::PhysicsVec {x:-x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
@@ -713,7 +763,7 @@ impl CharacterDisplayComponent {
                         //println!("applied left force");
                 },
                 LevelType::Overhead => {
-                    if lin_vel.x > -5.0 {
+                    if lin_vel.x > self.scale_by_speed_level(-5.0) {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt * 0.5 * time_delta,y: 0.0}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:-x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
                     }
@@ -733,17 +783,17 @@ impl CharacterDisplayComponent {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             match level_type {
                 LevelType::Platformer => {
-                    if body.linear_velocity().y > -12.0 && self.in_jump {
+                    if body.linear_velocity().y > self.scale_by_speed_level(-12.0) && self.in_jump {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt * time_delta}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -up_mult * y_move_amt * time_delta}, &loc_cent, true);
                     }
-                    else if body.linear_velocity().y > 12.0 && self.in_fall {
+                    else if body.linear_velocity().y > self.scale_by_speed_level(12.0) && self.in_fall {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt * 0.25 * time_delta}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -y_move_amt * 0.25 * time_delta}, &loc_cent, true);
                     }
                 },
                 LevelType::Overhead => {
-                    if lin_vel.y > -5.0 {
+                    if lin_vel.y > self.scale_by_speed_level(-5.0) {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt * time_delta}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -x_move_amt * time_delta}, &loc_cent, true);
                     }
@@ -759,7 +809,7 @@ impl CharacterDisplayComponent {
                     body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: y_move_amt * time_delta}, &loc_cent, true);
                 },
                 LevelType::Overhead => {
-                    if lin_vel.y < 5.0 {
+                    if lin_vel.y < self.scale_by_speed_level(5.0) {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: x_move_amt * time_delta}, &loc_cent, true);
                     }
@@ -875,24 +925,35 @@ impl CharacterDisplayComponent {
     //     //vel.y = vel.y.max(-80.0);
     // }
 
-    // Update animation status from collision standing status
-    pub fn update_body_status(&mut self, is_standing: bool) {
+    pub fn get_spritesheet_frame(&self, frame_num: u32, set_num: u32)
+        -> (f32, f32, f32, f32) {
 
-        match is_standing {
-            true => {
-                if self.in_jump || self.in_fall {
-                    self.start_walk();
-                }
-            },
-            false => {
-                if !self.in_jump && !self.in_fall {
-                    self.start_fall();
-                }
-            }
-        }
-        
+        let ss_cells = self.spritesheet_cols;
+        let ss_rows = self.spritesheet_rows;
+        let src_x = 0.0 + (frame_num as f32) / ss_cells;
+        let src_y = 0.0 + (set_num as f32) / ss_rows;
+        let (src_w, src_h) = (1.0 / ss_cells, 1.0 / ss_rows);
+
+        (src_x, src_y, src_w, src_h)
     }
 
+    
+
+}
+
+impl super::RenderItemTarget for CharacterDisplayComponent {
+
+    fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let character_reader = world.read_storage::<CharacterDisplayComponent>();
+
+            // Get Sprite Component to call draw method            
+            if let Some(character) = character_reader.get(entity.clone()) {
+                use crate::components::{RenderTrait};
+                character.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+            }
+        }
 }
 
 impl super::CharLevelInteractor for CharacterDisplayComponent {
@@ -912,26 +973,105 @@ impl super::CharLevelInteractor for CharacterDisplayComponent {
     }
 }
 
+impl PhysicsUpdateTrait for CharacterDisplayComponent {
+    fn pre_physics_update(&mut self, world: &World, physics_world: &mut PhysicsWorld, time_delta: f32, 
+        opt_collision: &mut Option<&mut Collision>,
+        opt_character: &mut Option<&mut CharacterDisplayComponent>,
+        opt_npc: &mut Option<&mut NpcComponent>,
+        //level_bounds: &LevelBounds,
+        //game_state: &GameStateResource,
+        entity: &Entity) {
+
+        //println!("Pre Physics update {:?}", &entity);
+
+    }
+
+    fn post_physics_update(&mut self, world: &World, physics_world: &mut PhysicsWorld, time_delta: f32, 
+        opt_collision: &mut Option<&mut Collision>,
+        opt_character: &mut Option<&mut CharacterDisplayComponent>,
+        opt_npc: &mut Option<&mut NpcComponent>,
+        //game_state: &GameStateResource,
+        entity: &Entity) {
+        
+        //println!("Post Physics update {:?}", &entity);
+        // println!(" Borrow Particle Sys {:?}", &entity);
+        // let mut particle_sys_res = world.write_storage::<ParticleSysComponent>();
+        //println!(" Borrow GameStateRes {:?}", &entity);
+        let mut particle_sys_res = world.write_storage::<ParticleSysComponent>();
+        //let mut game_state_res = world.fetch_mut::<GameStateResource>();
+        //if let Some() = world.get_mut::<ParticleSysComponent>();
+        //println!(" Get Particle Sys ref {:?}", &entity);
+        if let Some(mut particle_sys) = particle_sys_res.get_mut(*entity) {
+
+            if let Some(ref mut collision) = opt_collision {
+                let coll_velx = collision.vel.x; //get_avg_x(5);
+                let coll_vely = collision.vel.y; //get_avg_y(5);
+                particle_sys.world_vel.0 = coll_velx * 5.0;
+                particle_sys.world_vel.1 = coll_vely * 5.0;
+            }
+
+
+            particle_sys.set_logic_value( match (self.in_walk || self.in_idle) && self.since_move < 0.05 {
+                false => false,
+                true => true,
+            });
+            
+            //println!("Post Physics update {:?} Particle Sys Viz: {}", &entity, &particle_sys.visible);
+            //game_state_res.points = game_state_res.points + 1;
+        }
+
+    }
+}
 
 impl super::RenderTrait for CharacterDisplayComponent {
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
         //println!("PlayerRenderTrait drawing...");
-        let time : f32 = {
+        let frame_num : i32 = {
             let game_state_res = world.fetch::<GameStateResource>();
 
-            let gs = &*game_state_res;
-            0.0
+            // let gs = &*game_state_res;
+            // 0.0
+            game_state_res.level_frame_num
         };
         let mut rng = rand::thread_rng();
         let mut _draw_ok = true;
         // color part:  ,Color::new(1.0,0.7,0.7,1.0)
         let texture_scale = 1.5;//self.breath_cycle.cos() * 0.02;
         let mut angle = 0.0;
+        let mut pos_history = Vec::<Point2::<f32>>::new();
+        let mut trail_frame_history = Vec::<AnimSnapshotInfo>::new();
+        //let mut trail_set_history = Vec::<u32>::new();
         if let Some(ent_id) = ent {
             let collision_reader = world.read_storage::<Collision>();
             let entity = world.entities().entity(ent_id);
             if let Some(coll) = collision_reader.get(entity) {
                 angle = coll.angle;
+
+                if coll.pos_history.len() > 0 {
+                    let mut hist_index = 0;
+                    let trans_frame_num = (frame_num as f32 * 0.66).round() as i32;
+                    let every_x_frames = 7;
+                    for pos in coll.pos_history.iter() {
+                        if (-trans_frame_num - hist_index) % every_x_frames == 0 {
+                            pos_history.push(pos.clone());
+                        }                    
+                        hist_index += 1;
+                    }
+                    hist_index = 0;
+                    for anim_frame_info in self.frame_history.iter() {
+                        if (-trans_frame_num - hist_index) % every_x_frames == 0 {
+                            trail_frame_history.push(anim_frame_info.clone());
+                        }                    
+                        hist_index += 1;
+                    }
+                    /*hist_index = 0;
+                    for set_num in self.anim_set_history.iter() {
+                        if (-trans_frame_num - hist_index) % every_x_frames == 0 {
+                            trail_set_history.push(*set_num);
+                        }                    
+                        hist_index += 1;
+                    }*/
+                }
             }
 
         }
@@ -951,20 +1091,70 @@ impl super::RenderTrait for CharacterDisplayComponent {
             self.jump_duration
         };
 
-        if let Ok(rect) = graphics::Mesh::new_circle(
-            ctx,
-            graphics::DrawMode::fill(),
-            na::Point2::new(0.0,0.0),
-            3.0, 0.7,
-            graphics::Color::new(1.0,texture_green,1.0,1.0),
-        ) {
-            // Mirror X-scale if facing left
-            let mut x_scale = texture_scale;
-            if self.facing_right == false {
-                x_scale = -x_scale;
-            }
+        // if let Ok(rect) = graphics::Mesh::new_circle(
+        //     ctx,
+        //     graphics::DrawMode::fill(),
+        //     na::Point2::new(0.0,0.0),
+        //     3.0, 0.7,
+        //     graphics::Color::new(1.0,texture_green,1.0,1.0),
+        // ) {
+            
 
-            {
+        {
+
+
+            
+            // Draw spritesheet texture
+            let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
+            if let Ok(image) = image_ref {
+                // Get starting x/y in spritesheet space (0.0-1.0,0.0-1.0)
+                
+                // let ss_cells = self.spritesheet_cols;
+                // let ss_rows = self.spritesheet_rows;
+                // let src_x = 0.0 + (self.anim_frame as f32) / ss_cells;
+                // let src_y = 0.0 + (self.anim_set as f32) / ss_rows;
+                // let (src_w, src_h) = (1.0 / ss_cells, 1.0 / ss_rows);
+
+                if self.speed_level >= 2 {
+                    let num_frames = pos_history.len().min(trail_frame_history.len());
+                    let mut frame_num = 0;
+                    for frame_num in 0..num_frames {
+                        let pos_frame = pos_history.get(frame_num).unwrap();
+                        let trail_anim_info = trail_frame_history.get(frame_num).unwrap();
+                        let trail_frame_num = trail_anim_info.frame_num;
+                        let trail_anim_set = trail_anim_info.anim_set;
+                        let frame_alpha = (frame_num + 1) as f32 / (num_frames + 1) as f32;
+                        // Mirror X-scale if facing left
+                        let mut x_scale = texture_scale;
+                        if trail_anim_info.facing_right == false {
+                            x_scale = -x_scale;
+                        }
+
+                        let (src_x, src_y, src_w, src_h) = self.get_spritesheet_frame(trail_frame_num, trail_anim_set);
+                        
+                        if let Err(_) = ggez::graphics::draw(ctx, image, 
+                            // Setup draw parameters
+                            DrawParam::default()
+                            .src(Rect::new(src_x,src_y,src_w,src_h)) // set texture source rectangle
+                            .dest(na::Point2::new(pos_frame.x, pos_frame.y - 10.0)) // world space location for texture
+                            .scale(na::Vector2::new(x_scale,texture_scale)) // set draw scale,including x-mirroring
+                            .offset(na::Point2::new(0.5,0.5)) // set anchor point at middle of image rect
+                            .rotation(angle) // would rotate if altered
+                            .color(Color::new(1.0, 1.0, 1.0, frame_alpha))
+                        ) {
+                            _draw_ok = false;
+                        }
+                        //frame_num += 1;
+                    }
+                }
+
+                let (src_x, src_y, src_w, src_h) = self.get_spritesheet_frame(self.anim_frame, self.anim_set);
+                // Mirror X-scale if facing left
+                let mut x_scale = texture_scale;
+                if self.facing_right == false {
+                    x_scale = -x_scale;
+                }
+
                 // Use shader if needed
                 let mut _lock : Option<ggez::graphics::ShaderLock> = None;
                 /* if self.in_idle {
@@ -974,13 +1164,13 @@ impl super::RenderTrait for CharacterDisplayComponent {
                 }
                 else */
                 {
-                    match &self.suri_player {
-                        SuriPlayer::Suri => {
+                    match &self.player_char {
+                        PlayerCharacter::Suri => {
                             if let Ok(shader_ref) = shader_res.shader_ref("suri_shadow".to_string()) {
                                 _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                             }
                         },
-                        SuriPlayer::Milo => {
+                        PlayerCharacter::Milo => {
                             if let Ok(shader_ref) = shader_res.shader_ref("milo_shadow".to_string()) {
                                 _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                             }
@@ -988,32 +1178,51 @@ impl super::RenderTrait for CharacterDisplayComponent {
                     }
                     
                 }
-                
-                // Draw spritesheet texture
-                let image_ref = image_resources.image_ref(self.spritesheet_path.clone());
-                if let Ok(image) = image_ref {
-                    // Get starting x/y in spritesheet space (0.0-1.0,0.0-1.0)
-                    let ss_cells = self.spritesheet_cols;
-                    let ss_rows = self.spritesheet_rows;
-                    let src_x = 0.0 + (self.anim_frame as f32) / ss_cells;
-                    let src_y = 0.0 + (self.anim_set as f32) / ss_rows;
-                    let (src_w, src_h) = (1.0 / ss_cells, 1.0 / ss_rows);
-    
-                    let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
-                    if let Err(_) = ggez::graphics::draw(ctx, image, 
-                        // Setup draw parameters
-                        DrawParam::default()
-                        .src(Rect::new(src_x,src_y,src_w,src_h)) // set texture source rectangle
-                        .dest(texture_position) // world space location for texture
-                        .scale(na::Vector2::new(x_scale,texture_scale)) // set draw scale,including x-mirroring
-                        .offset(na::Point2::new(0.5,0.5)) // set anchor point at middle of image rect
-                        .rotation(angle) // would rotate if altered
-                    ) {
-                        _draw_ok = false;
-                    }
-                }                    
 
+                let texture_position = na::Point2::new(draw_pos.x , draw_pos.y - 10.0);
+                if let Err(_) = ggez::graphics::draw(ctx, image, 
+                    // Setup draw parameters
+                    DrawParam::default()
+                    .src(Rect::new(src_x,src_y,src_w,src_h)) // set texture source rectangle
+                    .dest(texture_position) // world space location for texture
+                    .scale(na::Vector2::new(x_scale,texture_scale)) // set draw scale,including x-mirroring
+                    .offset(na::Point2::new(0.5,0.5)) // set anchor point at middle of image rect
+                    .rotation(angle) // would rotate if altered
+                ) {
+                    _draw_ok = false;
+                }
+            }                    
+
+        }
+
+        if let Some(ent_id) = ent {
+            //println!("Before ParticleSys borrow");
+            let psys_reader = world.read_storage::<ParticleSysComponent>();
+            //println!("After ParticleSys borrow");
+            let entity = world.entities().entity(ent_id);
+            //println!("Before Psys Get from Entity");
+            if let Some(psys) = psys_reader.get(entity) {
+                //println!("Before Draw Psys");
+                //psys.draw(ctx, world, Some(ent_id), pos.clone(), 0);
+                //println!("After Draw Psys");
             }
+
+        }
+
+        //}
+
+    }
+}
+
+
+
+
+// Register all possible components for world
+pub fn register_components(world: &mut World) {
+    // register components
+    //world.register::<PlayerComponent>();
+    world.register::<CharacterDisplayComponent>();
+}
 
 
 
@@ -1101,18 +1310,3 @@ impl super::RenderTrait for CharacterDisplayComponent {
             //     ggez::graphics::apply_transformations(ctx);
             // }
             
-
-        }
-
-    }
-}
-
-
-
-
-// Register all possible components for world
-pub fn register_components(world: &mut World) {
-    // register components
-    //world.register::<PlayerComponent>();
-    world.register::<CharacterDisplayComponent>();
-}

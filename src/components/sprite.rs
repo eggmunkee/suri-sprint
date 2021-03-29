@@ -3,7 +3,7 @@ use ggez::{Context};
 use ggez::graphics;
 use ggez::graphics::{Rect,Image,Color,DrawParam,WrapMode,BlendMode};
 use ggez::nalgebra as na;
-use specs::{Component, DenseVecStorage, World, WorldExt};
+use specs::{Component, DenseVecStorage, World, WorldExt, Entity};
 //use specs::shred::{Dispatcher};
 use specs_derive::*;
 use rand::prelude::*;
@@ -11,7 +11,8 @@ use serde::{Deserialize,de::DeserializeOwned};
 
 // ================================
 
-//use crate::game_state::{GameState};
+use crate::entities::level::{LevelItem};
+use crate::core::game_state::{GameState};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource};
 use crate::conf::*;
@@ -133,6 +134,34 @@ impl SpriteComponent {
     pub fn set_src(&mut self, src: &(f32, f32, f32, f32)) {
         self.src = Rect::new(src.0, src.1, src.2, src.3);
     }
+
+    /*pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let sprite_reader = world.read_storage::<SpriteComponent>();
+            let collision_reader = world.read_storage::<Collision>();
+
+            // Get Sprite Component to call draw method            
+            if let Some(sprite) = sprite_reader.get(entity.clone()) {
+                use crate::components::{RenderTrait};
+                sprite.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+            }
+        }*/
+}
+
+impl super::RenderItemTarget for SpriteComponent {
+    fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let sprite_reader = world.read_storage::<SpriteComponent>();
+            let collision_reader = world.read_storage::<Collision>();
+
+            // Get Sprite Component to call draw method            
+            if let Some(sprite) = sprite_reader.get(entity.clone()) {
+                use crate::components::{RenderTrait};
+                sprite.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+            }
+        }
 }
 
 
@@ -221,8 +250,109 @@ impl MultiSpriteComponent {
     }
 }
 
+impl super::RenderItemTarget for MultiSpriteComponent {
+    fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let sprite_reader = world.read_storage::<MultiSpriteComponent>();
+
+            // Get Sprite Component to call draw method            
+            if let Some(sprite) = sprite_reader.get(entity.clone()) {
+                use crate::components::{RenderTrait};
+                sprite.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+            }
+        }
+}
+
 
 impl super::RenderTrait for MultiSpriteComponent {
+    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
+        //println!("BallRender...");
+        let mut rng = rand::thread_rng();
+
+        if item_index >= 0 && item_index < self.sprites.len() {
+
+            if let Some(sprite) = self.sprites.get(item_index) {
+                sprite.draw(ctx, world, ent, pos, 0);
+
+            }
+        }
+    }
+}
+
+
+#[derive(Debug,Component)]
+#[storage(DenseVecStorage)]
+pub struct ParallaxSpriteComponent {
+    //pub image: Image, // component owns image
+    pub sprites: Vec<SpriteComponent>,
+    //pub debug_font: graphics::Font,
+    pub scroll_mults: Vec<f32>,
+}
+
+impl ParallaxSpriteComponent {
+    pub fn new(ctx: &mut Context) -> ParallaxSpriteComponent {
+        
+        ParallaxSpriteComponent {
+            //image: image,
+            sprites: vec![],
+            scroll_mults: vec![],
+        }
+    }
+
+    pub fn add_sprite(&mut self, ctx: &mut Context, sprite: SpriteComponent, scroll_multiplier: f32) -> i32 {
+        // Push normal Sprite component to list
+        self.sprites.push(sprite);
+        // Push the scroll multiplier amount for this sprite
+        self.scroll_mults.push(scroll_multiplier);
+
+        self.sprites.len() as i32 - 1
+    }
+}
+
+impl super::RenderItemTarget for ParallaxSpriteComponent {
+    fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let plx_sprite_reader = world.read_storage::<ParallaxSpriteComponent>();
+
+            if let Some(parallax_sprite) = plx_sprite_reader.get(entity.clone()) {
+
+                let mut curr_x_off = game_state.current_offset.x;
+                let mut curr_y_off = game_state.current_offset.y;
+                let mut mult = 1.0;
+
+                // Get Sprite Component to call draw method            
+                // if let Some(sprite) = sprite_reader.get(entity.clone()) {
+                //     use crate::components::{RenderTrait};
+                //     sprite.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+                // }
+
+                if item_index >= 0 && item_index < parallax_sprite.scroll_mults.len() {
+                    if let Some(multiplier) = parallax_sprite.scroll_mults.get(item_index) {
+                        mult = *multiplier;
+                    }
+                }
+
+                curr_x_off = curr_x_off * mult;
+                curr_y_off = curr_y_off * mult;
+
+                let mut parallax_pos = pos.clone();
+                parallax_pos.x -= curr_x_off;
+                parallax_pos.y -= curr_y_off;
+
+                if item_index >= 0 && item_index < parallax_sprite.sprites.len() {
+                    use crate::components::{RenderTrait};
+                    if let Some(sprite) = parallax_sprite.sprites.get(item_index) {
+                        sprite.draw(ctx, world, Some(entity.id()), parallax_pos, 0);
+        
+                    }
+                }
+            }
+        }
+}
+
+impl super::RenderTrait for ParallaxSpriteComponent {
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
         //println!("BallRender...");
         let mut rng = rand::thread_rng();
@@ -244,4 +374,5 @@ pub fn register_components(world: &mut World) {
     //world.register::<PlayerComponent>();
     world.register::<SpriteComponent>();
     world.register::<MultiSpriteComponent>();
+    world.register::<ParallaxSpriteComponent>();
 }

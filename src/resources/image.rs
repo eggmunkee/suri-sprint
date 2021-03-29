@@ -30,11 +30,17 @@ impl ImageResources {
     pub fn load_image(&mut self, path:String, ctx: &mut Context) -> GameResult<()> {
         let entry = self.image_lookup.entry(path.clone());
         if let Entry::Vacant(_) = entry {
-            let mut image = Image::new(ctx, path.clone())?;
-            image.set_filter(ggez::graphics::FilterMode::Nearest);
-            let new_idx = self.images.len();
-            self.images.push(image);
-            self.image_lookup.insert(path.clone(), new_idx);
+            if let Ok(mut image) = Image::new(ctx, path.clone()) {
+                image.set_filter(ggez::graphics::FilterMode::Nearest);
+                let new_idx = self.images.len();
+                self.images.push(image);
+                self.image_lookup.insert(path.clone(), new_idx);
+            }
+            else {
+                return Err(GameError::ResourceLoadError(
+                    format!("Failed to load image with path: {}", &path)
+                ));
+            }
             //()
         }
         Ok(()) // ok if already loaded

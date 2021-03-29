@@ -9,15 +9,27 @@ LevelConfig(
     items: [
         Player ( x: 80.0, y: 100.0 ),
 
-        Player ( x: 900.0, y: 900.0, player: Some(Milo) ),
-        Player ( x: 800.0, y: 900.0, player: Some(Suri) ),
-        Player ( x: 700.0, y: 900.0, player: Some(Milo) ),
-        Player ( x: 600.0, y: 900.0, player: Some(Milo) ),
-        Player ( x: 500.0, y: 900.0, player: Some(Suri) ),
-        Player ( x: 400.0, y: 900.0, player: Some(Milo) ),
-        Player ( x: 300.0, y: 900.0, player: Some(Suri) ),
-        Player ( x: 200.0, y: 900.0, player: Some(Milo) ),
-        Player ( x: 100.0, y: 900.0, player: Some(Suri) ),
+        PlayerNpc ( x: 900.0, y: 900.0, player: Some(Milo) ),
+        PlayerNpc ( x: 800.0, y: 900.0, player: Some(Suri) ),
+        PlayerNpc ( x: 700.0, y: 900.0, player: Some(Milo) ),
+        PlayerNpc ( x: 600.0, y: 900.0, player: Some(Milo) ),
+        PlayerNpc ( x: 500.0, y: 900.0, player: Some(Suri) ),
+        PlayerNpc ( x: 400.0, y: 900.0, player: Some(Milo) ),
+        PlayerNpc ( x: 300.0, y: 900.0, player: Some(Suri) ),
+        PlayerNpc ( x: 200.0, y: 900.0, player: Some(Milo) ),
+        PlayerNpc ( x: 100.0, y: 900.0, player: Some(Suri) ),
+
+        Sprite ( x: 15, y: 5, sprite: "entities/exit_crack", z: 200, angle: 0.7, src: (0, 0, 1, 1), ),
+
+        Mouse ( x: 50.0, y: 550.0 ),
+        Mouse ( x: 60.0, y: 550.0 ),
+
+        Mouse ( x: 70.0, y: 550.0 ),
+
+        Mouse ( x: 80.0, y: 550.0 ),
+
+        Mouse ( x: 90.0, y: 550.0 ),
+        Mouse ( x: 100.0, y: 550.0 ),
 
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (0,0,8,8), ),
 
@@ -26,6 +38,8 @@ LevelConfig(
 
         StaticLevelProp( x: 100, y: 500.0, w: 64, h: 64.0, ang: 0, image: "entities/wooden_chair", img_w: 48.0, img_h: 48.0,
                 z: Some(700.0) ),
+
+        Ghost (x: 500, y: 500, ),
 
         Portal (x: 700, y: 200, w: 30, name: "a", destination: "b", start_enabled: true,),
         Portal (x: 200, y: 700, w: 30, name: "b", destination: "a", start_enabled: true,),

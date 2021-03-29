@@ -7,10 +7,11 @@ use wrapped2d::b2;
 use wrapped2d::user_data::*;
 use std::collections::{HashMap};
 
-use crate::game_state::{GameState,RunningState,GameMode};
-use crate::core::physics::{PhysicsQueryInfo};
-use crate::resources::{InputResource,GameStateResource,ConnectionResource};
-use crate::components::{Position};
+use crate::core::game_state::{GameState,State,RunningState,GameMode};
+use crate::core::input::{InputKey};
+use crate::core::physics::{BoxQueryInfo};
+use crate::resources::{InputResource,GameStateResource,ConnectionResource,WorldAction,Camera,GameLog};
+use crate::components::{Position,WorldUpdateTrait,Velocity};
 use crate::components::collision::{Collision};
 use crate::components::sprite::{SpriteLayer,SpriteComponent};
 use crate::components::anim_sprite::{AnimSpriteComponent};
@@ -29,63 +30,296 @@ use crate::systems::particles::{ParticleSystem};
 use crate::systems::physics::{PhysicsSystem};
 
 use crate::core::physics;
-use crate::core::physics::{PhysicsWorld};
+use crate::core::physics::{PhysicsWorld,RayCastQueryInfo};
 
 pub struct CoreSystem {
 }
 
 impl CoreSystem {
 
-    pub fn run_update_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
-
+    pub fn run_frame_time_update(game_state: &mut GameState, ctx: &mut Context, time_delta: f32, advance_world: bool) -> f32 {
         // Register actual pre-processed time (application time)
         game_state.update_run_time(time_delta);
 
         // Pre-process frame time (for simulation time)
-        let time_delta = game_state.process_time_delta(ctx, time_delta);
+        let time_delta = game_state.process_time_delta(ctx, time_delta, advance_world);
     
         // Save frame time
-        game_state.set_frame_time(time_delta);        
+        game_state.set_frame_time(time_delta, advance_world);
+
+        time_delta
+    }
+
+    pub fn clear_inputs(game_state: &mut GameState) {
+        let mut input = game_state.world.fetch_mut::<InputResource>();
+        input.keys_pressed.clear();
+        drop(input);
+    }
+
+    // Process Menu update - check for unpause trigger
+    pub fn run_menu_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
+        Self::run_frame_time_update(game_state, ctx, time_delta, false);
+
+        //println!("Running menu step");
+
+        //CoreSystem::run_menu_update(game_state, ctx, time_delta);
+        InputSystem::handle_menu_input(game_state, time_delta);
+
+        let mut input = game_state.world.fetch_mut::<InputResource>();
+
+        let wactions = input.actions.drain(0..).collect::<Vec<_>>();
+
+        if input.exit_flag {
+            ggez::event::quit(ctx);
+        }
+        input.clear_actions();
+        drop(input);
+
+        for world_action in &wactions {
+            match world_action {
+                WorldAction::CloseAllMenus => {
+                    println!("Close All Menus");
+                    game_state.close_all_menus();
+                },
+                WorldAction::CloseMenu => {
+                    println!("Close Menu");
+                    if game_state.menu_stack.len() > 0 {
+                        game_state.menu_stack.pop();
+                    }
+                },
+                WorldAction::OpenSubMenu(name) => {
+                    println!("Open SubMenu {}", &name);
+                    game_state.open_submenu(name.clone());
+                },
+                WorldAction::ExitGame => {
+                    println!("Exit Game");
+                    ggez::event::quit(ctx);
+                },
+                WorldAction::RestartLevel => {
+                    game_state.close_all_menus();
+                    game_state.restart_level(ctx);
+                },
+                WorldAction::NewGame => {
+                    game_state.close_all_menus();
+                    game_state.load_level(ctx, "overview_1".to_string(), "".to_string());
+                },
+                WorldAction::ToggleFullscreen => {
+                    game_state.toggle_fullscreen_mode(ctx);
+                },
+                _ => {}
+            }
+        }
+
+        Self::clear_inputs(game_state);
+    }
+
+    // Run non-paused update of world - Edit mode, Play mode (Playing/Dialog)
+    pub fn run_update_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
+
+        // // Register actual pre-processed time (application time)
+        // game_state.update_run_time(time_delta);
+
+        // // Pre-process frame time (for simulation time)
+        // let time_delta = game_state.process_time_delta(ctx, time_delta);
+    
+        // // Save frame time
+        // game_state.set_frame_time(time_delta);        
+        let time_delta = Self::run_frame_time_update(game_state, ctx, time_delta, true);
 
         let mut new_state = game_state.running_state.clone();
+        let menu_lvls = game_state.menu_stack.len();
         let mut state_change = false;
         match &game_state.mode {
             GameMode::Edit => {
 
             },
             GameMode::Play => {
-                match &game_state.running_state { 
-                    RunningState::Playing => {
-                        // Update components in play mode
-                        CoreSystem::run_play_update(game_state, ctx, time_delta);
-        
-                        // Cleanup the world state after changes
-                        game_state.world.maintain();
+                if menu_lvls > 0 {
+                    //let input_res = self.world.fetch::<InputResource>();
+                    //CoreSystem::run_menu_update(game_state, ctx, time_delta);
+                    println!("ERROR MENU WITHIN RUN UPDATE STEP #(*&#(*& $*#($(*# &*#( *&$");
+                }
+                else {
+                    match &game_state.running_state { 
+                        RunningState::Playing => {
 
-                        // Run physics simulation for frame
-                        PhysicsSystem::run_physics_update(&mut game_state.world, &mut game_state.phys_world, time_delta);
-        
-                        // Update components after physics
-                        //self.run_post_physics_update(ctx, time_delta);
-                        CoreSystem::run_post_physics_update(game_state, ctx, time_delta);
-                    },
-                    RunningState::Dialog(_) => {
-                        //let input_res = self.world.fetch::<InputResource>();
-                        new_state = CoreSystem::run_dialog_update(game_state, ctx, time_delta);
-                        //InputSystem::handle_dialog_input(&input_res, &self, time_delta);
-                        if new_state == RunningState::Playing {
-                            state_change = true;
+                            if game_state.game_frame_count % 60 == 0 {
+                                println!("A) Run Play Update ==================================");
+                            }
+                            // Update components in play mode
+                            CoreSystem::run_play_update(game_state, ctx, time_delta);
+            
+                            if game_state.game_frame_count % 60 == 0 {
+                                println!("   World Maintain  ==================================");
+                            }
+                            // Cleanup the world state after changes
+                            game_state.world.maintain();
+
+                            if game_state.game_frame_count % 60 == 0 {
+                                println!("B) Run Physics Update ==================================");
+                            }
+                            // Run physics simulation for frame
+                            PhysicsSystem::run_physics_update(&mut game_state.world, ctx, &mut game_state.phys_world, time_delta);
+            
+                            if game_state.game_frame_count % 60 == 0 {
+                                println!("C) Run Post Physics Update ==================================");
+                            }
+                            // Update components after physics
+                            //self.run_post_physics_update(ctx, time_delta);
+                            CoreSystem::run_post_physics_update(game_state, ctx, time_delta);
+
+                            if game_state.game_frame_count % 60 == 0 {
+                                println!("   World Maintain  ==================================");
+                            }
+                            game_state.world.maintain();
+
+                            // Tell game state a game frame finished its cycle
+                            game_state.game_frame_completed();
+                        },
+                        RunningState::Dialog{..} => {
+                            //let input_res = self.world.fetch::<InputResource>();
+                            new_state = CoreSystem::run_dialog_update(game_state, ctx, time_delta);
+                            //InputSystem::handle_dialog_input(&input_res, &self, time_delta);
+                            if new_state == RunningState::Playing {
+                                println!("Dialog > Playing");
+                                state_change = true;
+                            }
                         }
                     }
                 }
             }
         }
+
+        let mut start_pause = false;
+        let mut open_menu = false;
+        let mut slow_mode = false;
+        {
+            let input = game_state.world.fetch_mut::<InputResource>();
+            if input.keys_pressed.len() > 0 {
+                //println!("Frame Key Presses: - - - - - -");
+                for key in &input.keys_pressed {
+                    //println!("InputKey Pressed: {:?}", &key);
+                    if menu_lvls == 0 {
+                        if key == &InputKey::Pause {
+                            // match game_state.current_state {
+                            //     State::Paused => {
+                            //         // println!("Pause activated -------------------------");
+                            //         // start_play = true;
+                            //     },
+                            //     State::Running => {
+                            if game_state.running_state == RunningState::Playing {
+                                //RunningState::Playing => {
+                                //println!("Pause activated -------------------------");
+                                start_pause = true;
+                                //},
+                                //_ => {} // don't pause on dialogs
+                            }
+                            //     }
+                            // }
+                        }
+                        else if key == &InputKey::Exit {
+                            open_menu = true;
+                        }
+                        else if key == &InputKey::SlowMode {
+                            slow_mode = true;
+                        }
+                    } 
+                }
+                //println!(" - - - - - - - - - - - - - - -");
+            }
+
+            if input.exit_flag {
+                ggez::event::quit(ctx);
+            }
+
+            drop(input);
+        }
+
+        Self::clear_inputs(game_state);
+
+        {
+            let curr_game_time = game_state.world.fetch::<GameStateResource>().game_run_seconds;
+            //let curr_game_time = 
+            let mut log = game_state.world.fetch_mut::<GameLog>();
+
+            let mut delete_to_index = -1;
+            for entry in log.entries.iter() {
+                if entry.entry_time < curr_game_time - 5.0 {
+                    delete_to_index += 1; // -1 to 0 for 1st, 0 to 1 for 2nd
+                }
+            }
+            // remove first entry for [delete_to_index] times
+            while delete_to_index >= 0 && log.entries.len() > 0 {
+                log.entries.remove(0);
+                delete_to_index -= 1;
+            }
+            
+        }
+
+        if start_pause {
+            game_state.pause();
+        }
+        else if open_menu {
+            game_state.open_menu();
+        }
+        else if slow_mode {
+            let curr_scale = game_state.play_time_scale;
+            if curr_scale >= 1.0 {
+                game_state.set_timescale(0.5);
+            }
+            else if curr_scale >= 0.5 {
+                game_state.set_timescale(0.25);
+            }
+            else {
+                game_state.set_timescale(1.0);
+            }
+        }
         
+        // Update state if any step changed the game running state
         if state_change {
             game_state.set_running_state(ctx, new_state); //running_state = new_state;
         }
     }
 
+    pub fn run_pause_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
+
+        let time_delta = Self::run_frame_time_update(game_state, ctx, time_delta, false);
+        game_state.paused_anim += time_delta;
+
+        // Check Input Resources for Pause Key Presses
+        //let mut start_play = false;
+        //let mut input = game_state.world.fetch_mut::<InputResource>();
+
+        InputSystem::handle_paused_input(game_state, time_delta);
+        
+        /*if input.keys_pressed.len() > 0 {
+            println!("Paused Frame Key Presses: - - - - - -");
+            for key in &input.keys_pressed {
+                println!("InputKey Pressed: {:?}", &key);
+                if key == &InputKey::Pause {
+                    match game_state.current_state {
+                        State::Paused => {
+                            println!("Play activated -------------------------");
+                            start_play = true;
+                        },
+                        State::Running => {
+                            
+                        }
+                    }
+                }
+            }
+            println!(" - - - - - - - - - - - - - - -");
+        }
+
+        input.keys_pressed.clear();
+        drop(input);
+
+        if start_play {
+            game_state.play();
+        }*/
+    }
+
+    // Process Dialog update - check for unpause trigger
     pub fn run_dialog_update(game_state: &mut GameState, _ctx: &mut Context, time_delta: f32) -> RunningState {
         
         // {
@@ -94,19 +328,37 @@ impl CoreSystem {
         //     input_sys.run_now(&world);
         // }
 
-        let input_res = game_state.world.fetch::<InputResource>();
-        let new_state = InputSystem::handle_dialog_input(&input_res, &game_state, time_delta);
+        let mut input_res = game_state.world.fetch_mut::<InputResource>();
+        let new_state = InputSystem::handle_dialog_input(&mut input_res, &game_state, time_delta);
+
+        Camera::update(game_state, time_delta);
 
         new_state
     }
 
+    // Process Menu update - check for unpause trigger
+    pub fn run_menu_update(game_state: &mut GameState, _ctx: &mut Context, time_delta: f32) {
+        
+        // {
+        //     let world = &mut game_state.world;
+        //     let mut input_sys = InputSystem::new();
+        //     input_sys.run_now(&world);
+        // }
+        //let mut input = game_state.world.fetch_mut::<InputResource>();
+        InputSystem::handle_menu_input(game_state, time_delta);
+
+        Camera::update(game_state, time_delta);
+
+    }
+
+    // Process Playing update - run all game systems
     pub fn run_play_update(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
         let world = &mut game_state.world;
 
         // RUN LOGIC ---------------------------------------
         {            
             let mut logic_sys = LogicSystem {
-                show_debug_output: game_state.debug_logic_frames > 0
+                show_debug_output: game_state.debug_logic_frames > 0 
             };
 
             if logic_sys.show_debug_output {
@@ -122,6 +374,14 @@ impl CoreSystem {
 
         // Run Input System - Mainly player/npc inputs, process meows, process input clicks
         {
+            let camera = world.fetch::<Camera>();
+            let mut display_offset = na::Point2::new(camera.display_offset.0, camera.display_offset.1);
+            drop(camera);
+
+
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run InputSystem =======================");
+            }
             // Run InputSystem on world
             // outputs: meow locations and clicked entity info
             let mut input_sys = InputSystem::new();
@@ -129,6 +389,9 @@ impl CoreSystem {
             //input_sys.phys_world = Some(Box::pi(physics_world));
             input_sys.run_now(&world);
 
+            if game_state.game_frame_count % 60 == 0 {
+                println!("   Build new Meows ====================");
+            }
             // Process meow creation
             let mut meow_count : i32 = 0;
             for m in &input_sys.meows {
@@ -141,9 +404,12 @@ impl CoreSystem {
             }
 
             // CLICK - COLLIDER HANDLING CODE - in testing =========================
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Click Check Code ==================");
+            }
             // Get display size for click position calculations
             let dim = ggez::graphics::drawable_size(ctx);
-            let mut display_offset = game_state.current_offset;
+            //let mut display_offset = game_state.current_offset;
             display_offset.x += dim.0 as f32 / 2.0;
             display_offset.y += dim.1 as f32 / 2.0;
 
@@ -165,17 +431,17 @@ impl CoreSystem {
 
                 // create bounding box for click position to check colliders
                 // very small rectangle around the cursor position translated into world coords
-                let mut aabb = b2::AABB::new();
-                // create physics-scale positions for bounding box
-                aabb.lower = physics::create_pos(&na::Point2::new(center_x-0.5, center_y-0.5));
-                aabb.upper = physics::create_pos(&na::Point2::new(center_x+0.5, center_y+0.5));
+                // let mut aabb = b2::AABB::new();
+                // // create physics-scale positions for bounding box
+                // aabb.lower = physics::create_pos(&na::Point2::new(center_x-0.5, center_y-0.5));
+                // aabb.upper = physics::create_pos(&na::Point2::new(center_x+0.5, center_y+0.5));
         
                 {
                     let physics = &game_state.phys_world;
                     // create object which received click collide info
-                    let mut query_results = PhysicsQueryInfo::new();
+                    let mut query_results = physics::box_query(physics, center_x, center_y, 1.0, 1.0);//BoxQueryInfo::new();
                     // query physics world with aabb, updating click_info
-                    physics.query_aabb(&mut query_results, &aabb);
+                    //physics.query_aabb(&mut query_results, &aabb);
         
                     // go through click info from query
                     for (b, f) in &query_results.hit_info {
@@ -215,9 +481,42 @@ impl CoreSystem {
             drop(input_sys);
         }
 
+
+        // Non-collider velocity system
+        {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Velocity Update loop ==================");
+            }
+            // Operator on meows, collisions and sprite components
+            let mut pos_writer = world.write_storage::<Position>();
+            let collision_reader = world.read_storage::<Collision>();
+            let velocity_reader = world.read_storage::<Velocity>();
+            let entities = world.entities();                
+
+            for (pos, vel, coll_opt, ent) in (&mut pos_writer, &velocity_reader, (&collision_reader).maybe(), &entities).join() {
+                let mut no_collision = true;
+                if let Some(_) = coll_opt {
+                    no_collision = false;
+                }
+                if game_state.game_frame_count % 60 == 0 {
+                    println!(" Vel for {:?} - No collision? {}", &ent, &no_collision);
+                }
+
+                if no_collision {
+                    println!(" From Pos: {:?}", &pos);
+                    pos.x += vel.x * time_delta;
+                    pos.y += vel.y * time_delta;
+                    println!(" .. To Pos: {:?}", &pos);
+                }
+            }
+        }
+
         // Meow "system" - updates meow state and components
         //  This could be moved into a system as long as the physics data was accessible & writable from the system class
         {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Meow Update loop ==================");
+            }
             // Operator on meows, collisions and sprite components
             let mut meow_writer = world.write_storage::<MeowComponent>();
             let mut collision_writer = world.write_storage::<Collision>();
@@ -240,6 +539,9 @@ impl CoreSystem {
 
         // Portal "system"
         {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Portal update loop ==================");
+            }
             // Operator on meows, collisions and sprite components
             let mut portal_writer = world.write_storage::<PortalComponent>();
             let mut collision_writer = world.write_storage::<Collision>();
@@ -261,6 +563,9 @@ impl CoreSystem {
 
         // Animation system
         {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Animation update loop ==================");
+            }
             //let mut world = &mut self.world;
             let mut anim_sys = AnimationSystem {
             };
@@ -271,6 +576,9 @@ impl CoreSystem {
 
         // Particle system
         {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run ParticleSys update loop ==================");
+            }
             //let mut world = &mut self.world;
             let mut particle_sys = ParticleSystem {};
 
@@ -279,6 +587,9 @@ impl CoreSystem {
         }
 
         {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Pickup update loop ==================");
+            }
             // Operator on meows, collisions and sprite components
             let mut pickup_writer = world.write_storage::<PickupComponent>();
             let mut collision_writer = world.write_storage::<Collision>();
@@ -334,6 +645,9 @@ impl CoreSystem {
         let mut spawn_mouse = false;
         let mut spawn_closed_box = false;
         {
+            if game_state.game_frame_count % 60 == 0 {
+                println!("Run Button update loop ==================");
+            }
             // Operator on meows, collisions and sprite components
             let mut button_reader = world.write_storage::<ButtonComponent>();
             let mut collision_writer = world.write_storage::<Collision>();
@@ -408,8 +722,27 @@ impl CoreSystem {
         //     crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
         //         w, h, 0.0, SpriteLayer::Entities.to_z());   
         // }
+
+        // Camera System
+        {
+            Camera::update(game_state, time_delta);
+        }
+
     }
 
+    // Run system update after physics system runs
+    /*******************************************************
+     * Builds portal list then iterates components with collision/pos
+     * and optionial Character, Npc, Sprite or AnimSprite components
+     * Component processing:
+     * * Character-Exit condition - set exit info on game state
+     * * Collider-Portal condition - check in/out direction, check validity,
+     *     update pos/velocity of collider
+     * * If valid warp & character - set facing_right and start fall if not falling
+     * * If valid warp & npc - set facing_right from portal interaction
+     * If exit flagged, update game_state with exit poral info
+
+    *******************************************************/
     pub fn run_post_physics_update(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
         //let world = &mut game_state.world;
 
@@ -431,6 +764,7 @@ impl CoreSystem {
             let mut sprite_res = game_state.world.write_storage::<SpriteComponent>();
             let mut anim_sprite_res = game_state.world.write_storage::<AnimSpriteComponent>();
 
+            // BUILD INFO ON PORTALS (hash by name)
             // hash to store portal names and their positions - avoid needing to search for them later
             let mut portal_hash = HashMap::<String,(i32,f32,f32,bool,(f32,f32))>::new();
             let portal_res = game_state.world.read_storage::<PortalComponent>();
@@ -439,6 +773,8 @@ impl CoreSystem {
                 portal_hash.insert(portal.name.clone(), (_ent.id() as i32, pos.x, pos.y, portal.screen_facing, (portal.normal.x, portal.normal.y)));
             }
 
+            // Iterate Position/Collision with possible Character or Npc, with possible Sprite or AnimSprite
+            //  Process Exit interation, Portal interaction,
             // Join entities and their components to process physics update
             for (_ent, mut character_opt, mut npc_opt,  mut pos, mut coll, mut sprite, mut anim_sprite) in 
                 (&entities, (&mut char_res).maybe(), (&mut npc_res).maybe(), &mut pos_res, &mut coll_res,
@@ -451,7 +787,7 @@ impl CoreSystem {
                 if let Some(ref mut character) = character_opt {
                     if character.since_warp < 0.5 { continue; }
                     // Handle character entered an exit and not already level warping
-                    if character.in_exit && !game_state.level_warping {
+                    if character.is_controlled && character.in_exit && !game_state.level_warping {
                         // Get exit 
                         let exit_id = character.exit_id as i32;
                         facing_right = character.facing_right;
@@ -525,8 +861,20 @@ impl CoreSystem {
                                 let mut ny = *y;
                                 let mut nvx = coll.vel_last.x * 1.0;
                                 let mut nvy = coll.vel_last.y * 1.0;
-                                let avg_x = coll.get_avg_x(3);
-                                let avg_y = -coll.get_avg_y(10);
+                                let mut avg_x = coll.get_avg_x(10);
+                                if avg_x < 0.0 && nvx < avg_x {
+                                    avg_x = nvx;
+                                }
+                                if avg_x > 0.0 && nvx > avg_x {
+                                    avg_x = nvx;
+                                }
+                                let mut avg_y = -coll.get_avg_y(10);
+                                if avg_y < 0.0 && -nvy < avg_y {
+                                    avg_y = -nvy;
+                                }
+                                if avg_y > 0.0 && -nvy > avg_y {
+                                    avg_y = -nvy;
+                                }
 
                                 let up_pos_y = -coll.vel_last.y;
 
@@ -722,20 +1070,20 @@ impl CoreSystem {
                                     if let Some(ref mut sprite_comp) = sprite {
                                         //sprite
                                         //sprite_comp
-                                        if sprite_comp.scale[0] > 0.0 {
+                                        if sprite_comp.scale[0] > 0.0 && nvx < 0.1 {
                                             sprite_comp.scale[0] = -sprite_comp.scale[0];
                                         }
-                                        else if sprite_comp.scale[0] < 0.0 {
+                                        else if sprite_comp.scale[0] < 0.0 && nvx > -0.1 {
                                             sprite_comp.scale[0] = -sprite_comp.scale[0];
                                         }
                                     }
                                     if let Some(ref mut anim_sprite_comp) = anim_sprite {
                                         //sprite
                                         //sprite_comp
-                                        if anim_sprite_comp.scale[0] > 0.0 {
+                                        if anim_sprite_comp.scale[0] > 0.0 && nvx < 0.1 {
                                             anim_sprite_comp.scale[0] = -anim_sprite_comp.scale[0];
                                         }
-                                        else if anim_sprite_comp.scale[0] < 0.0 {
+                                        else if anim_sprite_comp.scale[0] < 0.0 && nvx > -0.1 {
                                             anim_sprite_comp.scale[0] = -anim_sprite_comp.scale[0];
                                         }
                                     }
@@ -751,7 +1099,9 @@ impl CoreSystem {
                     if valid_warp {
                         if let Some(ref mut character) = character_opt {
                             character.facing_right = facing_right;
-                            character.start_fall();
+                            if !character.in_fall {
+                                character.start_fall();
+                            }
                         }
                         if let Some(ref mut npc) = npc_opt {
                             npc.facing_right = facing_right;
@@ -762,6 +1112,7 @@ impl CoreSystem {
 
         }
 
+        // If Level Warp triggered - start warp within GameState
         if game_state.level_warping == false && exit_name.is_empty() == false {
             game_state.start_warp(exit_name, exit_entry_name);
         }

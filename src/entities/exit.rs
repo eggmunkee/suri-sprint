@@ -5,12 +5,13 @@ use ggez::nalgebra as na;
 use specs::{Builder,Entity,Entities,EntityBuilder,World,WorldExt};
 use wrapped2d::user_data::*;
 
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::exit::{ExitComponent};
+use crate::components::flags::{RenderSpriteFlag};
 use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
 
 pub struct ExitBuilder;
@@ -61,6 +62,8 @@ impl ExitBuilder {
         .with(Position { x: x, y: y })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .build();
 
         let entity_id = entity.id();

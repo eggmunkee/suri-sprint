@@ -9,11 +9,12 @@ use crate::components::sprite::{SpriteComponent};
 use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::components::collision::{Collision};
 use crate::core::physics;
-use crate::core::physics::{PhysicsWorld};
+use crate::core::physics::{PhysicsWorld,PickupItemType};
 
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
 pub struct PickupComponent {
+    pub pickup_type: PickupItemType,
     pub picked_up: bool,
     pub in_pickup_anim: bool,
 }
@@ -21,6 +22,7 @@ pub struct PickupComponent {
 impl PickupComponent {
     pub fn new() -> Self {
         Self {
+            pickup_type: PickupItemType::Point,
             picked_up: false,
             in_pickup_anim: false,
         }
@@ -29,7 +31,8 @@ impl PickupComponent {
     pub fn update(&mut self, time_delta: f32, collision: &mut Collision, sprite: &mut AnimSpriteComponent) {
         if self.picked_up && !self.in_pickup_anim {
             if sprite.curr_animation != "explode" {
-                sprite.curr_animation = "explode".to_string();
+                sprite.set_animation("explode");
+                //sprite.curr_animation = "explode".to_string();
                 sprite.set_frame(0);
             }
             self.in_pickup_anim = true;

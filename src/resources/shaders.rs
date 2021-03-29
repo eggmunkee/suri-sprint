@@ -102,6 +102,11 @@ impl ShaderResources {
                 //println!("Shader added at index: {}", &new_idx);
                 self.shader_lookup.insert(name.clone(), new_idx);
             }
+            else {
+                return Err(GameError::ResourceLoadError(
+                    format!("Failed to load shader: {} at path: {}", &name, &path)
+                ));
+            }
             //()
         }
         Ok(()) // ok if already loaded

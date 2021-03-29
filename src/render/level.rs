@@ -6,7 +6,7 @@ use ggez::nalgebra as na;
 use ggez::graphics::{Color,DrawParam,Scale,set_window_title};
 
 
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::entities::level_builder::*;
 
 
@@ -47,6 +47,18 @@ impl LevelRenderer {
                             .dest(na::Point2::new(x - 5.0, y - 5.0)) );
                     }
                 },
+                LevelItem::PlayerNpc{x, y, .. } => {
+                    let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                    stroke_opt.line_width = 4.0;
+                    if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                        ggez::graphics::DrawMode::Stroke(stroke_opt),
+                        ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
+                        ggez::graphics::Color::new(1.0, 0.0, 0.5, 1.0)
+                    ) {
+                        ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                            .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                    }
+                },
                 LevelItem::Ghost{x, y, ..} => {
                     let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                     stroke_opt.line_width = 4.0;
@@ -76,7 +88,7 @@ impl LevelRenderer {
                     }
                 },
                 LevelItem::PortalSide {x, y, w, h, normal, ..} => {
-                    let radius = (*w * 0.25 + *h * 0.25);
+                    let radius = *w * 0.25 + *h * 0.25;
 
                     let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                     stroke_opt.line_width = 4.0;
@@ -161,6 +173,21 @@ impl LevelRenderer {
                             .rotation(*angle));
                     }
                 },
+                LevelItem::ParallaxSprite{x, y, ..} => {
+                    let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                    stroke_opt.line_width = 4.0;
+                    if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                        ggez::graphics::DrawMode::Stroke(stroke_opt),
+                        ggez::graphics::Rect::new(-10.0, -10.0, 20.0, 20.0),
+                        ggez::graphics::Color::new(0.7, 1.0, 0.0, 0.5)
+                    ) {
+                        ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                            //.dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                            .dest(na::Point2::new(*x, *y))
+                            .offset(na::Point2::new(0.0, 0.0))
+                        );
+                    }
+                },
                 LevelItem::Platform{x, y, w, h, ang, ..} | LevelItem::StaticLevelProp{x, y, w, h, ang, .. } => {
                     let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                     stroke_opt.line_width = 4.0;
@@ -235,7 +262,7 @@ impl LevelRenderer {
                              );
                     }
                 },
-                LevelItem::Bowl{x, y, ..} | LevelItem::Mouse{x, y, ..} => {
+                LevelItem::Bowl{x, y, ..} | LevelItem::Mouse{x, y, ..} | LevelItem::Ball {x, y, ..} => {
                     let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                     stroke_opt.line_width = 4.0;
                     if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
@@ -247,7 +274,7 @@ impl LevelRenderer {
                             .dest(na::Point2::new(x - 5.0, y - 5.0)) );
                     }
                 },
-                LevelItem::PointPickup{x, y, ..} => {
+                LevelItem::Pickup{x, y, ..} => {
                     let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                     stroke_opt.line_width = 4.0;
                     if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
@@ -257,6 +284,32 @@ impl LevelRenderer {
                     ) {
                         ggez::graphics::draw(ctx, &rect, DrawParam::default()
                             .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                    }
+                },
+                LevelItem::DynPickup{x, y, ..} => {
+                    let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                    stroke_opt.line_width = 4.0;
+                    if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                        ggez::graphics::DrawMode::Stroke(stroke_opt),
+                        ggez::graphics::Rect::new(0.0, 0.0, 10.0, 10.0),
+                        ggez::graphics::Color::new(1.0, 0.1, 0.9, 0.7)
+                    ) {
+                        ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                            .dest(na::Point2::new(x - 5.0, y - 5.0)) );
+                    }
+                },
+                LevelItem::EffectArea {x, y, w, h, area_type } => {
+                    let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                    stroke_opt.line_width = 4.0;
+                    if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                        ggez::graphics::DrawMode::Stroke(stroke_opt),
+                        ggez::graphics::Rect::new(0.0, 0.0, w*2.0, h*2.0),
+                        ggez::graphics::Color::new(0.7, 0.0, 0.5, 0.75)
+                    ) {
+                        ggez::graphics::draw(ctx, &rect, DrawParam::default()                                
+                            .dest(na::Point2::new(*x-*w, *y-*h))
+                            .offset(na::Point2::new(*w, *h))                            
+                             );
                     }
                 },
                 LevelItem::Connection{.. } => {

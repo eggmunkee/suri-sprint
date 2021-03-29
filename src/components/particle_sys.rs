@@ -3,7 +3,7 @@ use ggez::{Context,GameResult};
 use ggez::graphics;
 use ggez::graphics::{Rect,Image,Color,DrawParam,WrapMode,BlendMode};
 use ggez::nalgebra as na;
-use specs::{Component, DenseVecStorage, World, WorldExt};
+use specs::{Component, DenseVecStorage, World, WorldExt, Entity};
 //use specs::shred::{Dispatcher};
 use specs_derive::*;
 use rand::prelude::*;
@@ -11,7 +11,8 @@ use serde::{Deserialize,de::DeserializeOwned};
 
 // ================================
 
-//use crate::game_state::{GameState};
+use crate::core::game_state::{GameState};
+use crate::components::{Position, Velocity};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource};
 use crate::conf::*;
@@ -38,6 +39,9 @@ pub struct ParticleSysConfig {
     pub emit_rate: f32,
     pub max_particles: usize,
     pub ttl: f32,
+    pub system_ttl: Option<f32>,
+    pub destroy_on_end: bool,
+    pub world_positions: bool,    
 }
 
 impl ParticleSysConfig {
@@ -57,7 +61,8 @@ impl ParticleSysConfig {
         }
     }
 
-    pub fn create_from_config(world: &mut World, ctx: &mut Context, config_path: String) -> ParticleSysComponent {
+    pub fn create_from_config(world: &mut World, ctx: &mut Context, config_path: String,
+        x: f32, y: f32, vx: f32, vy: f32, base_offset: (f32, f32)) -> ParticleSysComponent {
 
         let maybe_config = get_ron_config::<ParticleSysConfig>(config_path.to_string());
 
@@ -91,6 +96,14 @@ impl ParticleSysConfig {
         sys.emit_rate = config.emit_rate;
         sys.max_particles = config.max_particles;
         sys.particle_ttl = config.ttl;
+        sys.system_ttl = config.system_ttl;
+        sys.destroy_on_end = config.destroy_on_end;
+        sys.position_offset = base_offset;
+        sys.world_positions = config.world_positions;
+        sys.world_offset.0 = x;
+        sys.world_offset.1 = y;
+        sys.world_vel.0 = vx;
+        sys.world_vel.1 = vy;
 
         sys.init();
 
@@ -132,7 +145,10 @@ pub struct ParticleSysComponent {
     //pub image: Image, // component owns image
     pub z_order: f32,
     pub visible: bool,
+    pub emitting: bool,
     pub toggleable: bool,
+    pub toggle_emit: bool,
+    pub delete_flag: bool,
     pub width: f32,
     pub height: f32,
     pub scale: (f32, f32),
@@ -153,6 +169,13 @@ pub struct ParticleSysComponent {
     pub max_particles: usize,
     pub particle_ttl: f32,
     pub particles: Vec<ParticleData>,
+    pub system_time: f32,
+    pub system_ttl: Option<f32>,
+    pub destroy_on_end: bool,
+    pub position_offset: (f32, f32),
+    pub world_positions: bool,
+    pub world_offset: (f32, f32),
+    pub world_vel: (f32, f32),
 }
 
 impl ParticleSysComponent {
@@ -161,7 +184,10 @@ impl ParticleSysComponent {
         let psys = ParticleSysComponent {
             z_order: 900.0,
             visible: true,
+            emitting: true,
             toggleable: false,
+            toggle_emit: true,
+            delete_flag: false,
             width: 10.0,
             height: 10.0,
             scale: (1.0, 1.0),
@@ -182,14 +208,46 @@ impl ParticleSysComponent {
             max_particles: 100,
             particle_ttl: 2.0,
             particles: vec![],
+            system_time: 0.0,
+            system_ttl: None,
+            destroy_on_end: false,
+            position_offset: (0.0, 0.0),
+            world_positions: true,
+            world_offset: (0.0, 0.0),
+            world_vel: (0.0, 0.0),
         };
 
         psys
     }
 
     pub fn init(&mut self) {
-        for i in 0..1000 {
-            self.update(0.05);
+        for i in 0..10 {
+            self.update(0.01, true);
+        }        
+    }
+
+    pub fn get_logic_value(&self) -> bool {
+        if self.toggleable {
+            if self.toggle_emit {
+                self.emitting
+            }
+            else {
+                self.visible
+            }
+        }
+        else {
+            true
+        }
+    }
+
+    pub fn set_logic_value(&mut self, active: bool) {
+        if self.toggleable {
+            if self.toggle_emit {
+                self.emitting = active;
+            }
+            else {
+                self.visible = active;
+            }
         }
     }
 
@@ -203,26 +261,57 @@ impl ParticleSysComponent {
         let mut rng = rand::thread_rng();
 
         let mut particle = ParticleData::create();
-        let xrand = (rng.gen::<f32>() - 0.5) * self.width;
-        let yrand = (rng.gen::<f32>() - 0.5) * self.height;
-        let vxrand = (rng.gen::<f32>() - 0.5) * self.vel_range.0;
-        let vyrand = (rng.gen::<f32>() - 0.5) * self.vel_range.1;
-        particle.x = xrand;
-        particle.y = yrand;
-        particle.vx = self.vel.0 + vxrand;
-        particle.vy = self.vel.1 + vyrand;
+        let mut xrand = (rng.gen::<f32>() - 0.5) * self.width;
+        let mut yrand = (rng.gen::<f32>() - 0.5) * self.height;
+        let mut vxrand = (rng.gen::<f32>() - 0.5) * self.vel_range.0;
+        let mut vyrand = (rng.gen::<f32>() - 0.5) * self.vel_range.1;
+
+        if self.world_positions {
+            xrand += self.world_offset.0;
+            yrand += self.world_offset.1;
+            vxrand += self.world_vel.0;
+            vyrand += self.world_vel.1;
+        }        
+
+        // Add system initial velocity into particle vx/vy
+        vxrand += self.vel.0;
+        vyrand += self.vel.1;
+
+        particle.x = xrand + self.position_offset.0;
+        particle.y = yrand + self.position_offset.1;
+        particle.vx = vxrand;
+        particle.vy = vyrand;
 
         self.particles.insert(0, particle);
     }
 
-    pub fn update(&mut self, time_delta: f32) {
-        self.emit_timer += time_delta;
+    pub fn update(&mut self, time_delta: f32, pre_update: bool) {
 
-        while self.emit_timer > self.emit_rate {
-            self.emit_timer -= self.emit_rate;
-            self.emit();
+        let mut emit_enabled = true;
+        if !pre_update {
+            self.system_time += time_delta;
+
+            // Stop emitting once system time-to-live is passed
+            if !self.toggleable {
+                if let Some(system_ttl) = self.system_ttl {
+                    if self.system_time > system_ttl {
+                        emit_enabled = false;
+                    }
+                }
+            }
         }
 
+        if emit_enabled && self.emitting {
+            self.emit_timer += time_delta;
+
+            while self.emit_timer > self.emit_rate {
+                self.emit_timer -= self.emit_rate;
+                self.emit();
+            }
+    
+        }
+
+        // Process particle updates and removals
         let mut dead_indices : Vec<usize> = vec![];
         let mut index : usize = 0;
         for particle in &mut self.particles {
@@ -230,7 +319,7 @@ impl ParticleSysComponent {
                 dead_indices.insert(0, index);
             }
             else {
-                particle.y += 0.5 * time_delta;
+                //particle.y += 0.5 * time_delta;
                 particle.lifetime += time_delta;
                 if particle.lifetime > self.particle_ttl {
                     particle.alive = false;
@@ -252,7 +341,29 @@ impl ParticleSysComponent {
             self.particles.remove(*dead_part_index);
         }
 
+        if self.destroy_on_end && emit_enabled == false && self.particles.len() == 0 {
+            // destroy flag should be set
+            // emitting has stopped and last particle is gone
+            self.delete_flag = true;
+        }
+
     }
+
+
+}
+
+impl super::RenderItemTarget for ParticleSysComponent {
+    fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let psys_reader = world.read_storage::<ParticleSysComponent>();
+
+            // Get Sprite Component to call draw method            
+            if let Some(psys) = psys_reader.get(entity.clone()) {
+                use crate::components::{RenderTrait};
+                psys.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+            }
+        }
 }
 
 
@@ -273,7 +384,7 @@ impl super::RenderTrait for ParticleSysComponent {
         let mut shader_res = world.fetch_mut::<ShaderResources>();
         let mut images = world.fetch_mut::<ImageResources>();
 
-        let draw_pos = na::Point2::<f32>::new(pos.x, pos.y);
+        let draw_pos = na::Point2::<f32>::new(pos.x + self.position_offset.0, pos.y + self.position_offset.1);
 
         let mut texture_ref : Option<GameResult<&mut Image>> = None;
         let mut no_texture = true;
@@ -338,7 +449,13 @@ impl super::RenderTrait for ParticleSysComponent {
                         //         _lock = Some(ggez::graphics::use_shader(ctx, shader_ref));
                         //     }
                         // }
-                        let p_draw_pos = na::Point2::new(draw_pos.x + particle.x - (scaled_w * 0.5), draw_pos.y + particle.y - (scaled_h * 0.5));
+                        let p_draw_pos = match self.world_positions {
+                            false => na::Point2::new(draw_pos.x + particle.x - (scaled_w * 0.5),
+                                draw_pos.y + particle.y - (scaled_h * 0.5)),
+                            true => na::Point2::new(particle.x - (scaled_w * 0.5),
+                                particle.y - (scaled_h * 0.5)),
+                        };
+                            
             
                         if let Err(_) = ggez::graphics::draw(ctx, *texture, DrawParam::new()
                                 .src( Rect::new(0.0, 0.0, 1.0, 1.0) )

@@ -67,18 +67,25 @@ LevelConfig(
 
         Portal ( x: 575.0, y: 200.0, w: 20, name: "portB", destination: "portExit", start_enabled: false ),
 
+        ParticleSys ( x: 233, y: 250, z: 400.0, config: "entities/psys/energy_explosion",
+            logic: Some(
+                ItemLogic( name: "leaky_faucet", start_enabled: false, logic_type: Some(Switch))
+            ) ),
+
         //Connection ( from: "btna", to: "mouse", conn_type: Switch ),
         Connection ( from: "btnc", to: "tileswitch0", conn_type: Switch ),
         Connection ( from: "btnc", to: "tileswitch", conn_type: Switch ),
         //Connection ( from: "btnc", to: "portExit", conn_type: Switch ),
-        Connection ( from: "btna", to: "box_door", conn_type: Switch ),
+        Connection ( from: "btnc", to: "box_door", conn_type: Switch ),
         Connection ( from: "btnb", to: "portB", conn_type: Switch ),
         Connection ( from: "btnb", to: "portExit", conn_type: Switch ),
-        Connection ( from: "btnc", to: "box_door2", conn_type: Switch ),
+        Connection ( from: "btna", to: "box_door2", conn_type: Switch ),
 
-        Connection ( from: "btna", to: "btna-light", conn_type: Switch ),
-        Connection ( from: "btnb", to: "btnb-light", conn_type: Switch ),
         Connection ( from: "btnc", to: "btnc-light", conn_type: Switch ),
+        Connection ( from: "btnb", to: "btnb-light", conn_type: Switch ),
+        Connection ( from: "btna", to: "btna-light", conn_type: Switch ),
+
+        Connection ( from: "btna", to: "leaky_faucet", conn_type: Switch ),
 
     ],
 )

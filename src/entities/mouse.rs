@@ -7,11 +7,12 @@ use wrapped2d::user_data::*;
 use wrapped2d::b2;
 
 use crate::conf::*;
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
+use crate::components::flags::{RenderSpriteFlag};
 use crate::core::physics::*;
 
 pub struct MouseBuilder;
@@ -55,6 +56,8 @@ impl MouseBuilder {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .build();
 
         let entity_id = entity.id();

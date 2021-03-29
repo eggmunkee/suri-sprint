@@ -4,7 +4,7 @@ use wrapped2d::user_data::*;
 
 use crate::components::sprite::*;
 use crate::components::anim_sprite::*;
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 //use crate::components::ball::*;
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
@@ -47,6 +47,8 @@ impl GhostBuilder {
         collision.collision_mask.push(CollisionCategory::Portal);
         collision.collision_mask.push(CollisionCategory::Sound);
         collision.create_dynamic_body_circle_fixed(physics_world);
+        // Set slight upward gravity scale (reversing and 1/10 power)
+        collision.set_gravity_scale(physics_world, -0.1);
 
         let body_handle_clone = collision.body_handle.clone();
 
@@ -57,6 +59,7 @@ impl GhostBuilder {
         //.with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
         .with(sprite) // SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
         .build();
 
         let entity_id = entity.id();

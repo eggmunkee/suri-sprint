@@ -4,7 +4,7 @@ LevelConfig(
         min_x: 0.0, min_y: 0.0, max_x: 2000.0, max_y: 2000.0,
         solid_sides: (false, true, false, true),
     ),
-    soundtrack: "suri-meow-1.ogg",
+    soundtrack: "pirates/track-08.mp3",
     items: [
         Player ( x: 100.0, y: 100.0 ),
 

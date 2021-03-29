@@ -7,7 +7,7 @@ LevelConfig(
     soundtrack: "Suri Theme 1.mp3",
     items: [
         Player ( x: 500.0, y: 700.0 ),
-        Player ( x: 1300.0, y: 600.0 ),
+        Player ( x: 1300.0, y: 600.0, player: Some(Milo) ),
         
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-1,-1,2,2), ),
 
@@ -42,7 +42,7 @@ LevelConfig(
 
         //DynEmptyBox ( x: 500.0, y: 900.0, w: 50.0, h: 50.0, ang: 0.0),
 
-        DynPlatform ( x: 810.0, y: 750.0, w: 40.0, h: 40.0, ang: 0.0),
+        DynPlatform ( x: 810.0, y: 750.0, w: 30.0, h: 30.0, ang: 0.0),
 
         // lower blockers
         //Platform ( x: 1.0, y: 825.0, w: 150.0, h: 15.0, ang: -1.57),
@@ -61,10 +61,11 @@ LevelConfig(
         // button platform above portal
         Button ( start_enabled: false, x: 300.0, y: 230.0, w: 35.0, h: 7, ang: 0, name: "btna",),
         Platform ( x: 300.0, y: 250.0, w: 150.0, h: 20.0, ang: 0.0 ),
-        Portal ( x: 930.0 , y: 300.0, w: 35.0, name: "top_left_out", destination: "lower_right_out", start_enabled: true),
 
-        StaticLevelProp( x: 850, y: 200.0, w: 24.0, h: 24.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
-        Button ( start_enabled: false, x: 850.0, y: 175.0, w: 35.0, h: 10, ang: 0, name: "btn_milo2",),
+        Portal ( x: 900.0 , y: 300.0, w: 35.0, name: "top_left_out", destination: "lower_right_out", start_enabled: true),
+        StaticLevelProp( x: 790, y: 200.0, w: 24.0, h: 24.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        
+        Button ( start_enabled: false, x: 790.0, y: 175.0, w: 35.0, h: 10, ang: 0, name: "btn_milo2",),
 
 
         // platform from mid-left to mid-right

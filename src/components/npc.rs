@@ -344,12 +344,16 @@ impl NpcComponent {
     }    
 
     pub fn apply_movement(&mut self, body: &mut physics::PhysicsBody, time_delta: f32) {
-        let move_amt = 2.0; //1300.0;
-        let up_mult = 3.0;
+        let move_amt = 1.0; //1300.0;
+        let up_mult = 0.75;
+        let loc_cent = body.local_center().clone();
+
         if self.going_right {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             if body.linear_velocity().x < 5.0 {
-                body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+                //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt,y: 0.0}, true);
+
+                body.apply_linear_impulse(&physics::PhysicsVec {x:move_amt * time_delta,y: 0.0}, &loc_cent, true);
             }
             
             //println!("applied right force");
@@ -357,20 +361,23 @@ impl NpcComponent {
         if self.going_left {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             if body.linear_velocity().x > -5.0 {
-                body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt,y: 0.0}, true);
+                //body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt * time_delta,y: 0.0}, true);
+                body.apply_linear_impulse(&physics::PhysicsVec {x:-move_amt * time_delta,y: 0.0}, &loc_cent, true);
             }
                 //println!("applied left force");
         }
         if self.going_up {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
             if body.linear_velocity().y > -5.0 {
-                body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt}, true);
+                //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt * time_delta}, true);
+                body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -up_mult * move_amt * time_delta}, &loc_cent, true);
             }
             //println!("applied up force");
         }
         if self.going_down {
             //let new_lin_vel = physics::create_pos(&Point2::new(self.vel.x, self.vel.y));
-            body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt}, true);
+            //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, true);
+            body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, &loc_cent, true);
             //println!("applied down force");
         }
     }

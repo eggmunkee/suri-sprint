@@ -24,9 +24,9 @@ mod render;
 // creates game state with world and dispatcher, handles event loop
 //   Update, Draw, KeyDown KeyUp, etc.
 //   Events are forwarded to specs dispatcher and render/input modules
-mod game_state;
 
 use crate::conf::*;
+use crate::core::{GameState};
 
 // ======================== MAIN INIT APP ============================
 
@@ -55,7 +55,7 @@ pub fn main() -> GameResult {
     let (ctx, event_loop) = &mut cb.build()?;
 
     // create app's state
-    let state = &mut crate::game_state::GameState::new(ctx, win_title, win_mode, config.music_volume, config.gravity)?;
+    let state = &mut GameState::new(ctx, win_title, win_mode, config.music_volume, config.audio_volume, config.gravity)?;
 
     // Load start level
     state.load_level(ctx, config.start_level, "".to_string());

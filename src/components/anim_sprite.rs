@@ -3,7 +3,7 @@ use ggez::{Context};
 use ggez::graphics;
 use ggez::graphics::{Rect,Image,Color,DrawParam,WrapMode,BlendMode};
 use ggez::nalgebra as na;
-use specs::{Component, DenseVecStorage, World, WorldExt};
+use specs::{Component, DenseVecStorage, World, WorldExt, Entity};
 //use specs::shred::{Dispatcher};
 use specs_derive::*;
 use rand::prelude::*;
@@ -11,7 +11,7 @@ use serde::{Deserialize,de::DeserializeOwned};
 
 // ================================
 
-//use crate::game_state::{GameState};
+use crate::core::game_state::{GameState};
 use crate::components::collision::{Collision};
 use crate::components::sprite::{SpriteConfig};
 use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource};
@@ -183,6 +183,10 @@ impl AnimSpriteComponent {
         num_frames
     }
 
+    pub fn set_animation(&mut self, name: &str) {
+        self.curr_animation = name.to_string();
+    }
+
     // pub fn advance_frame(&mut self) {
 
     //     self.advance_frame_offset(1);
@@ -343,6 +347,20 @@ impl AnimSpriteComponent {
     }
 }
 
+impl super::RenderItemTarget for AnimSpriteComponent {
+    fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+        pos: &na::Point2<f32>, item_index: usize) {
+            let world = &game_state.world;
+            let anim_sprite_reader = world.read_storage::<AnimSpriteComponent>();
+
+            // Get Sprite Component to call draw method            
+            if let Some(anim_sprite) = anim_sprite_reader.get(entity.clone()) {
+                use crate::components::{RenderTrait};
+                anim_sprite.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
+            }
+        }
+
+}
 
 impl super::RenderTrait for AnimSpriteComponent {
     fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, _item_index: usize) {

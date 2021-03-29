@@ -1,75 +1,149 @@
 
 use ggez::nalgebra as na;
+use ggez::{Context};
 use na::{Point2,Vector2,distance_squared,distance};
-use specs::{World, WorldExt, Entity};
+use specs::{World, WorldExt, Entity, Builder};
 use specs::Join;
 use wrapped2d::b2;
 use wrapped2d::user_data::*;
-
+use rand::prelude::*;
 
 use crate::core::physics::*;
-use crate::resources::{GameStateResource};
-use crate::components::{Position,CharLevelInteractor};
+use crate::resources::{GameStateResource,GameLog};
+use crate::components::{Position,Velocity,RenderFlag,RenderLayerType,CharLevelInteractor,PhysicsUpdateTrait};
 use crate::components::collision::{Collision};
 use crate::components::logic::{LogicComponent};
 use crate::components::exit::{ExitComponent};
 use crate::components::portal::{PortalComponent};
 use crate::components::pickup::{PickupComponent};
+use crate::components::button::{ButtonComponent};
+use crate::components::particle_sys::{ParticleSysComponent,ParticleSysConfig};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
 use crate::entities::level_builder::{LevelType};
+use crate::entities::point_pickup::{PickupBuilder};
+use crate::entities::ghost::{GhostBuilder};
 
 
 pub struct PhysicsSystem {}
 
 impl PhysicsSystem {
 
-    pub fn run_physics_update(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
+    pub fn run_physics_update(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
 
         // Run Physics setup process - address any inputs to physics system
         Self::pre_advance_physics(world, physics_world, delta_seconds);
 
         //println!("Running physics engine... delta={}", delta_seconds);
-        Self::advance_physics_system(world, physics_world, delta_seconds);
+        Self::advance_physics_system(world, ctx, physics_world, delta_seconds);
 
         // Run Physics post-run process - address any outputs of physics system to game world
         Self::post_advance_physics(world, physics_world, delta_seconds);
 
     }
 
+    // fn call_pre_physics_hook(physics_world: &mut PhysicsWorld, delta_seconds: f32,
+    //     physic_update_object: &mut dyn PhysicsUpdateTrait,
+    //     opt_character: Option<&mut CharacterDisplayComponent>,
+    //     opt_npc: Option<&mut NpcComponent>,
+    //     game_state: &GameStateResource,
+    //     entity: &Entity) {
+
+    //     physic_update_object.pre_physics_update(physics_world, delta_seconds, opt_character, opt_npc, game_state, entity);
+
+    // }
+
+    // fn call_post_physics_hook(physics_world: &mut PhysicsWorld, delta_seconds: f32,
+    //     physic_update_object: &mut dyn PhysicsUpdateTrait,
+    //     opt_character: Option<&mut CharacterDisplayComponent>,
+    //     opt_npc: Option<&mut NpcComponent>,
+    //     game_state: &GameStateResource,
+    //     entity: &Entity) {
+
+    //     physic_update_object.post_physics_update(physics_world, delta_seconds, opt_character, opt_npc, game_state, entity);
+
+    // }
+
     // Handle any component state which affects the physics - ex. player input applied forces
+    //  
     fn pre_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
-        let state_reader = world.fetch::<GameStateResource>();
+        //let state_reader = world.fetch::<GameStateResource>();
         let mut phys_writer = world.write_storage::<Collision>();
+        let mut pos_writer = world.write_storage::<Position>();
         let mut char_writer = world.write_storage::<CharacterDisplayComponent>();
         let mut npc_writer = world.write_storage::<NpcComponent>();
+        let mut button_writer = world.write_storage::<ButtonComponent>();
+        let mut pickup_writer = world.write_storage::<PickupComponent>();
+        let mut portal_writer = world.write_storage::<PortalComponent>();
         let entities = world.entities();
 
         //let level_bounds = &state_reader.level_bounds;
         //println!("Pre-advance-physics");
 
         // Make sure collision body has update itself from game loop
-        for (mut collision, mut character, mut npc, ent) in (&mut phys_writer, (&mut char_writer).maybe(),(&mut npc_writer).maybe(), &entities).join() {
+        for (mut collision, mut pos, mut character, mut npc, ent) in (&mut phys_writer, &mut pos_writer, (&mut char_writer).maybe(),(&mut npc_writer).maybe(), &entities).join() {
             
             // update collision body from character
-            collision.pre_physics_hook(physics_world, delta_seconds, character, npc, &state_reader);
+            //Self::call_pre_physics_hook(physics_world, delta_seconds, collision, character, npc, &state_reader, &ent);
+            collision.pre_physics_update(world, physics_world, delta_seconds, &mut None, &mut character, &mut npc, &ent);
+
+            if let Some(ref mut char_comp) = character {
+                char_comp.pre_physics_update(world, physics_world, delta_seconds, &mut Some(collision), &mut None, &mut npc, &ent);
+            }
+            
+            if let Some(ref mut npc_comp) = npc {
+                //npc_comp.pre_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut character, &mut None, &state_reader, &ent);
+            }
 
         }
+
+        for (mut collision, mut pos, mut button, ent) in (&mut phys_writer, &mut pos_writer, &mut button_writer, &entities).join() {
+            //button.pre_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        }
+
+        // let mut particle_writer = world.write_storage::<ParticleSysComponent>();
+        // for (mut collision, mut pos, mut particle_sys, ent) in (&mut phys_writer, &mut pos_writer, &mut particle_writer, &entities).join() {
+        //     //particle_sys.pre_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        // }
+        // drop(particle_writer);
+
+        for (mut collision, mut pos, mut pickup, ent) in (&mut phys_writer, &mut pos_writer, &mut pickup_writer, &entities).join() {
+            //pickup.pre_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        }
+
+        for (mut collision, mut pos, mut portal, ent) in (&mut phys_writer, &mut pos_writer, &mut portal_writer, &entities).join() {
+            //portal.pre_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        }
+
     }
 
     // Handle physics changes by updating component state
     fn post_advance_physics(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
+        //let state_reader = world.fetch::<GameStateResource>();
         let mut phys_writer = world.write_storage::<Collision>();
         let mut pos_writer = world.write_storage::<Position>();
+        let mut char_writer = world.write_storage::<CharacterDisplayComponent>();
+        let mut npc_writer = world.write_storage::<NpcComponent>();
         let logic_reader = world.read_storage::<LogicComponent>();
+        let mut button_writer = world.write_storage::<ButtonComponent>();
+        //let mut particle_writer = world.write_storage::<ParticleSysComponent>();
+        let mut pickup_writer = world.write_storage::<PickupComponent>();
+        let mut portal_writer = world.write_storage::<PortalComponent>();
         let entities = world.entities();
 
         // Update collision components after physics runs
-        for (mut collision, mut pos, ent) in (&mut phys_writer, &mut pos_writer, &entities).join() {
-            collision.post_physics_hook(physics_world);
+        for (mut collision, mut pos,  mut character, mut npc, ent) in 
+        (&mut phys_writer, &mut pos_writer, (&mut char_writer).maybe(),(&mut npc_writer).maybe(), &entities).join() {
+            //collision.post_physics_hook(physics_world, delta_seconds, character, npc, &state_reader);
+
+            //Self::call_post_physics_hook(physics_world, delta_seconds, collision, character, npc, &state_reader, &ent);
+            collision.post_physics_update(world, physics_world, delta_seconds, &mut None, &mut character, &mut npc, &ent);
             // update position from collision position
-            pos.x = collision.pos.x;
-            pos.y = collision.pos.y;
+            pos.post_physics_update(world, physics_world, delta_seconds, &mut Some(collision), &mut character, &mut npc, &ent);
+
+            if let Some(ref mut char_comp) = character {
+                char_comp.post_physics_update(world, physics_world, delta_seconds, &mut Some(collision), &mut None, &mut npc, &ent);
+            }            
         }
 
         for (mut collision, logic, ent) in (&mut phys_writer, &logic_reader, &entities).join() {
@@ -79,6 +153,33 @@ impl PhysicsSystem {
             //collision.update_body_obstruction(physics_world, active);
             collision.set_obstructing(active);
         }
+
+        // Update collision components after physics runs
+        for (mut character, mut collision, mut pos, ent) in
+            (&mut char_writer, &mut phys_writer, &mut pos_writer, &entities).join() {
+            
+            for (id, contact_type) in collision.body_contacts.iter() {
+
+            }
+        }
+
+        for (mut collision, mut pos, mut button, ent) in (&mut phys_writer, &mut pos_writer, &mut button_writer, &entities).join() {
+            //button.post_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        }
+
+        // let mut particle_writer = world.write_storage::<ParticleSysComponent>();
+        // for (mut collision, mut pos, mut particle_sys, ent) in (&mut phys_writer, &mut pos_writer, &mut particle_writer, &entities).join() {
+        //     //particle_sys.post_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        // }
+        // drop(particle_writer);
+
+        for (mut collision, mut pos, mut pickup, ent) in (&mut phys_writer, &mut pos_writer, &mut pickup_writer, &entities).join() {
+            //pickup.post_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        }
+
+        for (mut collision, mut pos, mut portal, ent) in (&mut phys_writer, &mut pos_writer, &mut portal_writer, &entities).join() {
+            //portal.post_physics_update(physics_world, delta_seconds, &mut Some(collision), &mut None, &mut None, &state_reader, &ent);
+        }
     }    
 
     pub fn handle_contact(coll_type_1: &CollisionCategory, coll_type_2: &CollisionCategory,
@@ -87,15 +188,42 @@ impl PhysicsSystem {
         // if coll_type_1 != &CollisionCategory::Player && coll_type_2 == &CollisionCategory::Player {
         //     return handle_contact(coll_type_2, coll_type_1);
         // }
+
+        // ENTITY TYPE DETERMINED CONTACTS
+        match ent_type_2 {
+            EntityType::SensorArea => {
+                match coll_type_1 {
+                    CollisionCategory::Player | CollisionCategory::Etherial | CollisionCategory::Level => {
+                        return Some(CollideType::Collider_Sensor);
+                    },
+                    _ => {}
+                }                
+            },
+            EntityType::PickupItem(_) => {
+                match coll_type_1 {
+                    CollisionCategory::Player => {
+                        return Some(CollideType::Player_Pickup);
+                    },
+                    _ => {}
+                }
+            },
+            _ => {}
+        }
+
+        match coll_type_1 {
+            CollisionCategory::Player | CollisionCategory::Etherial | CollisionCategory::Level => {
+                
+            },
+            _ => {}
+        }
+
+        // COLLISION CATEGORY DETERMINED CONTACTS OTHERWISE
         match coll_type_1 {
             CollisionCategory::Player => match coll_type_2 {
                 CollisionCategory::Etherial => Some(CollideType::Player_Ghost),
                 CollisionCategory::Portal => Some(CollideType::Collider_Portal),
-                CollisionCategory::Level => match ent_type_2 {
-                    EntityType::PickupItem(_) => Some(CollideType::Player_Point),
-                    _ => Some(CollideType::Collider_Collider),
-                },
-                CollisionCategory::Level | CollisionCategory::Player => Some(CollideType::Collider_Collider),
+                CollisionCategory::Level | CollisionCategory::Player
+                    => Some(CollideType::Collider_Collider),
                 _ => None
             },
             CollisionCategory::Etherial => match coll_type_2 {
@@ -106,26 +234,26 @@ impl PhysicsSystem {
                 _ => None,
             },
             CollisionCategory::Level => match coll_type_2 {
-                CollisionCategory::Portal => {
-                    //println!("Got level-portal collide");
-                    Some(CollideType::Collider_Portal)
-                },
-                CollisionCategory::Level | CollisionCategory::Etherial => Some(CollideType::Collider_Collider),
-                CollisionCategory::Player => match ent_type_1 {
-                    EntityType::PickupItem(_) => Some(CollideType::Player_Point),
-                    _ => Some(CollideType::Collider_Collider),
-                },
+                CollisionCategory::Portal => Some(CollideType::Collider_Portal),
+                CollisionCategory::Level | CollisionCategory::Etherial | CollisionCategory::Player
+                    => Some(CollideType::Collider_Collider),
+                // CollisionCategory::Player => match ent_type_1 {
+                //     EntityType::PickupItem(_) => Some(CollideType::Player_Pickup),
+                //     _ => Some(CollideType::Collider_Collider),
+                // },
                 _ => None,
             },
             CollisionCategory::Portal => match coll_type_2 {
-                CollisionCategory::Player | CollisionCategory::Etherial | CollisionCategory::Level => Some(CollideType::Collider_Portal),
+                CollisionCategory::Player | CollisionCategory::Etherial | CollisionCategory::Level
+                    => Some(CollideType::Collider_Portal),
                 _ => None,
             },
             CollisionCategory::Sound => match coll_type_2 {
-                CollisionCategory::Etherial => Some(CollideType::Ghost_Meow),
-                CollisionCategory::Level => Some(CollideType::Meow_Level),
+                //CollisionCategory::Etherial => Some(CollideType::Ghost_Meow),
+                //CollisionCategory::Level => Some(CollideType::Meow_Level),
                 _ => None,
-            }
+            },
+            
             _ => None
         }
     }
@@ -134,7 +262,9 @@ impl PhysicsSystem {
         interactor.set_standing(is_standing);
     }
 
-    pub fn advance_physics_system(world: &mut World, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
+    pub fn advance_physics_system(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, delta_seconds: f32) {
+
+        let mut rng = rand::thread_rng();
 
         let mut lvl_type : LevelType = LevelType::default();
         {
@@ -228,124 +358,185 @@ impl PhysicsSystem {
                 let collide_type = Self::handle_contact(&primary_collider_type, &other_collider_type, &primary_entity_type, &other_entity_type);
 
                 // Handle contact collide type info
-                match &collide_type {
-                    Some(collide_t) => {
+                if let Some(collide_t) = &collide_type {
 
-                        // HANDLE SPECIAL COLLIDE TYPES HERE IF NEEDED
-                        // Handle ghost meow collide
-                        if collide_t == &CollideType::Ghost_Meow {
-                            if primary_collider_type == CollisionCategory::Etherial {
-                                //delete_entity_list.push(primary_id);
+                    // HANDLE SPECIAL COLLIDE TYPES HERE IF NEEDED
+                    // Handle ghost meow collide
+                    if collide_t == &CollideType::Ghost_Meow {
+                        if primary_collider_type == CollisionCategory::Etherial {
+                            //delete_entity_list.push(primary_id);
+                            if let Some(collision) = coll_res.get_mut(entity_1) {
+                                collision.delete_flag = true;
+                            }
+                        }
+                        else {
+                            //delete_entity_list.push(other_id);
+                            // if let Some(collision) = coll_res.get_mut(entity_2) {
+                            //     collision.delete_flag = true;
+                            // }
+                        }
+                    }                        
+                    else if collide_t == &CollideType::Collider_Portal {
+                        // DEAL WITH IF FIRST ITEM IS THE COLLIDER
+                        match primary_collider_type {
+                            CollisionCategory::Etherial | CollisionCategory::Player 
+                            | CollisionCategory::Level => {
                                 if let Some(collision) = coll_res.get_mut(entity_1) {
-                                    collision.delete_flag = true;
+                                    //println!("PORTAL COLLISION - PRIMARY - {:?} ===============================================", &entity_1);
+                                    //debug_contact_floor_dot(&contact, contact_flipped);
+                                    let mut portal_enabled = false;
+                                    let portal_res = world.read_storage::<PortalComponent>();
+                                    if let Some(portal) = portal_res.get(entity_2) {
+                                        portal_enabled = portal.is_enabled;
+                                    }
+                                    if portal_enabled {
+                                        let portal_id = other_id as i32;
+                                        
+                                        collision.in_portal = true;
+                                        collision.portal_id = portal_id;
+                                    }
+
+                                    if body.is_awake() == false {
+                                        wake_body_list.push(body_handle);
+                                    }
                                 }
-                            }
-                            else {
-                                //delete_entity_list.push(other_id);
+                            },
+                            _ => {}
+                        }
+                        // DEAL WITH IF SCEOND ITEM IS THE COLLIDER
+                        match other_collider_type {
+                            CollisionCategory::Etherial | CollisionCategory::Player
+                            | CollisionCategory::Level => {
                                 if let Some(collision) = coll_res.get_mut(entity_2) {
-                                    collision.delete_flag = true;
+                                    //println!("PORTAL COLLISION - SECONDARY - {:?} ===============================================", &entity_2);
+                                    //debug_contact_floor_dot(&contact, contact_flipped);
+
+                                    let mut portal_enabled = false;
+                                    let portal_res = world.read_storage::<PortalComponent>();
+                                    if let Some(portal) = portal_res.get(entity_1) {
+                                        portal_enabled = portal.is_enabled;
+                                    }
+                                    if portal_enabled {
+                                        let portal_id = primary_id as i32;
+
+                                        collision.in_portal = true;
+                                        collision.portal_id = portal_id;
+
+                                    }
+
+                                    if other_body.is_awake() == false {
+                                        wake_body_list.push(other_body_handle);
+                                    }
                                 }
-                            }
-                        }                        
-                        else if collide_t == &CollideType::Collider_Portal {
-                            // DEAL WITH IF FIRST ITEM IS THE COLLIDER
-                            match primary_collider_type {
-                                CollisionCategory::Etherial | CollisionCategory::Player 
-                                | CollisionCategory::Level => {
-                                    if let Some(collision) = coll_res.get_mut(entity_1) {
-                                        //println!("PORTAL COLLISION - PRIMARY - {:?} ===============================================", &entity_1);
-                                        //debug_contact_floor_dot(&contact, contact_flipped);
-                                        let mut portal_enabled = false;
-                                        let portal_res = world.read_storage::<PortalComponent>();
-                                        if let Some(portal) = portal_res.get(entity_2) {
-                                            portal_enabled = portal.is_enabled;
-                                        }
-                                        if portal_enabled {
-                                            let portal_id = other_id as i32;
-                                            
-                                            collision.in_portal = true;
-                                            collision.portal_id = portal_id;
-                                        }
-
-                                        if body.is_awake() == false {
-                                            wake_body_list.push(body_handle);
-                                        }
-                                    }
-                                },
-                                _ => {}
-                            }
-                            // DEAL WITH IF SCEOND ITEM IS THE COLLIDER
-                            match other_collider_type {
-                                CollisionCategory::Etherial | CollisionCategory::Player
-                                | CollisionCategory::Level => {
-                                    if let Some(collision) = coll_res.get_mut(entity_2) {
-                                        //println!("PORTAL COLLISION - SECONDARY - {:?} ===============================================", &entity_2);
-                                        //debug_contact_floor_dot(&contact, contact_flipped);
-
-                                        let mut portal_enabled = false;
-                                        let portal_res = world.read_storage::<PortalComponent>();
-                                        if let Some(portal) = portal_res.get(entity_1) {
-                                            portal_enabled = portal.is_enabled;
-                                        }
-                                        if portal_enabled {
-                                            let portal_id = primary_id as i32;
-
-                                            collision.in_portal = true;
-                                            collision.portal_id = portal_id;
-
-                                        }
-
-                                        if other_body.is_awake() == false {
-                                            wake_body_list.push(other_body_handle);
-                                        }
-                                    }
-                                },
-                                _ => {}
-                            }
-
+                            },
+                            _ => {}
                         }
-                        else if collide_t == &CollideType::Player_Point {
-                            match primary_entity_type {
-                                EntityType::PickupItem(_) => {
-                                    // Get point item collision component
-                                    if let Some(pickup) = pickup_res.get_mut(entity_1) {
+
+                    }
+                    else if collide_t == &CollideType::Player_Pickup {
+                        match primary_entity_type {
+                            EntityType::PickupItem(_) => {
+                                let mut points_speed_lvl = 0;
+                                // Get point item collision component
+                                if let Some(pickup) = pickup_res.get_mut(entity_1) {
+                                    if !pickup.picked_up {
                                         pickup.pickup();
+
+                                        let mut game_state_res = world.fetch_mut::<GameStateResource>();
+                                        game_state_res.points = game_state_res.points + 1;
+                                        if game_state_res.points >= 100 {
+                                            points_speed_lvl = 3;
+                                        }
+                                        else if game_state_res.points >= 50 {
+                                            points_speed_lvl = 2;
+                                        }
+                                        else if game_state_res.points >= 10 {
+                                            points_speed_lvl = 1;
+                                        }
+                                        {
+                                            // let mut log = world.fetch_mut::<GameLog>();
+                                            // log.add_entry(true, "Suri got a point.".to_string(), None, game_state_res.game_run_seconds);
+                                        }
                                     }
-                                    if let Some(player) = char_disp_comp_res.get_mut(entity_2) {
-                                        
+                                }
+
+                                if dot > 0.2 {
+                                    any_stand_contact = true;
+                                }
+
+                                if let Some(player) = char_disp_comp_res.get_mut(entity_2) {
+                                    if player.speed_level < points_speed_lvl {
+                                        player.speed_level = points_speed_lvl;
+                                        println!("PLAYER SPEED INCREASE ==== [{}] ==== ==== [{}] ==== ",
+                                                    &points_speed_lvl, &points_speed_lvl);
+
+                                        let mut log = world.fetch_mut::<GameLog>();
+                                        log.add_entry(true, format!("SPEED BOOST LVL {}!", points_speed_lvl), None,
+                                            world.fetch_mut::<GameStateResource>().game_run_seconds);
                                     }
-                                },
-                                _ => {
-                                    match other_entity_type {
-                                        EntityType::PickupItem(_) => {
-                                            // Get point item collision component
-                                            if let Some(pickup) = pickup_res.get_mut(entity_2) {
+                                }
+                            },
+                            _ => {
+                                match other_entity_type {
+                                    EntityType::PickupItem(_) => {
+                                        let mut points_speed_lvl = 0;
+                                        // Get point item collision component
+                                        if let Some(pickup) = pickup_res.get_mut(entity_2) {
+                                            if !pickup.picked_up {
                                                 pickup.pickup();
+                                                let mut game_state_res = world.fetch_mut::<GameStateResource>();
+                                                game_state_res.points = game_state_res.points + 1;
+                                                if game_state_res.points >= 100 {
+                                                    points_speed_lvl = 3;
+                                                }
+                                                else if game_state_res.points >= 50 {
+                                                    points_speed_lvl = 2;
+                                                }
+                                                else if game_state_res.points >= 10 {
+                                                    points_speed_lvl = 1;
+                                                }
+                                                {
+                                                    // let mut log = world.fetch_mut::<GameLog>();
+                                                    // log.add_entry(true, "Suri got a point.".to_string(), None, game_state_res.game_run_seconds);
+                                                }
                                             }
-                                            if let Some(player) = char_disp_comp_res.get_mut(entity_1) {
-                                        
+                                        }
+
+                                        if dot > 0.2 {
+                                            any_stand_contact = true;
+                                        }
+
+                                        if let Some(player) = char_disp_comp_res.get_mut(entity_1) {
+                                            if player.speed_level < points_speed_lvl {
+                                                player.speed_level = points_speed_lvl;
+                                                println!("PLAYER SPEED INCREASE ==== [{}] ==== ==== [{}] ==== ",
+                                                    &points_speed_lvl, &points_speed_lvl);
+                                                
+                                                let mut log = world.fetch_mut::<GameLog>();
+                                                log.add_entry(true, format!("SPEED BOOST LVL {}!", points_speed_lvl), None,
+                                                    world.fetch_mut::<GameStateResource>().game_run_seconds);
+                                                
                                             }
-                                        },
-                                        _ => {}
-                                    }                                
-                                },
-                                _ => {}
-                            }
+                                        }
+                                    },
+                                    _ => {}
+                                }                                
+                            },
+                            _ => {}
                         }
-                        // generic physical contact - level-player, level-ghost, player-player
-                        else if collide_t == &CollideType::Collider_Collider || collide_t == &CollideType::Player_Ghost {
-                            if dot > 0.2 {
-                                any_stand_contact = true;
-                            }                        
+                    }
+                    // generic physical contact - level-player, level-ghost, player-player
+                    else if collide_t == &CollideType::Collider_Collider || collide_t == &CollideType::Player_Ghost {
+                        if dot > 0.2 {
+                            any_stand_contact = true;
                         }
+                    }
 
-                        // Add generic body contact to collider
-                        if let Some(collision) = coll_res.get_mut(entity_1) {
-                            collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
-                        }
+                    // Add generic body contact to collider
+                    if let Some(collision) = coll_res.get_mut(entity_1) {
+                        collision.body_contacts.push((other_id as i32, collide_t.clone()));                           
+                    }
 
-                    },
-                    _ => {}
                 }
 
                 // handle character exit =====================================================
@@ -409,26 +600,122 @@ impl PhysicsSystem {
                 }
             }
             drop(coll_res);
+            //drop(entities);
+
+            let mut particle_sys_res = world.write_storage::<ParticleSysComponent>();
+            //let entities = world.entities();
+            for (psys, ent) in 
+                (&mut particle_sys_res, &entities).join() {
+                if psys.delete_flag {                    
+                    let delete_id = ent.id();
+                    println!("Deleting particle system {:?}", &delete_id);
+                    delete_entity_list.push(delete_id);
+                }
+            }
+            drop(particle_sys_res);
             drop(entities);
 
             // Delete any entities on the list
             for &entity_id in &delete_entity_list {
                 let entity = world.entities().entity(entity_id);
 
+                // Call destroy body on any collision component of entity
+                let mut spawn_coin = false;
+                let mut spawn_ghost = false;
+                let mut spawn_smoke = false;
+                let mut spawn_energy_explosion = false;
+                let mut coll_x = 0.0;
+                let mut coll_y = 0.0;
+                let mut coll_vx = 0.0;
+                let mut coll_vy = 0.0;
+
                 if entity.gen().is_alive() {
 
-                    // Call destroy body on any collision component of entity
+
+
                     let mut collision_res = world.write_storage::<Collision>();
                     if let Some(collision) = collision_res.get_mut(entity) {
+
+                        coll_x = collision.pos.x;
+                        coll_y = collision.pos.y;
+                        coll_vx = collision.vel.x * 30.0; // get_size(collision.vel.x);
+                        coll_vy = collision.vel.y * 30.0; //get_size(collision.vel.y);
+
+                        match collision.entity_type {
+                            EntityType::PickupItem(PickupItemType::Point) => {
+                                if rng.gen::<f32>() >= 0.6 {
+                                    spawn_ghost = true;
+                                    spawn_smoke = true;
+                                }
+                                else {
+                                    spawn_energy_explosion = true;
+                                }
+                                
+                            },
+                            EntityType::Ghost => {
+                                spawn_coin = true;
+                                spawn_smoke = true;
+                            },
+                            _ => {}                            
+                        }
+
                         // Destroy collision body
                         collision.destroy_body(physics_world);
-
+                       
                     }
 
                     // Destroy world entity
-                    world.entities().delete(entity);
-
+                    if let Err(_) = world.entities().delete(entity) {
+                        println!("Error deleting entity {}", &entity_id);
+                    }
                 }
+
+                if spawn_coin {
+                    PickupBuilder::build_dynamic(world, ctx, physics_world, coll_x, coll_y, 100.0, 12.0, 12.0, PickupItemType::Point);
+                }
+
+                if spawn_ghost {
+                    GhostBuilder::build_collider(world, ctx, physics_world, coll_x, coll_y, coll_vx, coll_vy, 0.0, 0.0, 24.0, 24.0); 
+                }
+
+                if spawn_smoke {
+                    let mut part_sys = ParticleSysConfig::create_from_config(world, ctx, "psys/smoke_2s".to_string(),
+                        coll_x, coll_y, coll_vx, coll_vy, (0.0, 0.0));
+                    // part_sys.world_offset.0 = coll_x;
+                    // part_sys.world_offset.1 = coll_y;
+                    part_sys.z_order = 100.0;
+
+                    let velocity = Velocity {
+                        x: coll_vx, y: coll_vy, frozen: false, gravity: true,
+                    };
+
+                    world.create_entity()
+                        .with(part_sys)
+                        .with(Position { x: coll_x, y: coll_y })
+                        .with(velocity)
+                        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+                        .build();
+                }
+
+                if spawn_energy_explosion {
+                    let mut part_sys = ParticleSysConfig::create_from_config(world, ctx, "psys/energy_explosion".to_string(),
+                        coll_x, coll_y, coll_vx, coll_vy, (0.0, 0.0));
+                    // part_sys.world_offset.0 = coll_x;
+                    // part_sys.world_offset.1 = coll_y;
+                    part_sys.z_order = 100.0;
+
+                    let velocity = Velocity {
+                        x: coll_vx, y: coll_vy, frozen: false, gravity: true,
+                    };
+
+                    world.create_entity()
+                        .with(part_sys)
+                        .with(Position { x: coll_x, y: coll_y })
+                        .with(velocity)
+                        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+                        .build();
+                }
+
             }
         }
 

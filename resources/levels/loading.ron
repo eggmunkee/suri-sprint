@@ -1,0 +1,23 @@
+LevelConfig(
+    name: "",
+    //level_type: Some(Overhead),
+    bounds: (
+        min_x: -300.0, min_y: -300.0, max_x: 300.0, max_y: 300.0,
+        solid_sides: (true, true, true, true),
+    ),
+    soundtrack: "Suri Title theme.mp3",
+    items: [
+        PlayerNpc ( x: 0.0, y: 0.0 ),
+        
+        Sprite ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4.5,-4.5,4.5,4.5), ),
+
+        StaticLevelProp( x: -150, y: 150, w: 65, h: 32.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+        StaticLevelProp( x: 75, y: -50, w: 128, h: 32.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
+                z: Some(100.0) ),
+
+        Ghost ( x: 0.0, y: 0.0 ), 
+
+    ],
+)

@@ -5,7 +5,7 @@ use ggez::{Context};
 use specs::prelude::*;
 use rand::prelude::*;
 
-use crate::game_state::{GameState,RunningState};
+use crate::core::{GameState,RunningState};
 use crate::resources::{GameStateResource};
 use crate::components::*;
 use crate::components::anim_sprite::{AnimSpriteComponent};

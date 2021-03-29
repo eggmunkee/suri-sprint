@@ -10,7 +10,7 @@ use ggez::event::{GamepadId, Button, Axis};
 use rand::prelude::*;
 
 // Crate includes
-use crate::game_state::{GameState,GameMode,RunningState};
+use crate::core::game_state::{GameState,GameMode,RunningState,Menu,MenuItem,DialogChoice};
 use crate::core::input::{InputMap,InputKey};
 use crate::resources::{GameStateResource};
 use crate::components::sprite::{SpriteLayer,SpriteComponent};
@@ -44,8 +44,8 @@ impl event::EventHandler for GameState {
             _ => None
         };
         if let Some(index) = button_index {
-            InputMap::mouse_set_pos(&mut self.world, ctx, x, y);
-            InputMap::mouse_button_down(&mut self.world, ctx, index.clone());
+            self.input_map.mouse_set_pos(&mut self.world, ctx, x, y);
+            self.input_map.mouse_button_down(&mut self.world, ctx, index.clone());
         }
     }
 
@@ -63,14 +63,14 @@ impl event::EventHandler for GameState {
             _ => None
         };
         if let Some(index) = button_index {
-            InputMap::mouse_set_pos(&mut self.world, ctx, x, y);
-            InputMap::mouse_button_up(&mut self.world, ctx, index.clone());
+            self.input_map.mouse_set_pos(&mut self.world, ctx, x, y);
+            self.input_map.mouse_button_up(&mut self.world, ctx, index.clone());
         }
         
     }
 
     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32, _xrel: f32, _yrel: f32) {
-        InputMap::mouse_set_pos(&mut self.world, ctx, x, y);
+        self.input_map.mouse_set_pos(&mut self.world, ctx, x, y);
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
@@ -98,19 +98,20 @@ impl event::EventHandler for GameState {
             }
             //
             else if keycode == KeyCode::RBracket {
-                let new_level = (self.audio.base_music_volume + 0.05).min(5.0);
-                self.audio.set_volume(new_level);
+                //let new_level = (self.audio.base_music_volume + 0.05).round().min(2.0);
+                self.audio.incr_music_volume(); //  set_music_volume(new_level);
             }
             else if keycode == KeyCode::LBracket {
-                let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
-                self.audio.set_volume(new_level);
+                //let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
+                self.audio.decr_music_volume(); //  set_music_volume(new_level);
+                //self.audio.set_music_volume(new_level);
             }            
     
         }
 
 
 
-        let key = InputMap::key_down(&mut self.world, ctx, keycode, keymod);
+        let key = self.input_map.key_down(&mut self.world, ctx, keycode, keymod);
         if let Some(i_key) = key {
             self.game_key_down(ctx, &i_key);
         }
@@ -161,7 +162,7 @@ impl event::EventHandler for GameState {
             }
         }
         else if keycode == KeyCode::Subtract {
-            if self.display_scale > 0.25 {
+            if self.display_scale > 0.0125 {
                 self.display_scale -= 0.05;
             }            
         }
@@ -171,49 +172,60 @@ impl event::EventHandler for GameState {
             }            
         }
         // toggle edit mode - showing original level layout
-        else if keycode == KeyCode::F1 {
-            if self.mode == GameMode::Play {
-                self.mode = GameMode::Edit;
-            }
-            else {
-                self.mode = GameMode::Play;
-            }
-        }
+        // else if keycode == KeyCode::F1 {
+        //     if self.mode == GameMode::Play {
+        //         self.mode = GameMode::Edit;
+        //     }
+        //     else {
+        //         self.mode = GameMode::Play;
+        //     }
+        // }
         else if keycode == KeyCode::F11 {
-            let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
+            // let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
 
-            let mut new_fs_type : ggez::conf::FullscreenType = ggez::conf::FullscreenType::Windowed;
-            match game_state_writer.window_mode.fullscreen_type {
-                ggez::conf::FullscreenType::Windowed => {
-                    new_fs_type = ggez::conf::FullscreenType::Desktop;
-                },
-                ggez::conf::FullscreenType::Desktop => {
-                    new_fs_type = ggez::conf::FullscreenType::True;
-                },
-                ggez::conf::FullscreenType::True => {
-                    new_fs_type = ggez::conf::FullscreenType::Windowed;
-                }
-            }
-            game_state_writer.window_mode.fullscreen_type = new_fs_type;
+            // let mut new_fs_type : ggez::conf::FullscreenType = ggez::conf::FullscreenType::Windowed;
+            // match game_state_writer.window_mode.fullscreen_type {
+            //     ggez::conf::FullscreenType::Windowed => {
+            //         new_fs_type = ggez::conf::FullscreenType::Desktop;
+            //     },
+            //     ggez::conf::FullscreenType::Desktop => {
+            //         new_fs_type = ggez::conf::FullscreenType::True;
+            //     },
+            //     ggez::conf::FullscreenType::True => {
+            //         new_fs_type = ggez::conf::FullscreenType::Windowed;
+            //     }
+            // }
+            // game_state_writer.window_mode.fullscreen_type = new_fs_type;
 
-            ggez::graphics::set_fullscreen(ctx, new_fs_type);
+            // ggez::graphics::set_fullscreen(ctx, new_fs_type);
         }
         // reload current level
         else if keycode == KeyCode::R {
-            self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
+            //self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
+            self.restart_level(ctx);
         }        
         //
         if keycode == KeyCode::RBracket {
-            let new_level = (self.audio.base_music_volume + 0.05).min(1.0);
-            self.audio.set_volume(new_level);
+            // let new_level = (self.audio.base_music_volume + 0.05).min(2.0);
+            // self.audio.set_music_volume(new_level);
+            self.audio.incr_music_volume();
         }
         else if keycode == KeyCode::LBracket {
-            let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
-            self.audio.set_volume(new_level);
+            // let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
+            // self.audio.set_music_volume(new_level);
+            self.audio.decr_music_volume();
         }
         else if keycode == KeyCode::K {
                 
-            self.set_running_state(ctx, RunningState::Dialog("K dialog".to_string()));
+            self.set_running_state(ctx, RunningState::world_dialog("K dialog".to_string(),
+                Some(vec![
+                    DialogChoice { key: "a".to_string(), message: "Choice A".to_string() },
+                    DialogChoice { key: "b".to_string(), message: "Choice B".to_string() },
+                    DialogChoice { key: "c".to_string(), message: "Choice C".to_string() },
+                ]), "/dirty-box-1.png".to_string()));
+        }
+        else if keycode == KeyCode::M {
+            self.open_menu();
         }
         else if keycode == KeyCode::L {
             println!("DEBUG LOGIC 3x -------------------------------------------------");
@@ -226,7 +238,7 @@ impl event::EventHandler for GameState {
         }
         
 
-        let key = InputMap::key_up(&mut self.world, ctx, keycode, keymod);
+        let key = self.input_map.key_up(&mut self.world, ctx, keycode, keymod);
         if let Some(i_key) = key {
             self.game_key_up(ctx, &i_key);
         }
@@ -240,7 +252,7 @@ impl event::EventHandler for GameState {
         id: GamepadId
     ) {
         //println!("gamepad_button_down: {:?}", &_btn);
-        let key = InputMap::gamepad_button_down(&mut self.world, ctx, btn, id);
+        let key = self.input_map.gamepad_button_down(&mut self.world, ctx, btn, id);
         if let Some(i_key) = key {
             self.game_key_down(ctx, &i_key);
         }
@@ -253,7 +265,7 @@ impl event::EventHandler for GameState {
         id: GamepadId
     ) {
         //println!("gamepad_button_up: {:?}", &_btn);
-        let key = InputMap::gamepad_button_up(&mut self.world, ctx, btn, id);
+        let key = self.input_map.gamepad_button_up(&mut self.world, ctx, btn, id);
         if let Some(i_key) = key {
             self.game_key_up(ctx, &i_key);
         }

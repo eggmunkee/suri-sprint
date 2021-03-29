@@ -6,6 +6,7 @@ use wrapped2d::b2;
 use std::ops::Deref;
 
 
+use crate::components::{WorldUpdateTrait};
 use crate::components::collision::{Collision};
 //use crate::core::physics;
 use crate::core::{PhysicsWorld};
@@ -54,7 +55,10 @@ impl ButtonComponent {
         self.button_trigger = trigger_id;
     }
 
-    pub fn update(&mut self, delta_time: f32, collision: &mut Collision, physics_world: &mut PhysicsWorld) {
+}
+
+impl WorldUpdateTrait for ButtonComponent {
+    fn update(&mut self, delta_time: f32, collision: &mut Collision, physics_world: &mut PhysicsWorld) {
 
         //self.triggered = false;
         self.is_pressed = false;
@@ -123,9 +127,7 @@ impl ButtonComponent {
         } 
     
     }
-
 }
-
 
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]

@@ -331,11 +331,14 @@ impl<'a> System<'a> for LogicSystem {
                     }
                 }
                 if let Some(mut part_sys) = particle_res.get_mut(ent) {
+                    //println!("Logic System attached to Particle Sys. Togglable: {} Old Vis: {} New Vis: {}",
+                    //    &part_sys.toggleable, &part_sys.visible, &res_val);
                     if part_sys.toggleable {
-                        if debug && part_sys.visible != res_val {
-                            println!("[LOGIC P.SYS UPDATE] - VISIBLE: Old val {} - New val {}", &part_sys.visible, &res_val);
-                        }
-                        part_sys.visible = res_val;
+                        //if debug && part_sys.visible != res_val {
+                            //println!("[LOGIC P.SYS UPDATE] - VISIBLE: Old val {} - New val {}", &part_sys.visible, &res_val);
+                        //}
+                        //part_sys.visible = res_val;
+                        part_sys.set_logic_value(res_val);
                     }
                 }
                 if let Some(coll) = coll_res.get_mut(ent) {

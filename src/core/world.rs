@@ -1,13 +1,15 @@
 use ggez::{Context};
+use specs::prelude::*;
 use specs::{World, WorldExt, Entity, Builder}; // Builder, Component, ReadStorage, System, VecStorage, RunNow
 use specs::shred::{Dispatcher, DispatcherBuilder};
 use rand::prelude::*;
 
 use crate::resources::{add_resources,GameStateResource};
-use crate::components::{Position, Velocity,register_components};
+use crate::components::{Position, Velocity, LevelSource, register_components};
 use crate::components::sprite::{SpriteLayer,SpriteConfig};
+use crate::components::player::{CharacterDisplayComponent};
 use crate::entities::platform::{PlatformBuilder};
-use crate::entities::suri::{SuriBuilder};
+use crate::entities::player::{CharacterBuilder};
 use crate::entities::ghost::{GhostBuilder};
 use crate::entities::ui::{UIBuilder};
 use crate::systems::*;
@@ -41,7 +43,7 @@ fn init_world(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsW
     // // PlatformBuilder::build(world, ctx, physics_world, 1000.0, 1200.0, 1000.0, 50.0, SpriteLayer::World.to_z());
     // // PlatformBuilder::build(world, ctx, physics_world, 2000.0, 600.0, 50.0, 600.0, SpriteLayer::World.to_z());
 
-    // SuriBuilder::build(world, ctx, physics_world, 2000.0, 2000.0);
+    // CharacterBuilder::build(world, ctx, physics_world, 2000.0, 2000.0);
 
     // for i in 0..120 {
     //     let x: f32 = ((-500.0 + rng.gen::<f32>() * POSX_RANGE) / 100.0).round() * 100.0;
@@ -175,3 +177,40 @@ pub fn create_world<'a>(ctx: &mut Context, game_state_res: GameStateResource, ph
 
 //     dispatcher
 // }
+
+pub trait SuriWorld {
+    // Find the player which is controlled or the first controllable player
+    fn get_player(&self) -> Option<Entity>;
+    // Get Item_index from level if it was created from the level (or -1)
+    fn get_level_source(&self, entity: &Entity) -> i32;
+}
+
+impl SuriWorld for World {
+    fn get_player(&self) -> Option<Entity> {
+        let char_res = self.read_storage::<CharacterDisplayComponent>();
+        let ent_res = self.entities();
+
+        for (character, ent) in (&char_res, &ent_res).join() {
+            if character.is_controllable && character.is_controlled {
+                return Some(ent.clone());
+            }
+        }
+
+        for (character, ent) in (&char_res, &ent_res).join() {
+            if character.is_controllable {
+                return Some(ent.clone());
+            }
+        }
+
+        None
+    }
+    fn get_level_source(&self, entity: &Entity) -> i32 {
+        let lvl_src_res = self.read_storage::<LevelSource>();
+
+        if let Some(lvl_src) = lvl_src_res.get(*entity) {
+            return lvl_src.item_index;
+        }
+        
+        return -1;
+    }
+}

@@ -1,4 +1,4 @@
-use specs::{Component, DenseVecStorage, World, WorldExt};
+use specs::{Component, DenseVecStorage, World, WorldExt, Entity};
 //use specs::shred::{Dispatcher};
 use ggez::nalgebra::{Point2,Vector2,distance};
 use wrapped2d::b2;
@@ -8,11 +8,10 @@ use wrapped2d::b2::{MetaBody};
 use rand::prelude::*;
 
 
-use crate::entities::level_builder::{LevelBounds};
-//use crate::core::physics;
 use crate::core::physics as physics;
-use crate::core::{PhysicsWorld, PhysicsBody, PhysicsBodyType, PhysicsBodyHandle, EntityType,
+use crate::core::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyType, PhysicsBodyHandle, EntityType,
     CollisionCategory, CollisionBit, CollideType};
+use crate::components::{PhysicsUpdateTrait};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
 use crate::resources::{GameStateResource};
@@ -54,6 +53,8 @@ pub struct Collision {
     pub flag_obstruction: bool,
     pub vel_last: Vector2::<f32>,
     pub vel_history: Vec::<Vector2::<f32>>,
+    pub pos_last: Point2::<f32>,
+    pub pos_history: Vec::<Point2::<f32>>,
     pub delete_flag: bool,
 }
 
@@ -90,6 +91,8 @@ impl Collision {
             flag_obstruction: false,
             vel_last: Vector2::new(0.0,0.0),
             vel_history: vec![],
+            pos_last: Point2::new(0.0,0.0),
+            pos_history: vec![],
             delete_flag: false,
         }
     }
@@ -124,6 +127,8 @@ impl Collision {
             flag_obstruction: false,
             vel_last: Vector2::new(0.0,0.0),
             vel_history: vec![],
+            pos_last: Point2::new(0.0,0.0),
+            pos_history: vec![],
             delete_flag: false,
         }
     }
@@ -148,6 +153,29 @@ impl Collision {
             }, 
             _ => {}
         }
+    }
+
+    pub fn set_gravity_scale(&mut self, physics_world: &mut PhysicsWorld, new_scale: f32) {
+        match self.body_handle {
+            Some(handle) => {
+                //println!("Destroying physics body: {:?}", &handle);
+                let mut body = physics_world.body_mut(handle);
+                body.set_gravity_scale(new_scale);
+            }, 
+            _ => {}
+        }
+    }
+
+    pub fn get_gravity_scale(&mut self, physics_world: &mut PhysicsWorld) -> f32 {        
+        let grav_scale = match self.body_handle {
+            Some(handle) => {
+                //println!("Destroying physics body: {:?}", &handle);
+                let mut body = physics_world.body_mut(handle);
+                body.gravity_scale()
+            }, 
+            _ => 0.0
+        };
+        grav_scale
     }
 
     pub fn destroy_body(&mut self, physics_world: &mut PhysicsWorld) {
@@ -279,111 +307,6 @@ impl Collision {
         else {
             true
         }
-    }
-
-    pub fn pre_physics_hook(&mut self, physics_world: &mut PhysicsWorld, time_delta: f32, 
-        opt_character: Option<&mut CharacterDisplayComponent>,
-        opt_npc: Option<&mut NpcComponent>,
-        //level_bounds: &LevelBounds,
-        game_state: &GameStateResource) {
-
-        let mut rng = rand::thread_rng();
-
-        if self.toggleable && self.flag_obstruction {            
-            let entity_type = &self.entity_type;
-            println!("TOGGLEABLE OBSTRUCTION Entity {:?} Body {:?}", &entity_type, &self.body_handle);
-            self.update_body_obstruction(physics_world, self.is_obstructing);
-            self.flag_obstruction = false;
-        }
-
-        self.body_contacts.clear();
-
-        self.since_warp += time_delta;
-
-        if let Some(body_handle) = self.body_handle {
-
-            self.clear_pre_physics_state();
-
-            let mut body = physics_world.body_mut(body_handle);
-
-            let mut movement_applied = false;
-            if let Some(character) = opt_character {
-                // have character handle applying inputs to collision body
-                character.apply_movement(&mut body, time_delta, &game_state.level_type);
-
-                character.in_exit = false;
-                character.in_portal = false;
-                character.exit_id = -1;
-                character.portal_id = -1;
-
-                movement_applied = true
-            }
-
-            if let (Some(npc), false) = (opt_npc, movement_applied ) {
-                // have character handle applying inputs to collision body
-                npc.apply_movement(&mut body, time_delta);
-
-            }
-
-            let mut curr_pos = physics::get_pos(body.position());
-
-            
-            let body_type = body.body_type();
-
-            if body_type != PhysicsBodyType::Static { 
-
-                let mut updated_pos = false;
-
-                if curr_pos.y > game_state.level_bounds.max_y {
-                    curr_pos.y = game_state.level_bounds.min_y;
-    
-                    //let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
-    
-                    // move falling objects inward from edges as they wrap to the top
-                    // if curr_pos.x > 4900.0 {
-                    //     curr_pos.x = new_x;
-                    // }
-                    // if curr_pos.x < 100.0 {
-                    //     curr_pos.x = new_x;
-                    // }
-    
-                    updated_pos = true;
-                }
-    
-                if curr_pos.x < game_state.level_bounds.min_x {
-                    curr_pos.x = game_state.level_bounds.max_x - 1.0;
-                    updated_pos = true;
-                }
-                else if curr_pos.x > game_state.level_bounds.max_x {
-                    curr_pos.x = game_state.level_bounds.min_x + 1.0;
-                    updated_pos = true;
-                }
-    
-                if updated_pos {
-                    //println!("collider new position: {}, {}", &curr_pos.x, &curr_pos.y);
-                    //self.update_body_transfrom(physics_world, &curr_pos, &mut body);
-    
-                    let phys_pos = physics::create_pos(&curr_pos);
-                    let curr_ang = body.angle();
-                    body.set_transform(&phys_pos, curr_ang);
-                }
-
-            }
-
-        }
-
-        if (self.vel_last.y < -0.03 && self.vel.y > 0.03) ||
-            (self.vel_last.y > 0.03 && self.vel.y < -0.03) {
-            //println!("Y Flipped from {} to {}", &self.vel_last.y, &self.vel.y);
-        }
-        self.vel_last.x = self.vel.x;
-        self.vel_last.y = self.vel.y;
-
-        while self.vel_history.len() >= 10 {
-            self.vel_history.remove(0);
-        }
-        self.vel_history.push(self.vel_last.clone());
-
     }
 
     pub fn get_avg_x(&self, frame_count: usize) -> f32 {
@@ -519,7 +442,134 @@ impl Collision {
     }
     
 
-    pub fn post_physics_hook(&mut self, physics_world: &mut PhysicsWorld) {
+    
+}
+
+impl PhysicsUpdateTrait for Collision {
+    fn pre_physics_update(&mut self, world: &World, physics_world: &mut PhysicsWorld, time_delta: f32, 
+        opt_collision: &mut Option<&mut Collision>,
+        opt_character: &mut Option<&mut CharacterDisplayComponent>,
+        opt_npc: &mut Option<&mut NpcComponent>,
+        //level_bounds: &LevelBounds,
+        //game_state: &GameStateResource,
+        entity: &Entity) {
+
+        let mut rng = rand::thread_rng();
+
+        let game_state = world.fetch::<GameStateResource>();
+
+        if self.toggleable && self.flag_obstruction {            
+            let entity_type = &self.entity_type;
+            println!("TOGGLEABLE OBSTRUCTION Entity {:?} Body {:?}", &entity_type, &self.body_handle);
+            self.update_body_obstruction(physics_world, self.is_obstructing);
+            self.flag_obstruction = false;
+        }
+
+        self.body_contacts.clear();
+
+        self.since_warp += time_delta;
+
+        if let Some(body_handle) = self.body_handle {
+
+            self.clear_pre_physics_state();
+
+            let mut body = physics_world.body_mut(body_handle);
+
+            let mut movement_applied = false;
+            if let Some(ref mut character) = opt_character {
+                // have character handle applying inputs to collision body
+                character.apply_movement(&mut body, time_delta, &game_state.level_type);
+
+                character.in_exit = false;
+                character.in_portal = false;
+                character.exit_id = -1;
+                character.portal_id = -1;
+
+                movement_applied = true
+            }
+
+            if let (Some(ref mut npc), false) = (opt_npc, movement_applied ) {
+                // have character handle applying inputs to collision body
+                npc.apply_movement(&mut body, time_delta);
+
+            }
+
+            let mut curr_pos = physics::get_pos(body.position());
+
+            
+            let body_type = body.body_type();
+
+            if body_type != PhysicsBodyType::Static { 
+
+                let mut updated_pos = false;
+
+                if curr_pos.y > game_state.level_bounds.max_y {
+                    curr_pos.y = game_state.level_bounds.min_y;
+    
+                    //let new_x = (4800.0 * rng.gen::<f32>()) + 100.0;
+    
+                    // move falling objects inward from edges as they wrap to the top
+                    // if curr_pos.x > 4900.0 {
+                    //     curr_pos.x = new_x;
+                    // }
+                    // if curr_pos.x < 100.0 {
+                    //     curr_pos.x = new_x;
+                    // }
+    
+                    updated_pos = true;
+                }
+    
+                if curr_pos.x < game_state.level_bounds.min_x {
+                    curr_pos.x = game_state.level_bounds.max_x - 1.0;
+                    updated_pos = true;
+                }
+                else if curr_pos.x > game_state.level_bounds.max_x {
+                    curr_pos.x = game_state.level_bounds.min_x + 1.0;
+                    updated_pos = true;
+                }
+    
+                if updated_pos {
+                    //println!("collider new position: {}, {}", &curr_pos.x, &curr_pos.y);
+                    //self.update_body_transfrom(physics_world, &curr_pos, &mut body);
+    
+                    let phys_pos = physics::create_pos(&curr_pos);
+                    let curr_ang = body.angle();
+                    body.set_transform(&phys_pos, curr_ang);
+                }
+
+            }
+
+        }
+
+        if (self.vel_last.y < -0.03 && self.vel.y > 0.03) ||
+            (self.vel_last.y > 0.03 && self.vel.y < -0.03) {
+            //println!("Y Flipped from {} to {}", &self.vel_last.y, &self.vel.y);
+        }
+        self.vel_last.x = self.vel.x;
+        self.vel_last.y = self.vel.y;
+
+        while self.vel_history.len() >= 50 {
+            self.vel_history.remove(0);
+        }
+        self.vel_history.push(self.vel_last.clone());
+
+        self.pos_last.x = self.pos.x;
+        self.pos_last.y = self.pos.y;
+
+        while self.pos_history.len() >= 50 {
+            self.pos_history.remove(0);
+        }
+        self.pos_history.push(self.pos_last.clone());
+
+    }
+
+    fn post_physics_update(&mut self, world: &World, physics_world: &mut PhysicsWorld, time_delta: f32, 
+        opt_collision: &mut Option<&mut Collision>,
+        opt_character: &mut Option<&mut CharacterDisplayComponent>,
+        opt_npc: &mut Option<&mut NpcComponent>,
+        //game_state: &GameStateResource,
+        entity: &Entity) {
+
         if let Some(body_handle) = self.body_handle {
             let body = physics_world.body(body_handle);
 

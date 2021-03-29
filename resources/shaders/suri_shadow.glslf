@@ -20,7 +20,7 @@ void main() {
     float cent_dist = distance(frame_coord,vec2(0.50,0.65));
 
     if (tex_alpha < 0.5) {
-        float shad = max(0.0, 0.5 - 0.3 * pow(cent_dist * 4.0, 2.0));
+        float shad = max(0.0, 1.0 - 0.5 * pow(cent_dist * 4.0, 2.0));
         pixCol.r = 0.01;
         pixCol.g = 0.015;
         pixCol.b = 0.025;

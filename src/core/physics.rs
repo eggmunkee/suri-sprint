@@ -1,13 +1,13 @@
 
 use ggez::nalgebra as na;
 use na::{Point2,Vector2,distance_squared,distance};
-
 use specs::{World, WorldExt, Entity};
 use specs::Join;
 use wrapped2d::b2;
 use wrapped2d::user_data::*;
 use wrapped2d::dynamics::body::{MetaBody};
 use wrapped2d::dynamics::contacts::{Contact};
+use serde::{Deserialize,Serialize};
 
 //======================
 // use crate::resources::{GameStateResource};
@@ -55,18 +55,22 @@ pub enum CollideType {
     Collider_Portal,
     Ghost_Meow,
     Meow_Level,
-    Player_Point,
+    Player_Pickup,
     Collider_Collider, //generic physical touch
+    Collider_Sensor,
     Other,
 }
 
-#[derive(Copy,Clone,Debug,PartialEq)]
+#[derive(Copy,Clone,Debug,PartialEq,Deserialize,Serialize)]
 pub enum PickupItemType {
     Point,
+    Food,
+    SuperFood,
+    SpeedFood,
 }
 
+#[derive(Copy,Clone,Debug,PartialEq,Deserialize,Serialize)]
 
-#[derive(Copy,Clone,Debug,PartialEq)]
 pub enum EntityType {
     Player,
     Platform,
@@ -77,6 +81,7 @@ pub enum EntityType {
     Exit,
     Button,
     PickupItem(PickupItemType),
+    SensorArea,
     None
 }
 
@@ -129,18 +134,18 @@ impl CollisionBit for Vec::<CollisionCategory> {
 }
 
 // Struct which holds body/fixture physics query results
-pub struct PhysicsQueryInfo {
+pub struct BoxQueryInfo {
     pub hit_info: Vec::<(b2::BodyHandle,b2::FixtureHandle)>,
 }
 
-impl PhysicsQueryInfo {
+impl BoxQueryInfo {
     pub fn new() -> Self {
         Self {
             hit_info: vec![],
         }
     }
 }
-impl b2::QueryCallback for PhysicsQueryInfo {
+impl b2::QueryCallback for BoxQueryInfo {
 
     fn report_fixture(
         &mut self, 
@@ -152,6 +157,46 @@ impl b2::QueryCallback for PhysicsQueryInfo {
         self.hit_info.push((body.clone(), fixture.clone()));
 
         true
+    }
+}
+
+pub enum RayCastBehaviorType {
+    Fraction,
+    All,
+}
+
+pub struct RayCastQueryInfo {
+    pub mode : RayCastBehaviorType,
+    // Hold fraction, body, fixture, 
+    pub hit_info: Vec::<(f32,b2::BodyHandle,b2::FixtureHandle,b2::Vec2,b2::Vec2)>,
+}
+
+impl RayCastQueryInfo {
+    pub fn new() -> Self {
+        Self {
+            mode: RayCastBehaviorType::Fraction,
+            hit_info: vec![],
+        }
+    }
+}
+impl b2::RayCastCallback for RayCastQueryInfo {
+    fn report_fixture(
+        &mut self,
+        body: b2::BodyHandle,
+        fixture: b2::FixtureHandle,
+        p: &b2::Vec2,
+        normal: &b2::Vec2,
+        fraction: f32
+    ) -> f32 {
+
+        self.hit_info.push((fraction,
+            body.clone(), fixture.clone(),
+            p.clone(), normal.clone()));
+
+        match &self.mode {
+            Fraction => fraction,
+            All => 1.0
+        }        
     }
 }
 
@@ -231,16 +276,16 @@ impl wrapped2d::dynamics::world::callbacks::ContactFilter<GameStatePhysicsData> 
     }
 }
 
-pub fn create_physics_world(gravity_amount: f32) -> PhysicsWorld {
+// pub fn create_physics_world(gravity_amount: f32) -> PhysicsWorld {
 
-    let gravity = PhysicsVec { x: 0.0, y: gravity_amount}; //25.0
-    let world = PhysicsWorld::new(&gravity);
-    //world.set_contact_filter(Box<>)
+//     let gravity = PhysicsVec { x: 0.0, y: gravity_amount}; //25.0
+//     let world = PhysicsWorld::new(&gravity);
+//     //world.set_contact_filter(Box<>)
 
-    world
-}
+//     world
+// }
 
-pub fn create_physics_world_2d_grav(gravity_amount: (f32, f32)) -> PhysicsWorld {
+pub fn create_physics_world(gravity_amount: (f32, f32)) -> PhysicsWorld {
 
     let gravity = PhysicsVec { x: gravity_amount.0, y: gravity_amount.1 }; //25.0
     let world = PhysicsWorld::new(&gravity);
@@ -249,12 +294,12 @@ pub fn create_physics_world_2d_grav(gravity_amount: (f32, f32)) -> PhysicsWorld 
 }
 
 
-pub fn update_world_gravity(phys_world: &mut PhysicsWorld, gravity: f32) {
-    let gravity_vec = PhysicsVec { x: 0.0, y: gravity}; //25.0
-    phys_world.set_gravity(&gravity_vec);
-}
+// pub fn update_world_gravity(phys_world: &mut PhysicsWorld, gravity: f32) {
+//     let gravity_vec = PhysicsVec { x: 0.0, y: gravity}; //25.0
+//     phys_world.set_gravity(&gravity_vec);
+// }
 
-pub fn update_world_gravity_2d(phys_world: &mut PhysicsWorld, gravity: (f32, f32)) {
+pub fn update_world_gravity(phys_world: &mut PhysicsWorld, gravity: (f32, f32)) {
     let gravity_vec = PhysicsVec { x: gravity.0, y: gravity.1}; //25.0
     phys_world.set_gravity(&gravity_vec);
 }
@@ -600,4 +645,42 @@ pub fn add_static_body_circle(world: &mut PhysicsWorld, pos: &Point2<f32>, body_
     b_handle
 }
 
+pub fn box_query(world: &PhysicsWorld, center_x: f32, center_y: f32, width: f32, height: f32) -> BoxQueryInfo {
 
+    let mut aabb = b2::AABB::new();
+    // create physics-scale positions for bounding box
+    let half_w = width / 2.0;
+    let half_h = height / 2.0;
+    aabb.lower = create_pos(&na::Point2::new(center_x-half_w, center_y-half_h));
+    aabb.upper = create_pos(&na::Point2::new(center_x+half_w, center_y+half_h));
+
+    // create object which received click collide info
+    let mut query_results = BoxQueryInfo::new();
+    // query physics world with aabb, updating click_info
+    world.query_aabb(&mut query_results, &aabb);
+
+    query_results
+}
+
+// pub fn ray_cast<C: RayCastCallback>(
+//     &self,
+//     callback: &mut C,
+//     p1: &Vec2,
+//     p2: &Vec2
+// )
+
+pub fn raycast_query(world: &PhysicsWorld,
+    start_x: f32, start_y: f32,
+    end_x: f32, end_y: f32,
+    query_type: RayCastBehaviorType) -> RayCastQueryInfo {
+
+    let start_vec = b2::Vec2 { x: start_x, y: start_y };
+    let end_vec = b2::Vec2 { x: end_x, y: end_y };
+
+    // create object which received click collide info
+    let mut query_results = RayCastQueryInfo::new();
+    // query physics world with aabb, updating click_info
+    world.ray_cast(&mut query_results, &start_vec, &end_vec);
+
+    query_results
+}

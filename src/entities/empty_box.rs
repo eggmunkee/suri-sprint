@@ -7,13 +7,14 @@ use wrapped2d::user_data::*;
 use wrapped2d::b2;
 
 use crate::conf::*;
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer,MultiSpriteComponent};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::components::player::{CharacterDisplayComponent};
+use crate::components::flags::{RenderMultiSpriteFlag};
 use crate::systems::*;
 use crate::core::physics::*;
 
@@ -64,6 +65,8 @@ impl BoxBuilder {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(multi_sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderMultiSpriteFlag)
         .build();
 
         let entity_id = entity.id();
@@ -126,6 +129,8 @@ impl BoxBuilder {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(multi_sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderMultiSpriteFlag)
         .build();
 
         let entity_id = entity.id();

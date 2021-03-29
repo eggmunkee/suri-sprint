@@ -6,14 +6,15 @@ use specs::{Builder,Entity,EntityBuilder,World,WorldExt};
 use wrapped2d::user_data::*;
 
 use crate::conf::*;
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::logic::{LogicComponent,LogicOpType};
+use crate::components::flags::{RenderSpriteFlag};
 use crate::entities::level_builder::{ItemLogic};
 use crate::systems::*;
 use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
@@ -86,6 +87,8 @@ impl PlatformBuilder {
         .with(Position { x: x, y: y })
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .with(collision);
 
         if let Some(item_logic) = logic {
@@ -159,6 +162,8 @@ impl PlatformBuilder {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .build();
 
         let entity_id = entity.id();

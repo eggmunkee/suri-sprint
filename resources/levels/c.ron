@@ -6,7 +6,7 @@ LevelConfig(
     ),
     soundtrack: "Suri Boogie.mp3",
     items: [
-        Player ( x: 250.0, y: 350.0 ),
+        Player ( x: 350.0, y: 350.0 ),
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
 
@@ -18,9 +18,21 @@ LevelConfig(
         Platform ( x: 450.0, y: 200.0, w: 100.0, h: 20.0, ang: 0.1),
         Platform ( x: 950.0, y: 400.0, w: 50.0, h: 20.0, ang: -0.02),
 
-        Exit ( x: 100.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "test"),
+        Mouse ( x: 150.0, y: 450.0 ),
+        Mouse ( x: 180.0, y: 450.0 ),
 
-        Ghost ( x: 200.0, y: 100.0 ),
+        Mouse ( x: 350.0, y: 450.0 ),
+
+        Ball ( x: 200.0, y: 450.0 ),
+
+        Ball ( x: 250.0, y: 450.0 ),
+        Ball ( x: 300.0, y: 450.0 ),
+
+        Platform ( x: 250.0, y: 490.0, w: 150.0, h: 20.0, ang: 0.0),
+
+        Exit ( x: 100.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "mazea"),
+
+        Ghost ( x: 450.0, y: 300.0 ),
 
     ],
 )

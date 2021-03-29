@@ -1,5 +1,5 @@
 ShaderConfig(
     vert_path: "/shaders/basic.glslv",
-    frag_path: "/shaders/overlay_shader.glslf",
+    frag_path: "/shaders/overlay_shader2.glslf",
     blend_modes: ["alpha"],
 )

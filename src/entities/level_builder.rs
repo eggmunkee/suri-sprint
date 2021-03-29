@@ -1,7 +1,7 @@
 
 
 use ggez::{Context};
-use specs::{World,WorldExt,Builder};
+use specs::{Component,World,WorldExt,Builder,Entity,EntityBuilder};
 use serde::{Deserialize,Serialize};
 
 
@@ -10,149 +10,29 @@ use crate::components::anim_sprite::*;
 use crate::components::particle_sys::{ParticleSysConfig};
 use crate::components::sprite::*;
 use crate::components::logic::*;
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType,LevelSource};
+use crate::components::flags::{RenderSpriteFlag,RenderAnimSpriteFlag,RenderParticleSysFlag};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::empty_box::{BoxBuilder};
 use crate::entities::button::{ButtonBuilder};
 use crate::entities::portal_area::{PortalBuilder};
 use crate::entities::exit::{ExitBuilder};
-use crate::entities::suri::{SuriBuilder,SuriPlayer};
+use crate::entities::player::{CharacterBuilder,PlayerCharacter};
 use crate::entities::ghost::{GhostBuilder};
 use crate::entities::bowl::{BowlBuilder};
+use crate::entities::ball::{BallBuilder};
 use crate::entities::mouse::{MouseBuilder};
-use crate::entities::point_pickup::{PointPickup};
+use crate::entities::point_pickup::{PickupBuilder};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 use crate::resources::{ConnectionResource};
-use crate::core::physics::{PhysicsWorld,CollisionCategory};
+use crate::core::physics::{PhysicsWorld,CollisionCategory,PickupItemType};
 
+pub use crate::entities::level::*;
 
-#[allow(dead_code)]
-#[derive(Clone,Debug,Deserialize,Serialize)]
-pub enum LevelType {
-    Platformer,
-    Overhead,
+pub fn add_render_flag(builder: EntityBuilder, layer: RenderLayerType) -> EntityBuilder {
+    builder.with(RenderFlag::from_layer(layer))
 }
-
-impl Default for LevelType {
-    fn default() -> Self {
-        LevelType::Platformer
-    }
-}
-
-#[allow(dead_code)]
-#[derive(Clone,Debug,Deserialize,Serialize)]
-pub struct LevelBounds {
-    pub min_x: f32,
-    pub min_y: f32,
-    pub max_x: f32,
-    pub max_y: f32,
-    pub solid_sides: [bool;4], // top, right, bottom, left
-}
-
-impl Default for LevelBounds {
-    fn default() -> Self {
-        LevelBounds {
-            min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 800.0,
-            solid_sides: [false, true, true, true],
-        }
-    }
-}
-
-impl LevelBounds {
-    pub fn new(minx: f32, miny: f32, maxx: f32, maxy: f32) -> LevelBounds {
-        LevelBounds {
-            min_x: minx, min_y: miny, max_x: maxx, max_y: maxy,
-            solid_sides: [false, true, true, true],
-        }
-    }
-}
-
-#[allow(dead_code)]
-#[derive(Clone,Debug,Deserialize,Serialize)]
-pub struct ItemLogic {
-    pub name: String,
-    pub start_enabled: bool,
-    pub logic_op: Option<LogicOpType>,
-    pub logic_type: Option<ConnectionType>,
-}
-
-#[allow(dead_code)]
-#[derive(Clone,Debug,Deserialize,Serialize)]
-pub enum LevelItem {
-    Player {
-        x: f32, y: f32, player: Option<SuriPlayer>,
-    },
-    PlayerNamed {
-        x: f32, y: f32, player: Option<SuriPlayer>, name: String,
-    },
-    Platform {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, z: Option<f32>, logic: Option<ItemLogic>
-    },
-    DynPlatform {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, 
-    },
-    StaticLevelProp {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, z: Option<f32>, 
-        image: String, img_w: f32, img_h: f32,
-        logic: Option<ItemLogic>,
-    },
-    DynStaticLevelProp {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, z: Option<f32>, image: String, img_w: f32, img_h: f32,
-    },
-    EmptyBox {
-        x: f32, y: f32, w: f32, h: f32, ang: f32,
-    },
-    DynEmptyBox {
-        x: f32, y: f32, w: f32, h: f32, ang: f32,
-    },
-    Button {
-        x: f32, y: f32, w: f32, h: f32, ang: f32, name: String, start_enabled: bool,
-    },
-    Ghost {
-        x: f32, y: f32,
-    },
-    Sprite {
-        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), shader: Option<String>,
-    },
-    DynSprite {
-        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), name: String, start_enabled: bool,
-        logic_op: Option<LogicOpType>,
-    },
-    AnimSprite {
-        x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), shader: Option<String>,
-    },
-    Portal {
-        x: f32, y: f32, w: f32, z: Option<f32>, name: String, destination: String, start_enabled: bool,
-        logic: Option<ItemLogic>,
-    },
-    PortalSide {
-        x: f32, y: f32, ang: f32, w: f32, h: f32, z: Option<f32>, color: String, name: String, destination: String, start_enabled: bool,
-        normal: (f32, f32), logic: Option<ItemLogic>,
-    },
-    ParticleSys {
-        x: f32, y: f32, z: f32, config: String,
-    },
-    Exit {
-        x: f32, y: f32, w: f32, h: f32, z: Option<f32>, name: String, destination: String,
-    },
-    ExitCustom {
-        x: f32, y: f32, w: f32, h: f32, z: Option<f32>, name: String, destination: String, image: String, img_w: f32, img_h: f32,
-    },
-    Bowl {
-        x: f32, y: f32,z: Option<f32>, 
-    },
-    Mouse {
-        x: f32, y: f32, z: Option<f32>, 
-    },
-    PointPickup {
-        x: f32, y: f32, z: Option<f32>,
-    },
-    Connection {
-        from: String, to: String, conn_type: ConnectionType,
-    }
-}
-
 
 #[derive(Clone,Debug,Deserialize,Serialize)]
 pub struct LevelConfig {
@@ -161,6 +41,10 @@ pub struct LevelConfig {
     pub soundtrack: String,
     pub level_type: Option<LevelType>,
     pub items: Vec::<LevelItem>,
+    #[serde(skip)]
+    built_player: bool,
+    #[serde(skip)]
+    build_index: i32,
 }
 
 impl LevelConfig {
@@ -171,6 +55,8 @@ impl LevelConfig {
             soundtrack: "".to_string(),
             level_type: Some(LevelType::default()),
             items: vec![],
+            built_player: false,
+            build_index: 0,
         }
     }
 
@@ -192,60 +78,79 @@ impl LevelConfig {
         }
     }
 
-    pub fn build_item(&self, world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, entry_name: &str, item: &LevelItem) {
+    pub fn build_item(&mut self, world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld,
+        entry_name: &str, item: &LevelItem) -> (Option<Entity>, Option<Entity>) {
         let lvl_type = self.get_level_type();
+        let mut entity : Option<Entity> = None;
+        let mut entity2 : Option<Entity> = None;
         match item {
             LevelItem::Player{ x, y, player } if entry_name.is_empty() => {
-                let mut player_val = SuriPlayer::Suri;
+                let mut player_val = PlayerCharacter::Suri;
                 if let Some(plyr) = player {
                     player_val = plyr.clone();
                 }
-                //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
-                SuriBuilder::build(world, ctx, physics_world, *x, *y, player_val, &lvl_type);
+                let start_controlling_player = !self.built_player;
+                //CharacterBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
+                entity = Some(
+                    CharacterBuilder::build(world, ctx, physics_world, *x, *y, player_val, &lvl_type, start_controlling_player)
+                );
+                self.built_player = true;
             },
             LevelItem::PlayerNamed{ x, y, player, name } if name == &entry_name => {
-                let mut player_val = SuriPlayer::Suri;
+                let mut player_val = PlayerCharacter::Suri;
                 if let Some(plyr) = player {
                     player_val = plyr.clone();
                 }
-                //SuriBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
-                SuriBuilder::build(world, ctx, physics_world, *x, *y, player_val, &lvl_type);
+                let start_controlling_player = !self.built_player;
+                //CharacterBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
+                entity = Some(CharacterBuilder::build(world, ctx, physics_world, *x, *y, player_val, &lvl_type, start_controlling_player));
+                self.built_player = true;
+            },
+            LevelItem::PlayerNpc{ x, y, player } if entry_name.is_empty() => {
+                let mut player_val = PlayerCharacter::Suri;
+                if let Some(plyr) = player {
+                    player_val = plyr.clone();
+                }
+                //CharacterBuilder::build_npc(world, ctx, physics_world, *x+30.0, *y-30.0);
+                entity = Some(CharacterBuilder::build_npc(world, ctx, physics_world, *x, *y, player_val, &lvl_type));
             },
             LevelItem::Platform{ x, y, w, h, ang, z, logic} => {
                 let mut z_value = SpriteLayer::World.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                PlatformBuilder::build_w_logic(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, logic.clone());
+                entity = Some(PlatformBuilder::build_w_logic(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, logic.clone()));
             },
             LevelItem::DynPlatform{ x, y, w, h, ang} => {
-                PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
+                entity = Some(PlatformBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z()));
             },
             LevelItem::StaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z, logic} => {
                 let mut z_value = SpriteLayer::World.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                PlatformBuilder::build_w_image_logic(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h, logic.clone());
+                entity = Some(PlatformBuilder::build_w_image_logic(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h, logic.clone()));
             },
             LevelItem::DynStaticLevelProp{ x, y, w, h, ang, image, img_w, img_h, z} => {
                 let mut z_value = SpriteLayer::World.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                PlatformBuilder::build_dynamic_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h);
+                entity = Some(PlatformBuilder::build_dynamic_w_image(world, ctx, physics_world, *x, *y, *w, *h, *ang, z_value, (*image).to_string(), *img_w, *img_h));
             },
             LevelItem::EmptyBox{ x, y, w, h, ang} => {
-                BoxBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang);
+                entity = Some(BoxBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang));
             },
             LevelItem::DynEmptyBox{ x, y, w, h, ang} => {
-                BoxBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z());
+                entity = Some(BoxBuilder::build_dynamic(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::World.to_z()));
             },
             LevelItem::Button{ x, y, w, h, ang, name, start_enabled } => {
-                ButtonBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, (*name).to_string(), *start_enabled);
+                let (ent1, ent2) = ButtonBuilder::build(world, ctx, physics_world, *x, *y, *w, *h, *ang, (*name).to_string(), *start_enabled);
+                entity = Some(ent1);
+                entity2 = Some(ent2);
             },
             LevelItem::Ghost{ x, y } => {
-                GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0);  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
+                entity = Some(GhostBuilder::build_collider(world, ctx, physics_world, *x, *y, 0.0, 0.0, 0.0, 0.0, 24.0, 24.0));  //(world, ctx, physics_world, *x, *y, *w, *h, *ang, SpriteLayer::BGNear.to_z());
             },
             LevelItem::Sprite{ x, y, z, sprite, angle, src, shader} => {
                 let sprite_path = &*sprite;
@@ -255,7 +160,9 @@ impl LevelConfig {
                 sprite.set_src(&src); 
                 sprite.shader = shader.clone();
 
-                world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
+                entity = Some(
+                    world.create_entity().with(sprite).with(Position { x: *x, y: *y })
+                    .with(RenderFlag::from_layer(RenderLayerType::LevelLayer)).with(RenderSpriteFlag).build());
             },
             LevelItem::AnimSprite{ x, y, z, sprite, angle, src, shader} => {
                 let sprite_path = &*sprite;
@@ -265,7 +172,8 @@ impl LevelConfig {
                 sprite.set_src(&src); 
                 sprite.shader = shader.clone();
 
-                world.create_entity().with(sprite).with(Position { x: *x, y: *y }).build();
+                entity = Some(world.create_entity().with(sprite).with(Position { x: *x, y: *y })
+                    .with(RenderFlag::from_layer(RenderLayerType::LevelLayer)).with(RenderAnimSpriteFlag).build());
             },
             LevelItem::DynSprite{ x, y, z, sprite, angle, src, name, start_enabled, logic_op } => {
                 let sprite_path = &*sprite;
@@ -280,66 +188,120 @@ impl LevelConfig {
                 // if let Some(logic_operation) = &logic_op {
                 //     logic_comp.logic_op = *logic_operation;
                 // }
-                world.create_entity().with(sprite).with(logic_comp).with(Position { x: *x, y: *y }).build();
+                entity = Some(world.create_entity().with(sprite).with(logic_comp).with(Position { x: *x, y: *y })
+                    .with(RenderFlag::from_layer(RenderLayerType::LevelLayer)).with(RenderSpriteFlag).build());
+            },
+            LevelItem::ParallaxSprite { x, y, sprites, scroll_factors } => {
+
+                let mut plx_sprite = ParallaxSpriteComponent::new(ctx);
+
+                let spr_len = sprites.len();
+                let factor_len = scroll_factors.len();
+                let mut i : usize = 0;
+                while i < spr_len && i < factor_len {
+                    // Get sprite and scroll factor item i
+                    if let Some(sprite_config) = sprites.get(i) {
+                        if let Some(factor) = scroll_factors.get(i) {
+                            let sprite_comp = SpriteConfig::create_from_config(world, ctx, sprite_config.sprite.clone());
+                            plx_sprite.add_sprite(ctx, sprite_comp, *factor);
+                        }
+                    }
+
+                    i += 1;
+                }
+                
+                entity = Some(
+                    world.create_entity().with(plx_sprite).with(Position { x: *x, y: *y })
+                    .with(RenderFlag::from_layer(RenderLayerType::LevelLayer)).build());
             },
             LevelItem::Portal { x, y, w, z, name, destination, start_enabled, logic } => {
                 let mut z_value = SpriteLayer::World.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                PortalBuilder::build(world, ctx, physics_world, *x, *y, z_value, *w, 
-                    (*name).clone(), (*destination).to_string(), *start_enabled, logic.clone());
+                entity = Some(PortalBuilder::build(world, ctx, physics_world, *x, *y, z_value, *w, 
+                    (*name).clone(), (*destination).to_string(), *start_enabled, logic.clone()));
             },
             LevelItem::PortalSide { x, y, ang, w, h, z, color, name, destination, start_enabled, logic, normal } => {
                 let mut z_value = SpriteLayer::World.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                PortalBuilder::build_side(world, ctx, physics_world, *x, *y, z_value, *ang, *w, *h, (*color).clone(),
-                    (*name).clone(), (*destination).to_string(), *start_enabled, logic.clone(), (normal.0, normal.1));
+                entity = Some(PortalBuilder::build_side(world, ctx, physics_world, *x, *y, z_value, *ang, *w, *h, (*color).clone(),
+                    (*name).clone(), (*destination).to_string(), *start_enabled, logic.clone(), (normal.0, normal.1)));
             },
-            LevelItem::ParticleSys { x, y, z, config } => {
+            LevelItem::ParticleSys { x, y, z, config, logic } => {
                 let config_path = &*config;
-                let mut part_sys = ParticleSysConfig::create_from_config(world, ctx, config_path.clone());
+                let mut part_sys = ParticleSysConfig::create_from_config(world, ctx, config_path.clone(),
+                    *x, *y, 0.0, 0.0, (0.0, 0.0));
+                // part_sys.world_offset.0 = *x;
+                // part_sys.world_offset.1 = *y;
                 part_sys.z_order = *z;
 
-                world.create_entity().with(part_sys).with(Position { x: *x, y: *y }).build();
+                let mut builder = world.create_entity().with(Position { x: *x, y: *y });
+                if let Some(ItemLogic{ name, start_enabled, logic_op, logic_type }) = logic {
+                    part_sys.toggleable = true;
+                    println!("ParticleSys has ItemLogic: name: {}, start_enabled: {}, logic_op: {:?}, logic_type: {:?}",
+                        name, start_enabled, logic_op, logic_type);
+                    builder = builder.with(LogicComponent::new_logic(name.clone(), *start_enabled, Some(ItemLogic { 
+                        name: name.clone(), start_enabled: *start_enabled, logic_op: *logic_op, logic_type: logic_type.clone() }) ));
+                }                
+                builder = builder.with(part_sys);
+                builder = add_render_flag(builder, RenderLayerType::LevelLayer);
+                entity = Some(builder.with(RenderParticleSysFlag).build());
             },
             LevelItem::Exit { x, y, w, h, z, name, destination } => {
                 let mut z_value = SpriteLayer::BGNear.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                ExitBuilder::build(world, ctx, physics_world, *x, *y, z_value, *w, *h, (*name).to_string(), (*destination).to_string());
+                entity = Some(ExitBuilder::build(world, ctx, physics_world, *x, *y, z_value, *w, *h, (*name).to_string(), (*destination).to_string()));
             },
             LevelItem::ExitCustom { x, y, w, h, z, name, destination, image, img_w, img_h } => {
                 let mut z_value = SpriteLayer::BGNear.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                ExitBuilder::build_w_image(world, ctx, physics_world, *x, *y, z_value, *w, *h, (*name).to_string(), (*destination).to_string(),
-                    (*image).to_string(), *img_w, *img_h);
+                entity = Some(ExitBuilder::build_w_image(world, ctx, physics_world, *x, *y, z_value, *w, *h, (*name).to_string(), (*destination).to_string(),
+                    (*image).to_string(), *img_w, *img_h));
             },
             LevelItem::Bowl { x, y, z } => {
                 let mut z_value = SpriteLayer::Entities.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                BowlBuilder::build(world, ctx, physics_world, *x, *y, z_value);
+                entity = Some(BowlBuilder::build(world, ctx, physics_world, *x, *y, z_value));
             },
             LevelItem::Mouse { x, y, z } => {
                 let mut z_value = 300.0;
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                MouseBuilder::build(world, ctx, physics_world, *x, *y, 32.0, 8.0, 0.0, z_value);
+                entity = Some(MouseBuilder::build(world, ctx, physics_world, *x, *y, 32.0, 12.0, 0.0, z_value));
             },
-            LevelItem::PointPickup { x, y, z } => {
+            LevelItem::Ball { x, y, z } => {
                 let mut z_value = 300.0;
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                PointPickup::build(world, ctx, physics_world, *x, *y, z_value, 24.0, 24.0);
+                entity = Some(BallBuilder::build(world, ctx, physics_world, *x, *y, 24.0, 24.0, 0.0, z_value));
+            },
+            LevelItem::Pickup { x, y, z, pickup_type } => {
+                let mut z_value = 300.0;
+                if let Some(z_cfg_val) = z {
+                    z_value = *z_cfg_val;
+                }
+                entity = Some(PickupBuilder::build(world, ctx, physics_world, *x, *y, z_value, 12.0, 12.0, *pickup_type ));
+            },
+            LevelItem::DynPickup { x, y, z, pickup_type } => {
+                let mut z_value = 300.0;
+                if let Some(z_cfg_val) = z {
+                    z_value = *z_cfg_val;
+                }
+                entity = Some(PickupBuilder::build_dynamic(world, ctx, physics_world, *x, *y, z_value, 12.0, 12.0, *pickup_type ));
+            },
+            LevelItem::EffectArea { .. } => {
+
             },
             LevelItem::Connection { from, to, conn_type } => {
                 let mut connection_res = world.fetch_mut::<ConnectionResource>();
@@ -347,14 +309,37 @@ impl LevelConfig {
                 let mut connection = &mut *connection_res;
                 connection.add_connection(from.clone(), to.clone(), LogicOpType::And);
             },
-            _ => {}
+            _ => {
+                // Player starts that don't apply on the current level entry - ignored
+            }
         }
+
+
+        return (entity, entity2);
     }
 
     pub fn build_level(&mut self, world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, entry_name: String) {
-        
-        for item in &self.items {
-            self.build_item(world, ctx, physics_world, &entry_name, item);
+        // Clear built player flag when building the full level - will be set when player is built
+        self.built_player = false;
+        self.build_index = 0;
+
+        let mut items : Vec<LevelItem> = vec![];
+        // Get cloned level items
+        for level_item in &self.items {
+            items.push(level_item.clone());
+        }
+        // Built level items in order
+        for item in items {
+            let (ent1, ent2) = self.build_item(world, ctx, physics_world, &entry_name, &item);
+
+            if let Some(entity1) = ent1 {
+                let mut lvl_src_writer = world.write_storage::<LevelSource>();
+                lvl_src_writer.insert(entity1, LevelSource { item_index: self.build_index })
+                    .expect("Couldn't create LevelSource for entity.");
+                
+            }
+
+            self.build_index += 1;
         }
 
         let border_thickness : f32 = 25.0;

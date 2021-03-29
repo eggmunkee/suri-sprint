@@ -7,25 +7,36 @@ use ggez::graphics::{Image,Font};
 use ggez::{Context,GameResult,GameError};
 use ggez::conf::{WindowMode};
 use specs::{World};
-use ggez::nalgebra as na;
+//use ggez::nalgebra as na;
 // -------------------------
 
-use crate::core::physics::{PhysicsWorld,create_physics_world_2d_grav};
+//use crate::core::physics::{PhysicsWorld,create_physics_world};
+use crate::core::input::{InputKey};
 use crate::entities::level_builder::{LevelBounds,LevelType};
 
+mod game_state;
+mod camera;
+mod input;
 mod image;
 mod connection;
 mod shaders;
+mod log;
 
+pub use crate::resources::game_state::*;
+pub use crate::resources::camera::{Camera};
+pub use crate::resources::input::*;
 pub use crate::resources::image::*;
 pub use crate::resources::connection::*;
 pub use crate::resources::shaders::*;
+pub use crate::resources::log::*;
 
+/*
 #[derive(Default,Debug)]
 pub struct GameStateResource {
     pub window_w: f32,
     pub window_h: f32,
     pub window_mode: WindowMode,
+    pub display_offset: (f32, f32),
     pub delta_seconds: f32,
     pub level_world_seconds: f32,
     pub game_run_seconds: f32,
@@ -39,88 +50,12 @@ pub struct GameStateResource {
     // ai info
     pub player_target_loc: (f32, f32),
 
-    //pub phys_word: PhysicsWorldResource,
-}
+    // game status info
+    pub points: i32,
+}*/
 
-#[derive(Debug)]
-pub enum WorldAction {
-    AddCircle,
-    None
-}
-impl Default for WorldAction {
-    fn default() -> Self { WorldAction::None }
-}
 
-#[derive(Default,Debug)]
-pub struct InputResource {
-    pub dirs_pressed: [bool;4],
-    pub jump_pressed: bool,
-    pub mouse_x: f32,
-    pub mouse_y: f32,
-    pub mouse_down: [bool;3],
-    pub fire_pressed: bool,
-    pub actions: Vec::<WorldAction>,
-}
 
-impl InputResource {
-    pub fn set_left(&mut self, press: bool) {
-        self.dirs_pressed[0] = press;
-    }
-    pub fn set_right(&mut self, press: bool) {
-        self.dirs_pressed[1] = press;
-    }
-    pub fn set_up(&mut self, press: bool) {
-        self.dirs_pressed[2] = press;
-    }
-    pub fn set_down(&mut self, press: bool) {
-        self.dirs_pressed[3] = press;
-    }
-    pub fn set_jump(&mut self, press: bool) {
-        self.jump_pressed = press;
-    }
-    pub fn set_fire(&mut self, press: bool) {
-        self.fire_pressed = press;
-    }
-    pub fn set_mouse_pos(&mut self, mouse_x: f32, mouse_y: f32) {
-        self.mouse_x = mouse_x;
-        self.mouse_y = mouse_y;
-    }
-    pub fn set_mouse_x(&mut self, mouse_x: f32) {
-        self.mouse_x = mouse_x;
-    }
-    pub fn set_mouse_y(&mut self, mouse_y: f32) {
-        self.mouse_y = mouse_y;
-    }
-    pub fn set_mouse_down(&mut self, mouse_down: bool, button_index: usize) {
-        if button_index < 3 {
-            self.mouse_down[button_index] = mouse_down;
-        }
-    }
-    // pub fn clear_actions(&mut self) {
-    //     self.actions.clear();
-    // }
-    // pub fn add_action(&mut self, action: WorldAction) {
-    //     println!("Add action: {:?}", &action);
-    //     match action {
-    //         WorldAction::None => {},
-    //         _a => { self.actions.push(_a); }
-    //     }
-    // }
-    // pub fn unpop_action(&mut self) -> WorldAction {
-    //     if self.actions.len() == 0 {
-    //         //println!("UnPop action: NONE");
-    //         return WorldAction::None;
-    //     }
-    //     let action_spl = self.actions.splice(1.., Vec::new());
-
-    //     for action in action_spl {
-    //         println!("UnPop action: {:?}", &action);
-    //         return action;
-    //     }
-
-    //     WorldAction::None
-    // }
-}
 
 pub fn add_resources(world: &mut World, ctx: &mut Context) {
 
@@ -130,6 +65,12 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
     //     window_w: win_w, window_h: win_h,
     // });
 
+    world.insert(GameLog {
+        entries: vec![],
+        max_keep: 10,
+    });
+
+    // Insert the Input Resource which holds game inputs state
     world.insert(InputResource { 
         dirs_pressed: [false,false,false,false],
         jump_pressed: false,
@@ -137,37 +78,33 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
         mouse_y: 0.0,
         mouse_down: [false,false,false],
         fire_pressed: false,
-        actions: Vec::new(),
+        use_pressed: false,
+        actions: vec![],
+        keys_pressed: vec![],
+        exit_flag: false,
     });
 
 
-    let font = graphics::Font::new(ctx, "/FreeMonoBold.ttf").unwrap();
-
-    let mut images = ImageResources {
+    // Insert Image Resources to hold and lend refs to images and the system font
+    world.insert(ImageResources {
         image_lookup: HashMap::new(),
         images: Vec::<Image>::new(),
-        font: font,
-    };
-    // Paused overlay (borders)
-    images.load_image("/overlay.png".to_string(), ctx);
-    // Warp In / Warp Out overlays
-    images.load_image("/warp-overlay-purple.png".to_string(), ctx);
-    images.load_image("/warp-overlay-grey.png".to_string(), ctx);
-    world.insert(images);
+        font: graphics::Font::new(ctx, "/FreeMonoBold.ttf").unwrap(),
+    });
 
 
-
+    // Insert Shader Resources - preload all required shader files
     let mut shaders = ShaderResources::new();
-    shaders.load_shader("overlay".to_string(), "shaders/overlay_shader".to_string(), ctx);
-    shaders.load_shader("suri_shader".to_string(), "shaders/suri_shader".to_string(), ctx);
-    shaders.load_shader("meow_shader".to_string(), "shaders/meow_shader".to_string(), ctx);
-    shaders.load_shader("suri_shadow".to_string(), "shaders/suri_shadow".to_string(), ctx);
-    shaders.load_shader("milo_shadow".to_string(), "shaders/milo_shadow".to_string(), ctx);
+    shaders.load_shader("overlay".to_string(), "shaders/overlay_shader".to_string(), ctx).expect("MISSING REQUIREMENT");
+    shaders.load_shader("suri_shader".to_string(), "shaders/suri_shader".to_string(), ctx).expect("MISSING REQUIREMENT");
+    shaders.load_shader("meow_shader".to_string(), "shaders/meow_shader".to_string(), ctx).expect("MISSING REQUIREMENT");
+    shaders.load_shader("suri_shadow".to_string(), "shaders/suri_shadow".to_string(), ctx).expect("MISSING REQUIREMENT");
+    shaders.load_shader("milo_shadow".to_string(), "shaders/milo_shadow".to_string(), ctx).expect("MISSING REQUIREMENT");
 
     world.insert(shaders);
 
-
-
     world.insert(ConnectionResource::new());
+
+    world.insert(Camera { display_offset: (0.0, 0.0), snap_view: true, target_offset: (0.0, 0.0), following: None });
 
 }

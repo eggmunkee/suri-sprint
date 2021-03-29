@@ -6,13 +6,14 @@ use specs::{Builder,Entity,EntityBuilder,World,WorldExt};
 use wrapped2d::user_data::*;
 
 use crate::conf::*;
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer};
 use crate::components::anim_sprite::{AnimSpriteComponent,AnimSpriteConfig};
 use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
+use crate::components::flags::{RenderSpriteFlag,RenderAnimSpriteFlag};
 use crate::systems::*;
 use crate::core::physics::{PhysicsWorld,CollisionCategory};
 
@@ -49,6 +50,8 @@ impl BowlBuilder {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderAnimSpriteFlag)
         .build();
 
         let entity_id = entity.id();
@@ -93,6 +96,8 @@ impl BowlBuilder {
         //.with(DisplayComp { circle: false, display_type: DisplayCompType::DrawSelf })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .build();
 
         let entity_id = entity.id();

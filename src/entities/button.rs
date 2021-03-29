@@ -7,14 +7,15 @@ use wrapped2d::user_data::*;
 use wrapped2d::b2;
 
 use crate::conf::*;
-use crate::game_state::{GameState};
+use crate::core::{GameState};
 use crate::resources::{GameStateResource,ImageResources};
-use crate::components::{Position};
+use crate::components::{Position,RenderFlag,RenderLayerType};
 use crate::components::button::{ButtonComponent,ButtonTriggerComponent};
 use crate::components::sprite::{SpriteComponent,SpriteConfig,SpriteLayer,MultiSpriteComponent};
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
 use crate::components::logic::{LogicComponent};
+use crate::components::flags::{RenderSpriteFlag};
 use crate::systems::*;
 use crate::core::physics::*;
 
@@ -64,6 +65,8 @@ impl ButtonBuilder {
         .with(Position { x: x, y: y })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .build();
 
         let button_id = button_entity.id();
@@ -112,6 +115,8 @@ impl ButtonBuilder {
         .with(Position { x: x, y: y })
         .with(sprite)
         .with(collision)
+        .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
+        .with(RenderSpriteFlag)
         .build();
 
         let trigger_id = trigger_entity.id();
