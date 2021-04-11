@@ -36,31 +36,12 @@ use crate::core::input::{InputKey,InputMap};
 // Core Game System - runs other systems and physics simulation
 use crate::core::system::{CoreSystem};
 // Global SPECS Resource classes
-use crate::resources::{InputResource,GameStateResource,ConnectionResource,Camera};
+use crate::resources::{InputResource,GameStateResource,ConnectionResource,Camera,GameLog};
 // Level definition support
 use crate::entities::level_builder::{LevelConfig,LevelBounds,LevelType};
 // Render class support
 use crate::render;
 
-/* use crate::components::{Position};
-use crate::components::collision::{Collision};
-use crate::components::sprite::{SpriteLayer,SpriteComponent};
-use crate::components::anim_sprite::{AnimSpriteComponent};
-use crate::components::meow::{MeowComponent};
-use crate::components::pickup::{PickupComponent};
-use crate::components::exit::{ExitComponent};
-use crate::components::portal::{PortalComponent};
-use crate::components::button::{ButtonComponent};
-use crate::components::player::{CharacterDisplayComponent};
-use crate::components::npc::{NpcComponent};
-use crate::systems::logic::{LogicSystem};
-use crate::systems::animation::{AnimationSystem};
-use crate::systems::{InputSystem};
-use crate::entities::meow::{MeowBuilder};
-use crate::systems::particles::{ParticleSystem};*/
-//use crate::entities::ghost::{GhostBuilder};
-//use crate::entities::platform::{PlatformBuilder};
-//use crate::entities::empty_box::{BoxBuilder};
 
 #[derive(Clone,Debug,PartialEq)]
 pub enum DialogType {
@@ -89,29 +70,6 @@ pub enum RunningState {
         custom_bg: Option<String>, // image path for world dialog/choices
         text_color: Option<Color>,
     },  
-}
-
-impl RunningState {
-    pub fn get_bg_image(&self) -> String {
-        match self {
-            RunningState::Playing => "".to_string(),
-            RunningState::Dialog { dialog_type, ref custom_bg, .. } => {
-                match dialog_type {
-                    DialogType::LevelEntry => "/purple-dialog-bg.png".to_string(),
-                    DialogType::DialogInfo | DialogType::DialogChoices => "/cloud-dialog-bordered.png".to_string(),
-                    DialogType::WorldDialog | DialogType::WorldChoices => match custom_bg {
-                        Some(bg) => {
-                            bg.clone()
-                        },
-                        None => {
-                            "/purple-dialog-wide-bg.png".to_string()
-                        }
-                    }
-                }
-            }
-        }
-        
-    }
 }
 
 #[derive(Clone,Debug,PartialEq)]
@@ -159,6 +117,27 @@ impl RunningState {
         };
         RunningState::Dialog{ msg, dialog_type: dialog_type, choices: choices, selected_choice: -1, 
             custom_bg: Some(custom_bg), text_color: None }
+    }
+
+    pub fn get_bg_image(&self) -> String {
+        match self {
+            RunningState::Playing => "".to_string(),
+            RunningState::Dialog { dialog_type, ref custom_bg, .. } => {
+                match dialog_type {
+                    DialogType::LevelEntry => "/images/purple-dialog-bg.png".to_string(),
+                    DialogType::DialogInfo | DialogType::DialogChoices => "/images/cloud-dialog-bordered.png".to_string(),
+                    DialogType::WorldDialog | DialogType::WorldChoices => match custom_bg {
+                        Some(bg) => {
+                            bg.clone()
+                        },
+                        None => {
+                            "/images/purple-dialog-wide-bg.png".to_string()
+                        }
+                    }
+                }
+            }
+        }
+        
     }
 }
 
@@ -216,6 +195,8 @@ pub struct GameState {
     pub warp_level_entry_name: String,
     // paused anim
     pub paused_anim: f32,
+    // game display zoom animation
+    pub ui_game_display_zoom: f32,
     // audio
     pub audio: Audio,
 
@@ -244,7 +225,7 @@ impl GameState {
             delta_seconds: 0.15, level_bounds: LevelBounds::new(-500.0, -500.0, 3000.0, 3000.0),
             level_world_seconds: 0.0, game_run_seconds: 0.0, player_target_loc: (500.0, 500.0),
             player_count: 0, player_1_char_num: -1, level_type: LevelType::default(), points: 0,
-            level_frame_num: 0
+            level_frame_num: 0, ui_game_display_zoom: 1.0,
         };
 
         // get window
@@ -442,7 +423,7 @@ impl GameState {
         }
         else {
             // Non-play state time speed
-            time_delta *= 0.25;
+            time_delta *= 0.5;
         }
         time_delta
     }
@@ -502,7 +483,7 @@ impl GameState {
             LevelType::Platformer => {
                 self.set_gravity_ext((self.gravity_x, self.gravity_scale));
             },
-            LevelType::Overhead => {
+            LevelType::Overhead | LevelType::Space => {
                 self.set_gravity_ext((0.0, 0.0));
             }
         };
@@ -512,9 +493,13 @@ impl GameState {
         //self.running_state = RunningState::Dialog(format!("Level {}, entry {}", &level_name, &entry_name));
 
         self.warp_level_name = level_name;
-        self.warp_level_entry_name = entry_name;
+        self.warp_level_entry_name = entry_name.clone();
         self.level_warping = true;
         self.level_warp_timer = 0.0;
+
+        if !entry_name.is_empty() {
+            self.level_warp_timer = WARP_TIME_LIMIT - 0.05;
+        }
     }
 
     #[allow(dead_code)]
@@ -542,7 +527,7 @@ impl GameState {
         let mut world = &mut self.world;
         // Get mut ref to new physics world
         let mut physics_world = &mut self.phys_world;
-        &self.level.build_level(&mut world, ctx, &mut physics_world, entry_name);
+        &self.level.build_level_content(&mut world, ctx, &mut physics_world, entry_name);
 
         self.reset_level_time();
     }
@@ -568,6 +553,8 @@ impl GameState {
 
         self.actual_load_level(ctx, level_name, entry_name);
 
+        CoreSystem::run_logic_update(self);
+
         if self.current_level_name == "loading" {
             self.running_state = RunningState::Playing;
             self.open_menu();
@@ -579,6 +566,10 @@ impl GameState {
             }
             else {
                 self.running_state = RunningState::Playing;
+
+                let mut log = self.world.fetch_mut::<GameLog>();
+                log.add_entry(true, format!("Entered {}", &self.level.name), None,
+                    self.world.fetch_mut::<GameStateResource>().game_run_seconds);
             }
         }
 
@@ -664,12 +655,12 @@ impl GameState {
                 },
                 State::Paused => {
     
-                    // Run one update step per second while paused
-                    if self.paused_anim > 0.25 {
-                        //self.run_update_step(ctx, delta_s);
-                        CoreSystem::run_update_step(self, ctx, delta_s);
-                        self.paused_anim = 0.0;
-                    }
+                    // // Run one update step per second while paused
+                    // if self.paused_anim > 0.25 {
+                    //     //self.run_update_step(ctx, delta_s);
+                    //     CoreSystem::run_update_step(self, ctx, delta_s);
+                    //     self.paused_anim = 0.0;
+                    // }
     
                     CoreSystem::run_pause_step(self, ctx, delta_s);
     
