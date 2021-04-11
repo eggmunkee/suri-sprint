@@ -59,323 +59,83 @@ impl Renderer {
 
         let mut images = world.fetch_mut::<ImageResources>();
 
+        images.load_image("/images/suri-splash-screen.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         // Paused overlay (borders)
-        images.load_image("/overlay.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/overlay.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         // Warp In / Warp Out overlays
-        images.load_image("/warp-overlay-purple.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/warp-overlay-grey.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/warp-overlay-purple.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/warp-overlay-grey.png".to_string(), ctx).expect("MISSING REQUIREMENT");
 
         // Menu Images
-        images.load_image("/purple-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/purple-dialog-wide-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/blue-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/green-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        //images.load_image("/grey-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        //images.load_image("/green-eye-blob.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/dirty-box-1.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/dark_messy_tile.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/cloud-dialog.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/cloud-dialog-shadow.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/cloud-dialog-bordered.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/cloud-dialog-selected.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/purple-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/purple-dialog-wide-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/blue-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/green-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        //images.load_image("/images/grey-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        //images.load_image("/images/green-eye-blob.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/dirty-box-1.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/dark_messy_tile.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/cloud-dialog.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/cloud-dialog-shadow.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/cloud-dialog-bordered.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/cloud-dialog-selected.png".to_string(), ctx).expect("MISSING REQUIREMENT");
 
         drop(images);
 
     }
 
     pub fn render_frame(&mut self, game_state: &mut GameState, ctx: &mut Context) -> GameResult {
+        
         let world: &World = &game_state.world;
-        // RENDER LIST (Entity ID, Position (world coords), Z order, sub-index of item (used in multi sprites))
-        //let mut render_objects : Vec<(u32,na::Point2<f32>,f32,usize)> = vec![];
-        //let mut render_objects : Vec<RenderCallInfo> = vec![];
-        //let mut player_offset = na::Point2::<f32>::new(0.0,0.0);
-
-        // let mut char_in_warp = false;
-        // let mut char_in_portal = false;
-
-        // let mut level_run_time : f32 = 0.0;
-        // let mut game_run_time : f32 = 0.0;
         {
             let camera = world.fetch::<Camera>();
             self.display_offset.x = camera.display_offset.0;
             self.display_offset.y = camera.display_offset.1;
         }
+        let (scrw, scrh) = ggez::graphics::drawable_size(ctx);
 
-
-        // let mut target_offset_x : f32 = game_state.current_offset.x;
-        // let mut target_offset_y : f32 = game_state.current_offset.y;
-
-        // let mut move_camera : bool = true;
-
-        // // Set freeze-camera states - when camera should not move towards target
-        // if game_state.menu_stack.len() > 0 {
-        //     move_camera = false;
-        // }
-        // match &game_state.running_state {
-        //     // DISPLAY DIALOG TEXT
-        //     RunningState::Dialog{..} => {
-        //         move_camera = false;
-        //     },
-        //     _ => {}
-        // }
-        // match &game_state.current_state {
-        //     State::Paused => {
-        //         move_camera = false;
-        //     },
-        //     _ => {}
-        // }
-
-        // self.display_offset.x = target_offset_x;
-        // self.display_offset.y = target_offset_y;
-
+        // RENDER LIST (Entity ID, Position (world coords), Z order, sub-index of item (used in multi sprites))
         // BUILD RENDER OBJECTS LIST -----------------------------------------------------------------
         let render_objects : Vec<RenderCallInfo> = self.generate_render_list(game_state, ctx, world);
 
-        // {
-        //     if game_state.game_frame_count % 60 == 1 {
-        //         println!(" Build Render Object list ------------------");
-        //     }
-        //     let gs_res = game_state.world.fetch::<GameStateResource>();
-
-        //     let current_player_num = gs_res.player_1_char_num;
-        //     level_run_time = gs_res.level_world_seconds;
-        //     game_run_time = gs_res.game_run_seconds;
-
-        //     let pos = game_state.world.read_storage::<Position>();
-        //     //let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
-        //     let entities = game_state.world.entities();
-
-        //     let render_res = game_state.world.read_storage::<RenderFlag>();
-
-        //     // Get read storage for all display components
-        //     let sprite_disp = game_state.world.read_storage::<SpriteComponent>();
-        //     let multi_sprite_disp = game_state.world.read_storage::<MultiSpriteComponent>();
-        //     let anim_sprite_disp = game_state.world.read_storage::<AnimSpriteComponent>();
-        //     let particle_sys_disp = game_state.world.read_storage::<ParticleSysComponent>();
-        //     let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
-
-        //     for (render_flag, character, pos, ent) in (&render_res, &char_disp, &pos, &entities).join() {
-        //         // Only process Level layer
-        //         if !render_flag.in_layer(RenderLayerType::LevelLayer) { continue; }
-
-        //         if character.player_number == current_player_num {
-        //             target_offset_x = -pos.x;
-        //             target_offset_y = -pos.y;
-        //         }
-        //         let z_order = SpriteLayer::Player.to_z();
-        //         char_in_portal = character.in_exit || character.in_portal;
-
-        //         let call_info = RenderCallInfo {
-        //             entity: ent.clone(),
-        //             pos: na::Point2::new(pos.x, pos.y),
-        //             z_order: z_order,
-        //             item_index: 0,
-        //             render_type: RenderFlagType::Character
-        //         };
-
-        //         render_objects.push(
-        //             //(ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //             call_info
-        //         );
-        //     }
-
-        //     for (_, sprite, pos, ent) in (&render_res, &sprite_disp, &pos, &entities).join() {
-        //         let z_order = sprite.z_order;
-
-        //         let call_info = RenderCallInfo {
-        //             entity: ent.clone(),
-        //             pos: na::Point2::new(pos.x, pos.y),
-        //             z_order: z_order,
-        //             item_index: 0,
-        //             render_type: RenderFlagType::Sprite
-        //         };
-
-        //         render_objects.push(
-        //             //(ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //             call_info
-        //         );
-        //     }
-
-        //     for (_, multi_sprite, pos, ent) in (&render_res, &multi_sprite_disp, &pos, &entities).join() {
-        //         let mut index : usize = 0;
-        //         for sprite in &multi_sprite.sprites {
-        //             let z_order = sprite.z_order;
-
-        //             let call_info = RenderCallInfo {
-        //                 entity: ent.clone(),
-        //                 pos: na::Point2::new(pos.x, pos.y),
-        //                 z_order: z_order,
-        //                 item_index: index,
-        //                 render_type: RenderFlagType::MultiSprite
-        //             };
-
-        //             render_objects.push(
-        //                 //(ent.id(),na::Point2::new(pos.x, pos.y), z_order, index)
-        //                 call_info
-        //             );
-        //             index += 1;
-        //         }
-        //     }
-
-        //     for (_, anim_sprite, pos, ent) in (&render_res, &anim_sprite_disp, &pos, &entities).join() {
-        //         let z_order = anim_sprite.z_order;
-
-        //         let call_info = RenderCallInfo {
-        //             entity: ent.clone(),
-        //             pos: na::Point2::new(pos.x, pos.y),
-        //             z_order: z_order,
-        //             item_index: 0,
-        //             render_type: RenderFlagType::AnimSprite
-        //         };
-
-        //         render_objects.push(
-        //             //(ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //             call_info
-        //         );
-        //     }
-
-        //     for (_, particle_sys, pos, ent) in (&render_res, &particle_sys_disp, &pos, &entities).join() {
-        //         let z_order = particle_sys.z_order;
-
-        //         let call_info = RenderCallInfo {
-        //             entity: ent.clone(),
-        //             pos: na::Point2::new(pos.x, pos.y),
-        //             z_order: z_order,
-        //             item_index: 0,
-        //             render_type: RenderFlagType::ParticleSys
-        //         };
-
-        //         render_objects.push(
-        //             //(ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //             call_info
-        //         );
-        //     }
-
-
-        //     // for (
-        //     //     opt_sprite_disp,
-        //     //     opt_char_disp,
-        //     //     opt_multi_sprite,
-        //     //     opt_anim_sprite,
-        //     //     opt_particle_sys,
-        //     //     pos,
-        //     //     ent) in 
-        //     //     (
-        //     //         (&sprite_disp).maybe(),
-        //     //         (&char_disp).maybe(),
-        //     //         (&multi_sprite_disp).maybe(), 
-        //     //         (&anim_sprite_disp).maybe(),
-        //     //         (&particle_sys_disp).maybe(),                
-        //     //         &pos,&entities).join() {
-        //     //     // Check for any of the display components
-        //     //     match opt_char_disp {
-        //     //         Some(character) => {
-        //     //             if character.player_number == current_player_num {
-        //     //                 target_offset_x = -pos.x;
-        //     //                 target_offset_y = -pos.y;
-        //     //             }
-        //     //             let z_order = SpriteLayer::Player.to_z();
-        //     //             char_in_portal = character.in_exit || character.in_portal;
-
-        //     //             render_objects.push(
-        //     //                 (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //     //             );
-        //     //         },
-        //     //         _ => match opt_sprite_disp {
-        //     //             Some(sprite) => {
-        //     //                 let z_order = sprite.z_order;
-
-        //     //                 render_objects.push(
-        //     //                     (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //     //                 );
-        //     //             },
-        //     //             _ => match opt_multi_sprite {
-        //     //                 Some(multi_sprite) => {
-        //     //                     let mut index : usize = 0;
-        //     //                     for sprite in &multi_sprite.sprites {
-        //     //                         let z_order = sprite.z_order;
-
-        //     //                         render_objects.push(
-        //     //                             (ent.id(),na::Point2::new(pos.x, pos.y), z_order, index)
-        //     //                         );
-        //     //                         index += 1;
-        //     //                     }
-        //     //                 },
-        //     //                 _ => match opt_anim_sprite {
-        //     //                     Some(anim_sprite) => {
-        //     //                         let z_order = anim_sprite.z_order;
-        //     //                         render_objects.push(
-        //     //                             (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //     //                         );
-        //     //                     },
-        //     //                     _ => match opt_particle_sys {
-        //     //                         Some(particle_sys) => {
-        //     //                             let z_order = particle_sys.z_order;
-        //     //                             render_objects.push(
-        //     //                                 (ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
-        //     //                             );
-        //     //                         },
-        //     //                         _ => {}
-        //     //                     }
-        //     //                 }
-        //     //             }
-        //     //         }
-        //     //     };
-
-        //     // }
-
-        // }
-
-        // if game_state.game_frame_count % 60 == 1 {
-        //     println!(" Calculate camera update ------------------");
-        // }
-        // let targ_x_mag = (target_offset_x - self.display_offset.x).abs();
-        // let targ_y_mag = (target_offset_y - self.display_offset.y).abs();
-        // let targ_axes_sum = targ_x_mag * targ_x_mag + targ_y_mag * targ_y_mag;
-        // if !game_state.snap_view && move_camera == true {
-
-        //     if targ_axes_sum < 10000.0 {
-        //     }
-        //     else if targ_axes_sum < 200000.0 {
-        //         // let midpoint = (self.display_offset.x - target_offset_x) * (targ_x_mag / 20.0);
-        //         // self.display_offset.x -= midpoint;
-        //         let midpoint_x = (self.display_offset.x - target_offset_x) * (targ_x_mag / 8000.0);
-        //         self.display_offset.x -= midpoint_x;
-        //         let midpoint_y = (self.display_offset.y - target_offset_y) * (targ_y_mag / 2500.0);
-        //         self.display_offset.y -= midpoint_y;
-        //     }
-        //     else {
-        //         //self.display_offset.x = target_offset_x;
-        //         //let midpoint = (self.display_offset.x - target_offset_x) * 0.95;
-        //         self.display_offset.x = target_offset_x; //midpoint;
-        //         self.display_offset.y = target_offset_y;
-        //     }
-        // }
-        // else if game_state.snap_view {
-        //     self.display_offset.x = target_offset_x; //midpoint;
-        //     self.display_offset.y = target_offset_y;
-        //     game_state.snap_view = false;
-        // }
-
-        // if char_in_portal {
-        //     graphics::clear(ctx, [0.5, 0.5, 0.6, 0.0].into());
-        // }
-        // else {
-        //     graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
-        // }
+        
         if game_state.game_frame_count % 60 == 1 {
             println!(" Clear display area ------------------");
         }
+
         // Clear background
+        graphics::clear(ctx, [0.0, 0.0, 0.0, 1.0].into());
+
+        {
+            let mut images = game_state.world.fetch_mut::<ImageResources>();
+            let texture_ref = images.image_ref("/images/suri-splash-screen.png".to_string());
+
+            if let Ok(mut texture) = texture_ref {
+
+                let w = texture.width();
+                let h = texture.height();
+                let scale_x = scrw / w as f32;
+                let scale_y = scrh / h as f32;
+                if let Err(_) = ggez::graphics::draw(ctx, texture, DrawParam::new()
+                        .dest(na::Point2::new(0.0,0.0))
+                        //.offset(na::Point2::new(0.5f32,0.5f32))
+                        .scale(na::Vector2::new(scale_x, scale_y))
+                    ) { 
+                    //_draw_ok = false;
+                    println!("Failed to render overlay image");
+                }
+            }
+        }
+
+        let mut canvas = graphics::Canvas::with_window_size(ctx).unwrap();
+        graphics::set_canvas(ctx, Some(&canvas));
         graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
-        
 
         if game_state.game_frame_count % 60 == 1 {
             println!(" Z Sort display list ------------------");
         }
         
 
-        // });
 
         let render_count = render_objects.len();
 
@@ -386,89 +146,6 @@ impl Renderer {
 
 
         self.render_level(game_state, ctx, world, &render_objects);
-
-        /*
-        self.pre_render_list(game_state, ctx, world);
-
-        // RENDER OBJECT LIST -----------------------------------------------------------------
-        if let State::Running | State::Paused = &game_state.current_state {
-            if game_state.game_frame_count % 60 == 1 {
-                println!("   Running/Paused - Render objects loop ---------------");
-            }            
-            // for (ent, pt, _, item_index) in render_objects.iter() {
-            //     // Get entity by id
-            //     let entity = game_state.world.entities().entity(ent.clone());
-            //     // If entity is still alive, render it
-            //     if entity.gen().is_alive() {
-            //         // Call generic renderer, which calls on render component to draw
-            //         Self::call_renderer(ctx, world, entity, pt, *item_index);
-            //     }
-            // }
-
-            for call_info in render_objects.iter() {
-                // Get entity by id
-                let entity = call_info.entity; //game_state.world.entities().entity(ent.clone());
-                // If entity is still alive, render it
-                if entity.gen().is_alive() {
-                    // Call generic renderer, which calls on render component to draw
-                    //Self::call_renderer(ctx, world, entity, call_info.pos, call_info.item_index);
-                    call_info.render_item(game_state, ctx);
-                }
-            }
-
-            let gs_res = game_state.world.fetch::<GameStateResource>();
-
-            // Render Target Location of game state
-            let ptl_x = gs_res.player_target_loc.0;
-            let ptl_y = gs_res.player_target_loc.1;
-
-            DialogRenderer::render_cursor(ctx, ptl_x, ptl_y, Color::new(0.0, 1.0, 0.0, 1.0));
-
-        }
-
-        if game_state.mode == GameMode::Edit {
-            if game_state.game_frame_count % 60 == 1 {
-                println!("   Edit Mode - Render level ---------------");
-            }
-            // Render Edit mode level setup            
-            LevelRenderer::render(&game_state, ctx);
-        
-            // draw level bounds
-            let game_res = game_state.world.fetch::<GameStateResource>();
-            let level_bounds = game_res.level_bounds.clone();
-            let width = level_bounds.max_x - level_bounds.min_x;
-            let height = level_bounds.max_y - level_bounds.min_y;
-
-            let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
-            stroke_opt.line_width = 4.0;
-
-            if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                ggez::graphics::DrawMode::Stroke(stroke_opt),
-                ggez::graphics::Rect::new(0.0, 0.0, width, height),
-                ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.5)
-            ) {
-                ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                    .dest(na::Point2::new(level_bounds.min_x, level_bounds.min_y)) );
-            }
-
-            stroke_opt.line_width = 2.0;
-            if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
-                ggez::graphics::DrawMode::Stroke(stroke_opt),
-                ggez::graphics::Rect::new(0.0, 0.0, width, height),
-                ggez::graphics::Color::new(1.0, 0.0, 0.0, 0.5)
-            ) {
-                ggez::graphics::draw(ctx, &rect, DrawParam::default()
-                    .dest(na::Point2::new(level_bounds.min_x, level_bounds.min_y)) );
-            }
-
-        }
-
-        {
-            if game_state.game_frame_count % 60 == 1 {
-                println!("   Post Render List step ---------------");
-            }
-            self.post_render_list(ctx, world);
-        }*/
 
         {
             // Over-scene overlays for warping
@@ -498,9 +175,9 @@ impl Renderer {
                 }
                 //graphics::clear(ctx, [0.5, 0.5, 0.5, (1.5 - game_state.level_warp_timer) * 0.1 ].into());
                 let mut images = game_state.world.fetch_mut::<ImageResources>();
-                let texture_ref = images.image_ref("/warp-overlay-grey.png".to_string());
+                let texture_ref = images.image_ref("/images/warp-overlay-grey.png".to_string());
 
-                let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+                //let (scrw, scrh) = (game_state.window_w, game_state.window_h);
 
                 if let Ok(mut texture) = texture_ref {
 
@@ -528,9 +205,9 @@ impl Renderer {
                 }
                 //graphics::clear(ctx, [0.5, 0.5, 0.5, (1.5 - game_state.level_warp_timer) * 0.1 ].into());
                 let mut images = game_state.world.fetch_mut::<ImageResources>();
-                let texture_ref = images.image_ref("/warp-overlay-grey.png".to_string());
+                let texture_ref = images.image_ref("/images/warp-overlay-grey.png".to_string());
 
-                let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+                //let (scrw, scrh) = (game_state.window_w, game_state.window_h);
 
                 if let Ok(mut texture) = texture_ref {
 
@@ -568,11 +245,11 @@ impl Renderer {
                         //DialogRenderer::render(&game_state, ctx, msg.clone());
                         // DialogRenderer::render_dialog_textured(&game_state, ctx, String::new(),
                         //     0.5, 0.25, 0.608, 0.418,
-                        //     "/cloud-dialog-shadow.png".to_string(), Color::new(0.0, 0.0, 0.0, 1.0)); //(&game_state, ctx, msg.clone());
+                        //     "/images/cloud-dialog-shadow.png".to_string(), Color::new(0.0, 0.0, 0.0, 1.0)); //(&game_state, ctx, msg.clone());
 
                         // DialogRenderer::render_dialog_textured(&game_state, ctx, msg.clone(),
                         //     0.5, 0.25, 0.6, 0.4,
-                        //     "/cloud-dialog.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0)); //(&game_state, ctx, msg.clone());
+                        //     "/images/cloud-dialog.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0)); //(&game_state, ctx, msg.clone());
 
                         DialogRenderer::render_dialog_textured(&game_state, ctx, msg.clone(),
                             0.5, 0.25, 0.6, 0.4,
@@ -598,8 +275,8 @@ impl Renderer {
                         println!("     Render Paused Overlay ------------");
                     }
                     let mut images = game_state.world.fetch_mut::<ImageResources>();
-                    let texture_ref = images.image_ref("/overlay.png".to_string());
-                    let (scrw, scrh) = (game_state.window_w, game_state.window_h);
+                    let texture_ref = images.image_ref("/images/overlay.png".to_string());
+                    //let (scrw, scrh) = (game_state.window_w, game_state.window_h);
 
                     if let Ok(mut texture) = texture_ref {
                         let mut shader_res = world.fetch_mut::<ShaderResources>();
@@ -654,6 +331,55 @@ impl Renderer {
         // GAME IN game Menu LAYER (points)
         self.render_dialog(ctx, game_state);
 
+        // unset render canvas
+        graphics::set_canvas(ctx, None);
+
+        {
+            let mut shader_res = world.fetch_mut::<ShaderResources>();
+            
+            // let mut _lock : Option<_> = None;
+            // if let Ok(shader_ref) = shader_res.shader_ref("overlay".to_string()) {
+            //     let mut dim = shader_ref.send(ctx, ShaderInputs {game_time: (game_state.game_frame_count % 629) as f32 * 0.01});
+            //     _lock = Some(graphics::use_shader(ctx, shader_ref));
+            // }
+            
+            // let scl = (((game_state.game_frame_count as f32 * 1.25) as i32 % 360) as f32 * 2.0 * 3.14159 / 360.0).cos() * 0.5 + 0.5;
+            // let x_scale = match ((game_state.game_frame_count as f32 * 1.25) as i32 % 720) >= 360 {
+            //     true => -scl, false => scl
+            // };
+
+            let mut scl = 1.0;
+            let mut alpha = 1.0;
+            if game_state.in_menu_system() {
+                scl = game_state.ui_game_display_zoom;
+                //alpha = 0.1;
+                alpha = scl;
+            }
+            let x_scale = scl;
+
+            // render canvas to window
+            let res = graphics::draw(ctx, &canvas, DrawParam::default()
+                .dest(na::Point2::new(
+                    scrw as f32 * 0.5, // - ((1.0 - scl) * 0.25 * scrw),
+                    scrh as f32 * 0.5 - (scl * 1.0 * scrh) //scrh as f32 * 0.5
+                    //(game_state.game_frame_count % 6) as f32 - 3.0, (game_state.game_frame_count % 4) as f32 - 2.0)
+                    )
+                )
+                .scale( na::Vector2::new(
+                    x_scale, scl
+                    //1.0 + ((game_state.game_frame_count % 3) as f32 * 0.01),
+                    //1.0 + ((game_state.game_frame_count % 5) as f32 * 0.01)
+                    )
+                )
+                .offset( na::Point2::new(0.5, 0.5) )
+                //.rotation( ((game_state.game_frame_count as f32 * 0.5) as i32 % 36) as f32 * 2.0 * 3.14159 / 76.0)
+                .color( Color::new(1.0, 1.0, 1.0, alpha))
+            );
+
+            // graphics::clear_shader(ctx);
+
+        }  
+
         // MENU LAYER
         self.render_menus(ctx, game_state);
 
@@ -673,6 +399,7 @@ impl Renderer {
         if game_state.game_frame_count % 60 == 1 {
             println!("  Frame contents Presented to device ------------");
         }
+
         graphics::present(ctx)?;
 
         Ok(())
@@ -1041,7 +768,7 @@ impl Renderer {
         //     Color::new(0.0, 0.0, 0.0, 1.0), Color::new(0.5, 0.5, 0.5, 0.8), Color::new(1.0, 1.0, 1.0, 1.0) );
 
         DialogRenderer::render_dialog_textured(game_state, ctx, format!("{} Pts", &points),
-            0.075, 0.05, 0.15, 0.1, "/cloud-dialog-bordered.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
+            0.075, 0.05, 0.15, 0.1, "/images/cloud-dialog-bordered.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
 
 
         // DialogRenderer::render_at(game_state, ctx, "Ghost: Hello, Suri.... \nalk f jfkj akjf kdkj".to_string(), 
@@ -1077,17 +804,22 @@ impl Renderer {
         // DialogRenderer::render_dialog_textured(game_state, ctx, "Test entry 1".to_string(),
         //     0.1,
         //     (0.0 / max_entr as f32 * 0.8) + 0.1,
-        //     0.15, 0.08, "/dark_messy_tile.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
+        //     0.15, 0.08, "/images/dark_messy_tile.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
         // DialogRenderer::render_dialog_textured(game_state, ctx, "Test entry 2 23@#$@#376".to_string(),
         //     0.1,
         //     (1.0 / max_entr as f32 * 0.8) + 0.1,
-        //     0.15, 0.08, "/dark_messy_tile.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
+        //     0.15, 0.08, "/images/dark_messy_tile.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
 
         for entry in game_log.entries.iter() {
             let log_pos_x = 0.15;
             let log_pos_y = ((item_idx as f32) / max_entr as f32 * 0.7) + 0.15;
+            let mut alpha = 1.0;
+            if entry.time_left < 1.0 {
+                alpha = entry.time_left;
+            }
+
             DialogRenderer::render_dialog_textured(game_state, ctx, entry.msg.clone(),
-                log_pos_x, log_pos_y, 0.2, 0.08, "/purple-dialog-wide-bg.png".to_string(), Color::new(0.8, 0.2, 0.2, 1.0));
+                log_pos_x, log_pos_y, 0.2, 0.08, "/images/purple-dialog-wide-bg.png".to_string(), Color::new(0.8, 0.2, 0.2, alpha));
             item_idx += 1;
         }
 
@@ -1135,9 +867,9 @@ impl Renderer {
             // }
 
             let dialog_bg_texture = match menu_layer {
-                0 => "/purple-dialog-wide-bg.png".to_string(),
-                _ => "/dark_messy_tile.png".to_string(),
-                //_ => "/green-dialog-bg.png".to_string(),
+                0 => "/images/purple-dialog-wide-bg.png".to_string(),
+                _ => "/images/dark_messy_tile.png".to_string(),
+                //_ => "/images/green-dialog-bg.png".to_string(),
             };
 
             let bg_alpha = match menu_layer {
@@ -1185,11 +917,11 @@ impl Renderer {
 
                 let bg_image = match is_header {
                     false => match selected {
-                        true => "/purple-dialog-bg.png".to_string(),
-                        false => "/blue-dialog-bg.png".to_string()
+                        true => "/images/purple-dialog-bg.png".to_string(),
+                        false => "/images/blue-dialog-bg.png".to_string()
                     },
                     true => match menu_layer {
-                        _ => "/dirty-box-1.png".to_string()
+                        _ => "/images/dirty-box-1.png".to_string()
                     }
                 };
 

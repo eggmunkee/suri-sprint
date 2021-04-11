@@ -32,7 +32,7 @@ pub struct CharacterBuilder;
 impl CharacterBuilder {
 
     // pub fn get_sprite_paths() -> Vec<String> {
-    //     vec!["/suri-spritesheet.png".to_string()]
+    //     vec!["/images/suri-spritesheet.png".to_string()]
     // }
 
     pub fn build_npc(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, player: PlayerCharacter, level_type: &LevelType) -> Entity {

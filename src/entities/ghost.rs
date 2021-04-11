@@ -57,7 +57,7 @@ impl GhostBuilder {
         .with(Position { x: x, y: y })
         //.with(Velocity { x: vx, y: vy, gravity: true, frozen: false })
         //.with(DisplayComp { circle: true, display_type: DisplayCompType::DrawCircle })
-        .with(sprite) // SpriteComponent::new(ctx, &"/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
+        .with(sprite) // SpriteComponent::new(ctx, &"/images/ghost-1-r.png".to_string(), SpriteLayer::Entities.to_z()))
         .with(collision)
         .with(RenderFlag::from_layer(RenderLayerType::LevelLayer))
         .build();

@@ -24,7 +24,7 @@ pub struct PlatformBuilder;
 impl PlatformBuilder {
 
     // pub fn get_sprite_paths() -> Vec<String> {
-    //     vec!["/dirty-box-1.png".to_string()]
+    //     vec!["/images/dirty-box-1.png".to_string()]
     // }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32,

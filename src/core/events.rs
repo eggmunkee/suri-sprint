@@ -222,7 +222,7 @@ impl event::EventHandler for GameState {
                     DialogChoice { key: "a".to_string(), message: "Choice A".to_string() },
                     DialogChoice { key: "b".to_string(), message: "Choice B".to_string() },
                     DialogChoice { key: "c".to_string(), message: "Choice C".to_string() },
-                ]), "/dirty-box-1.png".to_string()));
+                ]), "/images/dirty-box-1.png".to_string()));
         }
         else if keycode == KeyCode::M {
             self.open_menu();

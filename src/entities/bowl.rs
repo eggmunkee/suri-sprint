@@ -22,7 +22,7 @@ pub struct BowlBuilder;
 impl BowlBuilder {
 
     // pub fn get_sprite_paths() -> Vec<String> {
-    //     vec!["/dirty-box-1.png".to_string()]
+    //     vec!["/images/dirty-box-1.png".to_string()]
     // }
 
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32) -> Entity {
@@ -71,7 +71,7 @@ impl BowlBuilder {
         // Create sprite from config
         let mut sprite = SpriteConfig::create_from_config(world, ctx, "entities/box".to_string());
 
-        //let mut sprite = SpriteComponent::new(ctx, &"/dirty-box-1.png".to_string(), z_order);
+        //let mut sprite = SpriteComponent::new(ctx, &"/images/dirty-box-1.png".to_string(), z_order);
         sprite.scale.x *= width / 24.0;
         sprite.scale.y *= height / 24.0;
 
