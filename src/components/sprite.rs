@@ -14,7 +14,7 @@ use serde::{Deserialize,de::DeserializeOwned};
 use crate::entities::level::{LevelItem};
 use crate::core::game_state::{GameState};
 use crate::components::collision::{Collision};
-use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource};
+use crate::resources::{ImageResources,ShaderResources,ShaderInputs,GameStateResource,Camera};
 use crate::conf::*;
 
 #[allow(dead_code)]
@@ -94,6 +94,21 @@ impl SpriteConfig {
         sprite.alpha = config.alpha;
         sprite.src = Rect::new(config.src.0, config.src.1, config.src.2, config.src.3);
         sprite.shader = config.shader;
+
+        sprite
+    }
+
+    pub fn create_from_path(world: &mut World, ctx: &mut Context, image_path: String) -> SpriteComponent {
+
+        Self::init_images(world, ctx, image_path.clone());
+
+        let mut sprite = SpriteComponent::new(ctx, &image_path, 9999.0);
+
+        sprite.scale.x = 1.0;
+        sprite.scale.y = 1.0;
+        sprite.alpha = 1.0;
+        sprite.src = Rect::new(0.0, 0.0, 1.0, 1.0);
+        sprite.shader = None;
 
         sprite
     }
@@ -284,27 +299,31 @@ impl super::RenderTrait for MultiSpriteComponent {
 #[derive(Debug,Component)]
 #[storage(DenseVecStorage)]
 pub struct ParallaxSpriteComponent {
+    pub lvl_center: (f32, f32),
     //pub image: Image, // component owns image
     pub sprites: Vec<SpriteComponent>,
     //pub debug_font: graphics::Font,
     pub scroll_mults: Vec<f32>,
+    pub offsets: Vec<(f32,f32)>,
 }
 
 impl ParallaxSpriteComponent {
     pub fn new(ctx: &mut Context) -> ParallaxSpriteComponent {
         
         ParallaxSpriteComponent {
-            //image: image,
+            lvl_center: (0.0, 0.0),
             sprites: vec![],
             scroll_mults: vec![],
+            offsets: vec![],
         }
     }
 
-    pub fn add_sprite(&mut self, ctx: &mut Context, sprite: SpriteComponent, scroll_multiplier: f32) -> i32 {
+    pub fn add_sprite(&mut self, ctx: &mut Context, sprite: SpriteComponent, scroll_multiplier: f32, offset: (f32, f32)) -> i32 {
         // Push normal Sprite component to list
         self.sprites.push(sprite);
         // Push the scroll multiplier amount for this sprite
         self.scroll_mults.push(scroll_multiplier);
+        self.offsets.push( offset.clone() );
 
         self.sprites.len() as i32 - 1
     }
@@ -314,13 +333,33 @@ impl super::RenderItemTarget for ParallaxSpriteComponent {
     fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
         pos: &na::Point2<f32>, item_index: usize) {
             let world = &game_state.world;
+
+            let (scrw, scrh) = (game_state.window_w as f32, game_state.window_h as f32);
+            let camera = world.fetch::<Camera>();
+            let mut display_offset = na::Point2::new(camera.display_offset.0, camera.display_offset.1);
+            drop(camera);
+
             let plx_sprite_reader = world.read_storage::<ParallaxSpriteComponent>();
 
             if let Some(parallax_sprite) = plx_sprite_reader.get(entity.clone()) {
 
-                let mut curr_x_off = game_state.current_offset.x;
-                let mut curr_y_off = game_state.current_offset.y;
+                let mut offset = (0.0, 0.0);
                 let mut mult = 1.0;
+                if item_index >= 0 && item_index < parallax_sprite.offsets.len() {
+                    if let Some(offset_val) = parallax_sprite.offsets.get(item_index) {
+                        offset.0 = offset_val.0;
+                        offset.1 = offset_val.1;
+                        println!("  Render Parallax Item - scroll mult: {:?}", &offset);
+                    }
+                }
+                if item_index >= 0 && item_index < parallax_sprite.scroll_mults.len() {
+                    if let Some(multiplier) = parallax_sprite.scroll_mults.get(item_index) {
+                        mult = *multiplier;
+                        println!("  Render Parallax Item - scroll mult: {}", &mult);
+                    }
+                }
+                mult = mult.min(1.0).max(0.0);
+                let anti_mult = 1.0 - mult;
 
                 // Get Sprite Component to call draw method            
                 // if let Some(sprite) = sprite_reader.get(entity.clone()) {
@@ -328,18 +367,23 @@ impl super::RenderItemTarget for ParallaxSpriteComponent {
                 //     sprite.draw(ctx, world, Some(entity.id()), pos.clone(), item_index);
                 // }
 
-                if item_index >= 0 && item_index < parallax_sprite.scroll_mults.len() {
-                    if let Some(multiplier) = parallax_sprite.scroll_mults.get(item_index) {
-                        mult = *multiplier;
-                    }
-                }
+                let mut curr_x_off = display_offset.x;// + (scrw * 0.5);
+                let mut curr_y_off = display_offset.y;// - (scrh * 0.5);
+                
+                println!("Render Parallax Item: {} Offset: ({}, {})", &item_index, &curr_x_off, &curr_y_off);
 
-                curr_x_off = curr_x_off * mult;
-                curr_y_off = curr_y_off * mult;
+                curr_x_off = curr_x_off * mult - parallax_sprite.lvl_center.0 * anti_mult;
+                curr_y_off = curr_y_off * mult - parallax_sprite.lvl_center.1 * anti_mult;
+                println!("Render Parallax Item - Updated Offset: ({}, {})", &curr_x_off, &curr_y_off);
+                println!("Render Parallax Item - Position: ({}, {})", &pos.x, &pos.y);
 
                 let mut parallax_pos = pos.clone();
                 parallax_pos.x -= curr_x_off;
                 parallax_pos.y -= curr_y_off;
+                parallax_pos.x += offset.0;
+                parallax_pos.y += offset.1;
+
+                println!("Render Parallax Item - Position: ({}, {})", &parallax_pos.x, &parallax_pos.y);
 
                 if item_index >= 0 && item_index < parallax_sprite.sprites.len() {
                     use crate::components::{RenderTrait};
