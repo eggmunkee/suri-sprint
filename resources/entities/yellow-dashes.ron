@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/yellow-dashes.png",
+    path: "/images/yellow-dashes.png",
     scale: (1.0, 1.0),
     z_order: 1.0,
     alpha: 1.0,

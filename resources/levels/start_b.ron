@@ -10,8 +10,10 @@ LevelConfig(
         Player ( x: 110.0, y: 50.0, ), // default entrance
         PlayerNamed ( x: 175.0, y: 360.0, name: "a" ),
         PlayerNamed ( x: 900.0, y: 170.0, name: "b" ),
+
+        ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 41.0, angle: 0.0, src: (-4,-3,8,6), ),
 
         //DynEmptyBox ( x: 500.0, y: 695.0, w: 60.0, h: 40.0, ang: 0.0),
         DynStaticLevelProp ( x: 330.0, y: 630.0, w: 64.0, h: 64.0, ang:0.0, image: "entities/closed_box", img_w: 96.0, img_h: 96.0 ),

@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/mouse-green.png",
+    path: "/images/mouse-green.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 1.0,

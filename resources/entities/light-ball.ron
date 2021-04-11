@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/light-ball.png",
+    path: "/images/light-ball.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 0.75, //0.4,

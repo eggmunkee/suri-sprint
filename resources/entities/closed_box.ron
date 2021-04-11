@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/closed_box.png",
+    path: "/images/closed_box.png",
     scale: (1.0, 1.0),
     z_order: 200.0,
     alpha: 1.0,

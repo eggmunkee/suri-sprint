@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/dirty-box-1.png",
+    path: "/images/dirty-box-1.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 1.0,

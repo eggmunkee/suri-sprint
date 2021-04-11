@@ -5,7 +5,7 @@ ConfigData(
         title: "--- SURI SPRINT ---",
         samples: Eight, // anti-aliasing setting
         vsync: true,
-        icon: "/icon.png",
+        icon: "/images/icon.png",
         srgb: true,
     ),
     // Window mode config

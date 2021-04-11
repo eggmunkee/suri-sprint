@@ -9,9 +9,11 @@ LevelConfig(
         Player ( x: 345.0, y: 350.0, ),
         PlayerNamed ( x: 300.0, y: 300.0, name: "a" ),
         PlayerNamed ( x: 900.0, y: 100.0, name: "b" ),
+
+        ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
-        DynSprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 2.0, angle: 0.0, src: (-4,-3,8,6),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/dark-tile-bg", z: 40.0, angle: 0.0, src: (-4,-3,8,6), ),
+        DynSprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 41.0, angle: 0.0, src: (-4,-3,8,6),
             name: "dynbg", start_enabled: true ),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
@@ -19,7 +21,7 @@ LevelConfig(
         DynEmptyBox ( x: 500.0, y: 695.0, w: 60.0, h: 40.0, ang: 0.0),
         EmptyBox ( x: 700.0, y: 675.0, w: 120.0, h: 60.0, ang: 3.1415),
 
-        //DynSprite ( x: 300.0, y: 200.0, sprite: "entities/spotlight", z: 25.0, angle: 0.0, src: (0,0,1,1), name: "spot_1", start_enabled: false ),
+        //DynSprite ( x: 300.0, y: 200.0, sprite: "entities/spotlight", z:425.0, angle: 0.0, src: (0,0,1,1), name: "spot_1", start_enabled: false ),
         DynSprite ( x: 800.0, y: 200.0, sprite: "entities/spotlight", z: 125.0, angle: 3.14, src: (0,0,1,1), name: "spot_2", start_enabled: false ),
 
         Platform ( x: 300.0, y: 425.0, w: 100.0, h: 20.0, ang: 0.0),

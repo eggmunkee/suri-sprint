@@ -1,6 +1,6 @@
 AnimSpriteConfig(
     spritesheet: false,
-    path: "/food_bowl.png",
+    path: "/images/food_bowl.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 1.0,

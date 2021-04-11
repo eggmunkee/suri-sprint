@@ -10,7 +10,7 @@ ParticleSysConfig(
     ang_vel_range: 0,
     vel_range: (80, 80),
     vel_acc_range: (50, 50),
-    sprite: Some("/smoke_1.png"),
+    sprite: Some("/images/smoke_1.png"),
     start_alpha: 0.15,
     end_alpha: 0.0,
     color: None,

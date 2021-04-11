@@ -67,7 +67,7 @@ LevelConfig(
 
         Portal ( x: 575.0, y: 200.0, w: 20, name: "portB", destination: "portExit", start_enabled: false ),
 
-        ParticleSys ( x: 233, y: 250, z: 400.0, config: "entities/psys/energy_explosion",
+        ParticleSys ( x: 233, y: 250, z: 400.0, config: "psys/energy_explosion",
             logic: Some(
                 ItemLogic( name: "leaky_faucet", start_enabled: false, logic_type: Some(Switch))
             ) ),

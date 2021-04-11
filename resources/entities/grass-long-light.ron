@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/grass-long-light.png",
+    path: "/images/grass-long-light.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 1.0,

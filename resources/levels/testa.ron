@@ -9,9 +9,34 @@ LevelConfig(
         Player ( x: -950.0, y: -950.0 ),
         Player ( x: 3700.0, y: -550.0, player: Some(Milo) ), // test entrance by exit
 
+        ImportSection ( x: 0, y: 0, name: "sections/cliffs-bg" ),
+
+        /*ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: -1000.0, y: -400.0, sprite: Some("entities/cloud-layer"), z: 50.0, scale: (0,0), angle: 0.25, alpha: 0.5, src: (-1,-1,1,1) ),
+        ], scroll_factors: [0.55] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: Some("entities/cloud-layer"), z: 50.0, scale: (0,0), angle: 0.0, alpha: 0.4, src: (-1,-1,1,1) ),
+        ], scroll_factors: [0.6] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 1000.0, y: 400.0, sprite: Some("entities/cloud-layer"), z: 45.0, scale: (0,0), angle: -0.25, alpha: 0.25, src: (-1,-1,1,1), ),
+        ], scroll_factors: [0.65] ),
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 1000.0, y: 0.0, sprite: Some("entities/cloud-layer"), z: 20.0, scale: (0,0), angle: 0.0, alpha: 0.25, src: (-2,-2,2,2) ),
+        ], scroll_factors: [0.7] ),
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: Some("entities/electric-bg"), z: 10.0, scale: (3,3), angle: 0.0, alpha: 1.0, src: (0,0,1,1) ),
+        ], scroll_factors: [0.8] ),*/
+
+        /*ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (500,375), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: Some("entities/electric-bg"), z: 1.0, scale: (3,3), angle: 0.0, alpha: 1.0,src: (0,0,1,1), shader: None ),
+        ], scroll_factors: [0.8] ),*/
+
+
         //
-        Sprite ( x: 1500.0, y: 1500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
-        Sprite ( x: 1500.0, y: 1000.0, sprite: "entities/grid_structure", z: 10.0, angle: 0.0, src: (-20,-20,39,31.5), ),
+        //Sprite ( x: 1500.0, y: 1500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
+        //Sprite ( x: 1500.0, y: 1000.0, sprite: "entities/grid_structure", z: 10.0, angle: 0.0, src: (-20,-20,39,31.5), ),
 
         Sprite ( x: 1950.0, y: 640.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 1.197, src: (0,0,19,1), ),
         

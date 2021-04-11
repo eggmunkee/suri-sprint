@@ -33,7 +33,7 @@ LevelConfig(
         // bottom-right floor portal (red)
         PortalSide ( x: 730.0, y: 718.0, z: Some(660), ang: -1.57, w: 50, h: 100, color: "red", name: "portalB5", destination: "portalB3", start_enabled: true, normal: (0.0,-1.0) ),
 
-        ParticleSys ( x: 400, y: 618, z: 400.0, config: "entities/psys/psys1-up" ),
+        ParticleSys ( x: 400, y: 618, z: 400.0, config: "psys/psys1-up" ),
 
         
         Sprite ( x: 500.0, y: 375.0, sprite: "entities/grid_structure", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
@@ -42,20 +42,20 @@ LevelConfig(
                 z: Some(100.0) ),
 
 
-        ParticleSys ( x: 741, y: 55, z: 400.0, config: "entities/psys/psys1" ),
-        ParticleSys ( x: 730, y: 52, z: 600.0, config: "entities/psys/psys-watersplash" ),
+        ParticleSys ( x: 741, y: 55, z: 400.0, config: "psys/psys1" ),
+        ParticleSys ( x: 730, y: 52, z: 600.0, config: "psys/psys-watersplash" ),
 
         StaticLevelProp( x: 735, y: 52, w: 24, h: 24.0, ang: 0, image: "entities/exit", img_w: 24.0, img_h: 24.0,
                 z: Some(40.0) ),
 
-        ParticleSys ( x: 733, y: 117, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 733, y: 117, z: 400.0, config: "psys/psys1" ),
         
-        ParticleSys ( x: 738, y: 245, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 738, y: 245, z: 400.0, config: "psys/psys1" ),
 
-        ParticleSys ( x: 721, y: 375, z: 400.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 721, y: 375, z: 400.0, config: "psys/psys1" ),
 
-        ParticleSys ( x: 718, y: 499, z: 400.0, config: "entities/psys/psys1" ),
-        ParticleSys ( x: 745, y: 500, z: 185.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 718, y: 499, z: 400.0, config: "psys/psys1" ),
+        ParticleSys ( x: 745, y: 500, z: 185.0, config: "psys/psys1" ),
 
         StaticLevelProp( x: 950, y: 220, w: 64, h: 24.0, ang: 0, image: "entities/box", img_w: 48.0, img_h: 48.0,
                 z: Some(100.0) ),

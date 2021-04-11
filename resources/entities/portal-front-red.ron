@@ -1,6 +1,6 @@
 AnimSpriteConfig(
     spritesheet: false,
-    path: "/red-portal-front.png",
+    path: "/images/red-portal-front.png",
     scale: (1.0, 1.0),
     z_order: 100.0,
     alpha: 1.0,

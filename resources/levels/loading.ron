@@ -9,7 +9,9 @@ LevelConfig(
     items: [
         PlayerNpc ( x: 0.0, y: 0.0 ),
         
-        Sprite ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4.5,-4.5,4.5,4.5), ),
+        ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
+
+        Sprite ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 40.0, angle: 0.0, src: (-4.5,-4.5,4.5,4.5), ),
 
         StaticLevelProp( x: -150, y: 150, w: 65, h: 32.0, ang: 0, image: "entities/grass-long-light", img_w: 128.0, img_h: 32.0,
                 z: Some(100.0) ),

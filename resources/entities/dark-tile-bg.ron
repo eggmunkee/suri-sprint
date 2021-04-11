@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/dark_messy_tile.png",
+    path: "/images/dark_messy_tile.png",
     scale: (1.0, 1.0),
     z_order: 1.0,
     alpha: 1.0,

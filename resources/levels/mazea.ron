@@ -9,11 +9,12 @@ LevelConfig(
         Player ( x: 500.0, y: 700.0 ),
         Player ( x: 1300.0, y: 600.0, player: Some(Milo) ),
         
-        Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-1,-1,2,2), ),
+        //Sprite ( x: 500.0, y: 500.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-1,-1,2,2), ),
+        ImportSection ( x: 500, y: 250, name: "sections/stars-bg" ),
 
-        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/dark-tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg", start_enabled: false ),
-        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/white-tile-bg-overlay", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg2", start_enabled: false ),
-        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/tile-bg", z: 5.0, angle: 0.0, src: (-8,-4,16,8), name: "main-bg", start_enabled: true ),
+        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/dark-tile-bg", z: 7.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg", start_enabled: false ),
+        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/white-tile-bg-overlay", z: 7.0, angle: 0.0, src: (-8,-4,16,8), name: "alt-bg2", start_enabled: false ),
+        DynSprite ( x: 1000.0, y: 500.0, sprite: "entities/tile-bg", z: 7.0, angle: 0.0, src: (-8,-4,16,8), name: "main-bg", start_enabled: true ),
 
         StaticLevelProp( x: 50, y: 950.0, w: 100.0, h: 32.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
         StaticLevelProp( x: 1950, y: 955.0, w: 100.0, h: 32.0, ang: -0.01, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
@@ -128,7 +129,8 @@ LevelConfig(
 
         Ghost ( x: 1600.0, y: 300.0 ),
 
-        /*
+        
+        /* Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
@@ -169,8 +171,7 @@ LevelConfig(
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
         Ghost ( x: 1600.0, y: 300.0 ),
-        Ghost ( x: 1600.0, y: 300.0 ),
-        Ghost ( x: 1600.0, y: 300.0 ),*/
+        Ghost ( x: 1600.0, y: 300.0 ), */
 
 
         //Connection ( from: "btna", to: "btnb", conn_type: Switch),

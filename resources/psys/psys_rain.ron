@@ -10,7 +10,7 @@ ParticleSysConfig(
     ang_vel_range: 0,
     vel_range: (50, 0),
     vel_acc_range: (0, 0),
-    sprite: Some("/raindrop.png"),
+    sprite: Some("/images/raindrop.png"),
     start_alpha: 0.5,
     end_alpha: 0.5,
     color: None,

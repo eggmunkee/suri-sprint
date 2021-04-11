@@ -1,6 +1,6 @@
 AnimSpriteConfig(
     spritesheet: false,
-    path: "/ghost_anim.png",
+    path: "/images/ghost_anim.png",
     scale: (1.2, 1.2),
     z_order: 100.0,
     alpha: 0.75, //0.4,

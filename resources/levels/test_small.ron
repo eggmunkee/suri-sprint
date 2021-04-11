@@ -8,7 +8,9 @@ LevelConfig(
     items: [
         Player ( x: 100.0, y: 100.0 ),
 
-        Sprite ( x: 1000.0, y: 1000.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (1000,1000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: Some("entities/electric-bg"), z: 10.0, scale: (3,3), angle: 0.0, alpha: 1.0, src: (0,0,1,1) ),
+        ], scroll_factors: [0.8] ),
 
         Sprite ( x: 1000.0, y: 0.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 0.0, src: (0,0,15,1), ),
         Sprite ( x: 1000.0, y: 2000.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 0.0, src: (0,0,15,1), ),

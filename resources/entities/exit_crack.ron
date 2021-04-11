@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/exit_door.png",
+    path: "/images/exit_door.png",
     scale: (0.5, 0.5),
     z_order: 100.0,
     alpha: 1.0,

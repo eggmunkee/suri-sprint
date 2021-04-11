@@ -7,8 +7,10 @@ LevelConfig(
     soundtrack: "Suri Title theme.mp3",
     items: [
         Player ( x: 300.0, y: 600.0 ),
+
+        ImportSection ( x: 800, y: 200, name: "sections/bg-a" ),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 40.0, angle: 0.0, src: (-4,-3,8,6), ),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 

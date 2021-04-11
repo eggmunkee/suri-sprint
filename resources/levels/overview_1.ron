@@ -9,15 +9,19 @@ LevelConfig(
     items: [
         Player ( x: 80.0, y: 100.0 ),
 
-        PlayerNpc ( x: 900.0, y: 900.0, player: Some(Milo) ),
-        PlayerNpc ( x: 800.0, y: 900.0, player: Some(Suri) ),
-        PlayerNpc ( x: 700.0, y: 900.0, player: Some(Milo) ),
-        PlayerNpc ( x: 600.0, y: 900.0, player: Some(Milo) ),
-        PlayerNpc ( x: 500.0, y: 900.0, player: Some(Suri) ),
+        PlayerNamed (x: 900, y: 250, name: "exit" ),
+
+        ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
+
+        PlayerNpc ( x: 900.0, y: 780.0, player: Some(Milo) ),
+        PlayerNpc ( x: 800.0, y: 880.0, player: Some(Suri) ),
+        PlayerNpc ( x: 700.0, y: 830.0, player: Some(Milo) ),
+        PlayerNpc ( x: 550.0, y: 750.0, player: Some(Milo) ),
+        /* PlayerNpc ( x: 500.0, y: 900.0, player: Some(Suri) ),
         PlayerNpc ( x: 400.0, y: 900.0, player: Some(Milo) ),
         PlayerNpc ( x: 300.0, y: 900.0, player: Some(Suri) ),
         PlayerNpc ( x: 200.0, y: 900.0, player: Some(Milo) ),
-        PlayerNpc ( x: 100.0, y: 900.0, player: Some(Suri) ),
+        PlayerNpc ( x: 100.0, y: 900.0, player: Some(Suri) ), */
 
         Sprite ( x: 15, y: 5, sprite: "entities/exit_crack", z: 200, angle: 0.7, src: (0, 0, 1, 1), ),
 

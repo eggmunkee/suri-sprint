@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/empty_box_bg.png",
+    path: "/images/empty_box_bg.png",
     scale: (1.0, 1.0),
     z_order: 490.0,
     alpha: 1.0,

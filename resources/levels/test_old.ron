@@ -7,9 +7,109 @@ LevelConfig(
     soundtrack: "Suri Title theme.mp3",
     items: [
         Player ( x: 1000.0, y: 2000.0 ),
+
+        /* ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: -1000.0, y: -400.0, path: Some("/images/cloud-layer-1.png"), z: 50.0, scale: (1,1), angle: 0.25, alpha: 0.7, src: (-1,-1,1,1) ),
+        ], scroll_factors: [0.65] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, path: Some("/images/cloud-layer-1.png"), z: 50.0, scale: (1,1), angle: 0.0, alpha: 0.6, src: (-1,-1,1,1), ),
+        ], scroll_factors: [0.6] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 1000.0, y: 400.0, path: Some("/images/cloud-layer-1.png"), z: 45.0, scale: (1,1), angle: -0.25, alpha: 0.5, src: (-1,-1,1,1), ),
+        ], scroll_factors: [0.55] ),*/
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: -100.0, path: Some("/images/large-sunset-sky.png"), z: 10.0, scale: (1.0,1.0), angle: 0.0, alpha: 1.0, src: (0,0,1,1) ),
+        ], scroll_factors: [1.0] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, path: Some("/images/cave-bg-2.png"), z: 15.0, scale: (2.0,1.8), angle: 0.0, alpha: 1, src: (0,0,1,1), ),
+        ], scroll_factors: [0.97] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, path: Some("/images/cave-bg-3.png"), z: 20.0, scale: (2.2,2.0), angle: 0.0, alpha: 1, src: (0,0,1,1), ),
+        ], scroll_factors: [0.93] ),
+
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 1000.0, y: 0.0, path: Some("/images/cloud-layer-1.png"), z: 25.0, scale: (1,1), angle: 0.0, alpha: 0.5, src: (-2,-2,2,2), ),
+        ], scroll_factors: [0.7] ),
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 3000.0, y: 0.0, path: Some("/images/cloud-layer-1.png"), z: 30.0, scale: (1,1), angle: 0.0, alpha: 0.5, src: (-2,-2,2,2), ),
+        ], scroll_factors: [0.6] ),
+
+        /* ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2000), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/sunset-bg", z: 10.0, scale: (1,1), angle: 0.0, alpha: 1.0,src: (0,0,1,1), ),
+        ], scroll_factors: [1.0] ), */
+
+        /* ParallaxSprite (x: 0.0, y: 400.0, lvl_center: (1200,3600), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 210.0, angle: 0.0,alpha: 1.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 120.0, angle: 0.0,alpha: 0.2, src: (-2,-2,2.0,2), shader: None ),
+        ], scroll_factors: [0.72, 0.84 ]),
+
+         ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (1000,800), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 210.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 120.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 130.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 140.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 150.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 160.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 170.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 180.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),            
+        ], scroll_factors: [0.82, 0.84, 0.86, 0.88, 0.9, 0.92, 0.94, 0.96]),
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (3000,800), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 210.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 120.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 130.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 140.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 150.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 160.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 170.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 180.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),            
+        ], scroll_factors: [0.82, 0.84, 0.86, 0.88, 0.9, 0.92, 0.94, 0.96]),
+
+        ParallaxSprite (x: 0.0, y: 400.0, lvl_center: (3000,2800), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 210.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 120.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 130.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 140.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 150.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 160.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 170.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 180.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),            
+        ], scroll_factors: [0.82, 0.84, 0.86, 0.88, 0.9, 0.92, 0.94, 0.96]),
+
+        ParallaxSprite (x: 0.0, y: 400.0, lvl_center: (1000,2800), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 210.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 120.0, angle: 0.0, src: (-2,-2,2.0,2), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 130.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 140.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 150.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 160.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 170.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 180.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),            
+        ], scroll_factors: [0.82, 0.84, 0.86, 0.88, 0.9, 0.92, 0.94, 0.96]),
+
+         ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (1000,2000), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 51.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 41.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 31.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 21.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+        ], scroll_factors: [0.4, 0.3, 0.2, 0.1]),
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (1200,2200), sprites: [
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 52.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 42.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 32.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+            SpriteDesc ( x: 0.0, y: 0.0, sprite: "entities/pyramids", z: 22.0, angle: 0.0, src: (0,0,1.0,1.0), shader: None ),
+        ], scroll_factors: [0.4, 0.3, 0.2, 0.1]), */
+
+
+
+
         //
-        Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/electric-bg", z: 10.0, angle: 0.1, src: (-50,-50,100,100), ),
-        Sprite ( x: 2225.0, y: 2300.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-18,-28,38,21), ),
+        //Sprite ( x: 2225.0, y: 2500.0, sprite: "entities/electric-bg", z: 10.0, angle: 0.1, src: (-50,-50,100,100), ),
+        //Sprite ( x: 2225.0, y: 2300.0, sprite: "entities/tile-bg", z: 50.0, angle: 0.0, src: (-18,-28,38,21), ),
         
         Platform ( x: 150.0, y: 2300.0, w: 1300.0, h: 100.0, ang: -1.57),
         Platform ( x: 4000.0, y: 2300.0, w: 1300.0, h: 100.0, ang: 1.57),
@@ -60,13 +160,13 @@ LevelConfig(
         Portal ( x: 3845.0, y: 1720.0, w: 30.0, name: "c", destination: "a", start_enabled: true ),
 
 
-        Sprite ( x: 3505.0, y: 2455.0, sprite: "entities/white-tile-bg", z: 1.0, angle: 1.57, src: (-2,-2,4,4), ),
+        Sprite ( x: 3505.0, y: 2455.0, sprite: "entities/white-tile-bg", z: 35.0, angle: 1.57, src: (-2,-2,4,4), ),
 
         // platforms are "roof" over exit to avoid exit that way
         Platform ( x: 3400.0, y: 2380.0, w: 103.0, h: 15.0, ang: -0.16),
-            Sprite ( x: 3418.0, y: 2423.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: -0.15, src: (0,0,1,1), ),
+            Sprite ( x: 3418.0, y: 2423.0, sprite: "entities/platform_shadow_1", z: 55.0, angle: -0.15, src: (0,0,1,1), ),
         Platform ( x: 3600.0, y: 2380.0, w: 103.0, h: 15.0, ang: 0.16),
-            Sprite ( x: 3582.0, y: 2423.0, sprite: "entities/platform_shadow_1", z: 50.0, angle: 0.15, src: (0,0,1,1), ),
+            Sprite ( x: 3582.0, y: 2423.0, sprite: "entities/platform_shadow_1", z: 55.0, angle: 0.15, src: (0,0,1,1), ),
         Exit (x: 3500.0, y: 2450.0, w: 20.0, h: 20.0, name: "exit", destination: "logic" ) ,
         Platform ( x: 3500.0, y: 2520.0, w: 80.0, h: 15.0, ang: 0),
         

@@ -1,0 +1,22 @@
+LevelSectionConfig(
+    items: [
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: -100.0, path: Some("/images/large-sunset-sky.png"), z: 10.0, scale: (1.0,1.0), angle: 0.0, alpha: 1.0, src: (0,0,1,1) ),
+        ], scroll_factors: [1.0] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, path: Some("/images/cave-bg-2.png"), z: 15.0, scale: (2.0,1.8), angle: 0.0, alpha: 1, src: (0,0,1,1), ),
+        ], scroll_factors: [0.97] ),
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, path: Some("/images/cave-bg-3.png"), z: 20.0, scale: (2.2,2.0), angle: 0.0, alpha: 1, src: (0,0,1,1), ),
+        ], scroll_factors: [0.93] ),
+
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 1000.0, y: 0.0, path: Some("/images/cloud-layer-1.png"), z: 25.0, scale: (1,1), angle: 0.0, alpha: 0.5, src: (-2,-2,2,2), ),
+        ], scroll_factors: [0.7] ),
+
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (2000,2200), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 3000.0, y: 0.0, path: Some("/images/cloud-layer-1.png"), z: 30.0, scale: (1,1), angle: 0.0, alpha: 0.5, src: (-2,-2,2,2), ),
+        ], scroll_factors: [0.6] ),
+    ]
+)

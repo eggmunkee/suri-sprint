@@ -7,8 +7,10 @@ LevelConfig(
     soundtrack: "Suri Boogie.mp3",
     items: [
         Player ( x: 350.0, y: 350.0 ),
+
+        ImportSection ( x: 400, y: 0, name: "sections/bg-a" ),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (-4,-3,8,6), ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 40.0, angle: 0.0, src: (-4,-3,8,6), ),
 
         DynStaticLevelProp ( x: 200.0, y: 600.0, w: 52.0, h: 52.0, ang:0.0, image: "entities/closed_box", img_w: 96.0, img_h: 96.0 ),
 

@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/yellow-arrow.png",
+    path: "/images/yellow-arrow.png",
     scale: (1.0, 1.0),
     z_order: 1.0,
     alpha: 1.0,

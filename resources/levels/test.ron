@@ -8,7 +8,9 @@ LevelConfig(
     items: [
         Player ( x: 80.0, y: 0.0 ),
         
-        Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
+        //Sprite ( x: 250.0, y: 250.0, sprite: "entities/electric-bg", z: 1.0, angle: 0.1, src: (-3,-3,3,3), ),
+
+        ImportSection ( x: 500, y: 250, name: "sections/stars-bg" ),
 
         Sprite ( x: 2645.0, y: 500.0, sprite: "entities/grid_structure", z: 5.0, angle: 0.0, src: (-2.75,-3.9,5.5,7.8), ),
 

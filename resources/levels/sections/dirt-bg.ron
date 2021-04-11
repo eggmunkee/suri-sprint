@@ -1,0 +1,8 @@
+LevelSectionConfig(
+    
+    items: [
+        ParallaxSprite (x: 0.0, y: 0.0, lvl_center: (500,375), sprites: [  // (1925,2300)
+            SpriteDesc ( x: 0.0, y: 0.0, path: Some("/images/dirt-bg-1.png"), z: 1.0, scale: (2,2), angle: 0.0, alpha: 1.0,src: (0,0,1,1)),
+        ], scroll_factors: [0.8] ),
+    ]
+)

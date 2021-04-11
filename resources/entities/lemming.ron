@@ -1,6 +1,6 @@
 AnimSpriteConfig (
     spritesheet: false,
-    path: "/lemming.png",
+    path: "/images/lemming.png",
     scale: (5.4, 5.0),
     z_order: 100.0,
     alpha: 1.0,

@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: false,
-    path: "/ghost-1-r.png",
+    path: "/images/ghost-1-r.png",
     scale: (1.2, 1.2),
     z_order: 100.0,
     alpha: 0.75, //0.4,

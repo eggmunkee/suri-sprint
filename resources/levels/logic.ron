@@ -19,17 +19,17 @@ LevelConfig(
         // Create static animated sprite based on anim sprite config
         AnimSprite ( x: 200, y: 958, z: 300.0, sprite: "entities/lemming", angle: 0.0, src: (0,0,1,1), ),
         // Setup static particle systems based on particle system configs
-        ParticleSys ( x: 615, y: 10, z: 600.0, config: "entities/psys/psys1" ),
-        ParticleSys ( x: 605, y: 157, z: 600.0, config: "entities/psys/psys1" ),
-        ParticleSys ( x: 615, y: 410, z: 600.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 615, y: 10, z: 600.0, config: "psys/psys1" ),
+        ParticleSys ( x: 605, y: 157, z: 600.0, config: "psys/psys1" ),
+        ParticleSys ( x: 615, y: 410, z: 600.0, config: "psys/psys1" ),
 
-        ParticleSys ( x: 575, y: 725, z: 600.0, config: "entities/psys/psys1" ),
-        ParticleSys ( x: 635, y: 725, z: 600.0, config: "entities/psys/psys1" ),
+        ParticleSys ( x: 575, y: 725, z: 600.0, config: "psys/psys1" ),
+        ParticleSys ( x: 635, y: 725, z: 600.0, config: "psys/psys1" ),
 
 
-        ParticleSys ( x: 570, y: 730, z: 600.0, config: "entities/psys/psys2" ),
-        ParticleSys ( x: 630, y: 730, z: 600.0, config: "entities/psys/psys2" ),
-        ParticleSys ( x: 500, y: -700, z: 700.0, config: "entities/psys/psys_rain" ),
+        ParticleSys ( x: 570, y: 730, z: 600.0, config: "psys/psys2" ),
+        ParticleSys ( x: 630, y: 730, z: 600.0, config: "psys/psys2" ),
+        ParticleSys ( x: 500, y: -700, z: 700.0, config: "psys/psys_rain" ),
 
         Sprite ( x: 500.0, y: 500.0, sprite: "entities/tile-bg", z: 1.0, angle: 0.0, src: (0,0,8,8), ),
 

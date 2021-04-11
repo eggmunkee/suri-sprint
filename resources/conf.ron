@@ -5,7 +5,7 @@ ConfigData(
         title: "--- SURI SPRINT ---",
         samples: Eight, // anti-aliasing setting
         vsync: true,
-        icon: "/icon.png",
+        icon: "/images/icon.png",
         srgb: true,
     ),
     // Window mode config
@@ -21,8 +21,8 @@ ConfigData(
         max_height: 0.0,
         resizable: true,
     ),
-    start_level: "coin_room", //overview_1
-    music_volume: 0.85,
-    audio_volume: 0.70,
+    start_level: "loading", //overview_1
+    music_volume: 0.05,
+    audio_volume: 0.05,
     gravity: 30,
 )

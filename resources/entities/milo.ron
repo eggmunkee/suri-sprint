@@ -1,6 +1,6 @@
 SpriteConfig(
     spritesheet: true,
-    path: "/milo-spritesheet.png",
+    path: "/images/milo-spritesheet.png",
     scale: (1.5, 1.5),
     z_order: 500.0,
     alpha: 1.0,
