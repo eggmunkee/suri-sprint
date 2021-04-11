@@ -107,6 +107,7 @@ pub struct CharacterDisplayComponent {
     pub player_char: PlayerCharacter,
     pub is_controlled: bool,
     pub is_controllable: bool,
+    pub go_anywhere_mode: bool,
     // image path
     pub spritesheet_path: String,
     pub spritesheet_cols: f32,
@@ -168,6 +169,7 @@ impl CharacterDisplayComponent {
             player_number: 0,
             is_controlled: true,
             is_controllable: true,
+            go_anywhere_mode: false,
             //image: image,
             spritesheet_path: char_img.clone(),
             spritesheet_cols: match &player_char {
@@ -384,7 +386,7 @@ impl CharacterDisplayComponent {
                 LevelType::Platformer => {
                     0.5 * body_movement.x.abs().max(2.0).min(30.0)
                 },
-                LevelType::Overhead => {
+                LevelType::Overhead | LevelType::Space => {
                     0.5 * (body_movement.x.abs() + body_movement.y.abs()).max(2.0).min(30.0)
                 }
             };
@@ -617,7 +619,7 @@ impl CharacterDisplayComponent {
             LevelType::Platformer => {
                 is_moving || body_movement.x.abs() > 0.5
             },
-            LevelType::Overhead => {
+            LevelType::Overhead | LevelType::Space => {
                 is_moving || body_movement.x.abs() > 0.5 || body_movement.y.abs() > 0.5
             }
         }
@@ -748,6 +750,12 @@ impl CharacterDisplayComponent {
                         body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
                     }
                 },
+                LevelType::Space => {
+                    if lin_vel.x < self.scale_by_speed_level(20.0) {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt * 0.5 * time_delta,y: 0.0}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
+                    }
+                },
             }
         }
         else if self.going_left {
@@ -767,16 +775,22 @@ impl CharacterDisplayComponent {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:-move_amt * 0.5 * time_delta,y: 0.0}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:-x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
                     }
-                }
+                },
+                LevelType::Space => {
+                    if lin_vel.x < self.scale_by_speed_level(-20.0) {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:move_amt * 0.5 * time_delta,y: 0.0}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:x_move_amt * time_delta,y: 0.0}, &loc_cent, true);
+                    }
+                },
             }
         }
         else {
             match level_type {
                 LevelType::Platformer => {},
-                LevelType::Overhead => {
+                LevelType::Overhead | LevelType::Space => {
                     lin_vel.x = lin_vel.x * decr_amt;
                     body.set_linear_velocity(&physics::PhysicsVec { x: lin_vel.x, y: lin_vel.y });
-                }
+                },
             }
         }
         if self.going_up {
@@ -797,6 +811,12 @@ impl CharacterDisplayComponent {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt * time_delta}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -x_move_amt * time_delta}, &loc_cent, true);
                     }
+                },
+                LevelType::Space => {
+                    if lin_vel.y > self.scale_by_speed_level(-20.0) {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: -move_amt * time_delta}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: -x_move_amt * time_delta}, &loc_cent, true);
+                    }
                 }
             }
             //println!("applied up force");
@@ -813,7 +833,13 @@ impl CharacterDisplayComponent {
                         //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, true);
                         body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: x_move_amt * time_delta}, &loc_cent, true);
                     }
-                }
+                },
+                LevelType::Space => {
+                    if lin_vel.y < self.scale_by_speed_level(20.0) {
+                        //body.apply_force_to_center(&physics::PhysicsVec {x:0.0,y: move_amt * time_delta}, true);
+                        body.apply_linear_impulse(&physics::PhysicsVec {x:0.0,y: x_move_amt * time_delta}, &loc_cent, true);
+                    }
+                },
             }
 
             //println!("applied down force");
@@ -821,7 +847,7 @@ impl CharacterDisplayComponent {
         else {
             match level_type {
                 LevelType::Platformer => {},
-                LevelType::Overhead => {
+                LevelType::Overhead | LevelType::Space => {
                     lin_vel = body.linear_velocity().clone();
                     lin_vel.y = lin_vel.y * decr_amt;
                     body.set_linear_velocity(&physics::PhysicsVec { x: lin_vel.x, y: lin_vel.y });

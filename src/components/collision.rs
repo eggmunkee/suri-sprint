@@ -9,8 +9,9 @@ use rand::prelude::*;
 
 
 use crate::core::physics as physics;
-use crate::core::physics::{PhysicsWorld, PhysicsBody, PhysicsBodyType, PhysicsBodyHandle, EntityType,
+use crate::core::physics::{PhysicsWorld, PhysicsBody, PhysicsVec, PhysicsBodyType, PhysicsBodyHandle, EntityType,
     CollisionCategory, CollisionBit, CollideType};
+use crate::entities::level_builder::{LevelType};
 use crate::components::{PhysicsUpdateTrait};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::npc::{NpcComponent};
@@ -475,17 +476,47 @@ impl PhysicsUpdateTrait for Collision {
 
             let mut body = physics_world.body_mut(body_handle);
 
+            let mut curr_pos = physics::get_pos(body.position());
+            let mut curr_vel = physics::PhysicsVec { x: self.vel.x, y: self.vel.y };
+
+            let mut updated_pos = false;
             let mut movement_applied = false;
             if let Some(ref mut character) = opt_character {
                 // have character handle applying inputs to collision body
-                character.apply_movement(&mut body, time_delta, &game_state.level_type);
+                character.apply_movement(&mut body, time_delta, match character.go_anywhere_mode {
+                    false => &game_state.level_type, true => &LevelType::Overhead });
 
                 character.in_exit = false;
                 character.in_portal = false;
                 character.exit_id = -1;
                 character.portal_id = -1;
 
-                movement_applied = true
+                movement_applied = true;
+
+                if character.go_anywhere_mode {
+                    // Get updated velocity after movement was applied
+                    curr_vel = body.linear_velocity().clone();
+                    self.vel.x = curr_vel.x;
+                    self.vel.y = curr_vel.y;
+
+                    //println!("Character pos {:?} vel {:?}", &curr_pos, &curr_vel);
+                    // Convert velocity values to game scale
+                    let sc_vel_x = physics::get_size(curr_vel.x);
+                    let sc_vel_y = physics::get_size(curr_vel.y);
+                    // Update position from velocity
+                    curr_pos.x += sc_vel_x * time_delta;
+                    curr_pos.y += sc_vel_y * time_delta;
+                    // Create new character position in phys scale
+                    let phys_pos = physics::create_pos(&curr_pos);
+                    let curr_ang = body.angle();
+                    // Update body transform
+                    body.set_transform(&phys_pos, curr_ang);
+                    // Set collision component position
+                    self.pos.x = curr_pos.x;
+                    self.pos.y = curr_pos.y;
+                }
+
+                
             }
 
             if let (Some(ref mut npc), false) = (opt_npc, movement_applied ) {
@@ -493,8 +524,6 @@ impl PhysicsUpdateTrait for Collision {
                 npc.apply_movement(&mut body, time_delta);
 
             }
-
-            let mut curr_pos = physics::get_pos(body.position());
 
             
             let body_type = body.body_type();
@@ -571,16 +600,36 @@ impl PhysicsUpdateTrait for Collision {
         entity: &Entity) {
 
         if let Some(body_handle) = self.body_handle {
-            let body = physics_world.body(body_handle);
+            let mut body = physics_world.body_mut(body_handle);
 
             let curr_pos = physics::get_pos(body.position());
-            self.pos.x = curr_pos.x;
-            self.pos.y = curr_pos.y;
-            let curr_vel = body.linear_velocity();
-            self.vel.x = curr_vel.x;
-            self.vel.y = curr_vel.y;
 
-            self.angle = body.angle();
+            let apply_phys_update = match opt_character {
+                Some(character) => !character.go_anywhere_mode,
+                None => true,
+            };
+            
+            if apply_phys_update
+            {
+                self.pos.x = curr_pos.x;
+                self.pos.y = curr_pos.y;
+                // self.pos.x = curr_pos.x;
+                // self.pos.y = curr_pos.y;
+                let curr_vel = body.linear_velocity();    
+                self.vel.x = curr_vel.x;
+                self.vel.y = curr_vel.y;
+
+                self.angle = body.angle();
+            }
+            // EXPERIMENTAL OVERRIDE PHYSICS RESULTS FROM Collision component
+            else {
+                // Set collider position back to physics body
+                let phys_pos = physics::create_pos(&self.pos);
+                let curr_ang = body.angle();
+                body.set_transform(&phys_pos, curr_ang);
+                // Set collider velocity back to physics body
+                body.set_linear_velocity(&PhysicsVec { x: self.vel.x, y: self.vel.y });
+            }
 
             if self.in_portal && self.last_portal_id != self.portal_id {
                 //println!("PORTAL CHANGE - triggering warp. From {:?} to {:?}", &self.last_portal_id, &self.portal_id);
@@ -595,12 +644,12 @@ impl PhysicsUpdateTrait for Collision {
                 // }
             }
 
-            if curr_vel.x == 0.0 && self.vel_last.x.abs() > 0.0001 {
-                //println!("X Stopped from {}", &self.vel_last.x);
-            }
-            if curr_vel.y == 0.0 && self.vel_last.y.abs() > 0.0001 {
-                //println!("Y Stopped from {}", &self.vel_last.y);
-            }
+            // if curr_vel.x == 0.0 && self.vel_last.x.abs() > 0.0001 {
+            //     //println!("X Stopped from {}", &self.vel_last.x);
+            // }
+            // if curr_vel.y == 0.0 && self.vel_last.y.abs() > 0.0001 {
+            //     //println!("Y Stopped from {}", &self.vel_last.y);
+            // }
 
             //println!("New position: {}, {} Velocity: {}, {}", &self.pos.x, &self.pos.y, &self.vel.x, &self.vel.y);
         }

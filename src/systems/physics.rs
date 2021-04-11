@@ -436,6 +436,7 @@ impl PhysicsSystem {
                     else if collide_t == &CollideType::Player_Pickup {
                         match primary_entity_type {
                             EntityType::PickupItem(_) => {
+                                /*
                                 let mut points_speed_lvl = 0;
                                 // Get point item collision component
                                 if let Some(pickup) = pickup_res.get_mut(entity_1) {
@@ -447,10 +448,10 @@ impl PhysicsSystem {
                                         if game_state_res.points >= 100 {
                                             points_speed_lvl = 3;
                                         }
-                                        else if game_state_res.points >= 50 {
+                                        else if game_state_res.points >= 25 {
                                             points_speed_lvl = 2;
                                         }
-                                        else if game_state_res.points >= 10 {
+                                        else if game_state_res.points >= 1 {
                                             points_speed_lvl = 1;
                                         }
                                         {
@@ -475,6 +476,7 @@ impl PhysicsSystem {
                                             world.fetch_mut::<GameStateResource>().game_run_seconds);
                                     }
                                 }
+                                */
                             },
                             _ => {
                                 match other_entity_type {
@@ -489,10 +491,10 @@ impl PhysicsSystem {
                                                 if game_state_res.points >= 100 {
                                                     points_speed_lvl = 3;
                                                 }
-                                                else if game_state_res.points >= 50 {
+                                                else if game_state_res.points >= 25 {
                                                     points_speed_lvl = 2;
                                                 }
-                                                else if game_state_res.points >= 10 {
+                                                else if game_state_res.points >= 1 {
                                                     points_speed_lvl = 1;
                                                 }
                                                 {
@@ -557,7 +559,7 @@ impl PhysicsSystem {
             if let Some(character) = char_disp_comp_res.get_mut(entity_1) {
                 //character.set_standing(any_stand_contact);
                 match lvl_type {
-                    LevelType::Platformer => {
+                    LevelType::Platformer | LevelType::Space => {
                         Self::set_standing_status(character, any_stand_contact);
                     },
                     LevelType::Overhead => {
@@ -569,7 +571,7 @@ impl PhysicsSystem {
                 //npc.set_standing(any_stand_contact);
                 //set_standing_status(npc, any_stand_contact);
                 match lvl_type {
-                    LevelType::Platformer => {
+                    LevelType::Platformer | LevelType::Space => {
                         Self::set_standing_status(npc, any_stand_contact);
                     },
                     LevelType::Overhead => {
