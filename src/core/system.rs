@@ -8,6 +8,7 @@ use wrapped2d::user_data::*;
 use std::collections::{HashMap};
 
 use crate::core::game_state::{GameState,State,RunningState,GameMode};
+use crate::core::world::{SuriWorld};
 use crate::core::input::{InputKey};
 use crate::core::physics::{BoxQueryInfo};
 use crate::resources::{InputResource,GameStateResource,ConnectionResource,WorldAction,Camera,GameLog};
@@ -60,7 +61,22 @@ impl CoreSystem {
     pub fn run_menu_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
         Self::run_frame_time_update(game_state, ctx, time_delta, false);
 
-        //println!("Running menu step");
+        let exiting_menu = game_state.menu_stack.len() == 0;
+
+        if exiting_menu {
+            if game_state.ui_game_display_zoom < 1.0 {
+                game_state.ui_game_display_zoom += 0.5 * time_delta;
+                if game_state.ui_game_display_zoom >= 1.0 {
+                    game_state.ui_game_display_zoom = 1.0;
+                }
+            }
+        }
+        else {
+            //println!("Running menu step");
+            if game_state.ui_game_display_zoom > 0.0 {
+                game_state.ui_game_display_zoom -= 0.05 * time_delta;
+            }
+        }
 
         //CoreSystem::run_menu_update(game_state, ctx, time_delta);
         InputSystem::handle_menu_input(game_state, time_delta);
@@ -69,44 +85,48 @@ impl CoreSystem {
 
         let wactions = input.actions.drain(0..).collect::<Vec<_>>();
 
-        if input.exit_flag {
-            ggez::event::quit(ctx);
+        if !exiting_menu {
+            if input.exit_flag {
+                ggez::event::quit(ctx);
+            }
         }
         input.clear_actions();
         drop(input);
 
-        for world_action in &wactions {
-            match world_action {
-                WorldAction::CloseAllMenus => {
-                    println!("Close All Menus");
-                    game_state.close_all_menus();
-                },
-                WorldAction::CloseMenu => {
-                    println!("Close Menu");
-                    if game_state.menu_stack.len() > 0 {
-                        game_state.menu_stack.pop();
-                    }
-                },
-                WorldAction::OpenSubMenu(name) => {
-                    println!("Open SubMenu {}", &name);
-                    game_state.open_submenu(name.clone());
-                },
-                WorldAction::ExitGame => {
-                    println!("Exit Game");
-                    ggez::event::quit(ctx);
-                },
-                WorldAction::RestartLevel => {
-                    game_state.close_all_menus();
-                    game_state.restart_level(ctx);
-                },
-                WorldAction::NewGame => {
-                    game_state.close_all_menus();
-                    game_state.load_level(ctx, "overview_1".to_string(), "".to_string());
-                },
-                WorldAction::ToggleFullscreen => {
-                    game_state.toggle_fullscreen_mode(ctx);
-                },
-                _ => {}
+        if !exiting_menu {
+
+            for world_action in &wactions {
+                match world_action {
+                    WorldAction::CloseAllMenus => {
+                        println!("Close All Menus");
+                        game_state.close_all_menus();
+                    },
+                    WorldAction::CloseMenu => {
+                        println!("Close Menu");
+                        game_state.close_menu();
+                        
+                    },
+                    WorldAction::OpenSubMenu(name) => {
+                        println!("Open SubMenu {}", &name);
+                        game_state.open_submenu(name.clone());
+                    },
+                    WorldAction::ExitGame => {
+                        println!("Exit Game");
+                        ggez::event::quit(ctx);
+                    },
+                    WorldAction::RestartLevel => {
+                        game_state.close_all_menus();
+                        game_state.restart_level(ctx);
+                    },
+                    WorldAction::NewGame => {
+                        game_state.close_all_menus();
+                        game_state.load_level(ctx, "overview_1".to_string(), "".to_string());
+                    },
+                    WorldAction::ToggleFullscreen => {
+                        game_state.toggle_fullscreen_mode(ctx);
+                    },
+                    _ => {}
+                }
             }
         }
 
@@ -193,6 +213,7 @@ impl CoreSystem {
         let mut start_pause = false;
         let mut open_menu = false;
         let mut slow_mode = false;
+        let mut go_anywhere_mode = false;
         {
             let input = game_state.world.fetch_mut::<InputResource>();
             if input.keys_pressed.len() > 0 {
@@ -223,6 +244,9 @@ impl CoreSystem {
                         else if key == &InputKey::SlowMode {
                             slow_mode = true;
                         }
+                        else if key == &InputKey::CheatGoAnywhere {
+                            go_anywhere_mode = true;
+                        }
                     } 
                 }
                 //println!(" - - - - - - - - - - - - - - -");
@@ -238,13 +262,14 @@ impl CoreSystem {
         Self::clear_inputs(game_state);
 
         {
-            let curr_game_time = game_state.world.fetch::<GameStateResource>().game_run_seconds;
+            //let curr_game_time = game_state.world.fetch::<GameStateResource>().game_run_seconds;
             //let curr_game_time = 
             let mut log = game_state.world.fetch_mut::<GameLog>();
 
             let mut delete_to_index = -1;
-            for entry in log.entries.iter() {
-                if entry.entry_time < curr_game_time - 5.0 {
+            for entry in log.entries.iter_mut() {
+                entry.time_left -= time_delta;
+                if entry.time_left <= 0.0 {
                     delete_to_index += 1; // -1 to 0 for 1st, 0 to 1 for 2nd
                 }
             }
@@ -272,6 +297,20 @@ impl CoreSystem {
             }
             else {
                 game_state.set_timescale(1.0);
+            }
+        }
+        else if go_anywhere_mode {
+            if let Some(player_entity) = game_state.world.get_player() {
+                if player_entity.gen().is_alive() {
+                    // Get character component for world player
+                    let mut player_res = game_state.world.write_storage::<CharacterDisplayComponent>();
+                    if let Some(ref mut player) = player_res.get_mut(player_entity) {
+                        player.go_anywhere_mode = !player.go_anywhere_mode;
+                        let mut log = game_state.world.fetch_mut::<GameLog>();
+                        log.add_entry(true, format!("Go Anywhere: {:?}!", &player.go_anywhere_mode), None,
+                            game_state.world.fetch_mut::<GameStateResource>().game_run_seconds);
+                    }
+                }
             }
         }
         
@@ -336,19 +375,12 @@ impl CoreSystem {
         new_state
     }
 
-    // Process Menu update - check for unpause trigger
-    pub fn run_menu_update(game_state: &mut GameState, _ctx: &mut Context, time_delta: f32) {
-        
-        // {
-        //     let world = &mut game_state.world;
-        //     let mut input_sys = InputSystem::new();
-        //     input_sys.run_now(&world);
-        // }
-        //let mut input = game_state.world.fetch_mut::<InputResource>();
-        InputSystem::handle_menu_input(game_state, time_delta);
+    pub fn run_logic_update(game_state: &mut GameState) {
+        let mut logic_sys = LogicSystem {
+            show_debug_output: game_state.debug_logic_frames > 0 
+        };
 
-        Camera::update(game_state, time_delta);
-
+        logic_sys.run_now(&game_state.world);
     }
 
     // Process Playing update - run all game systems

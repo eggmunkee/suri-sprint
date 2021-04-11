@@ -55,7 +55,7 @@ impl Camera {
         // Set freeze-camera states - when camera should not move towards target
         let mut move_camera : bool = true;
         // FREEZE IN MENU
-        if game_state.menu_stack.len() > 0 {
+        if game_state.in_menu_system() {
             move_camera = false;
         }
         match &game_state.running_state {
@@ -86,8 +86,8 @@ impl Camera {
             if targ_axes_sum < 200000.0 {
                 // Create sliding scale of pan speed - must line up with max axes_sum in if
                 // Should not result in -x_div or -y_div, as long as initial values and what axes_sum is div. by make sense
-                let x_div = 12000.0 - (targ_axes_sum/20.0); // range 2000-11500
-                let y_div = 10001.0 - (targ_axes_sum/20.0); // range 1-10000
+                let x_div = (12000.0 - (targ_axes_sum/20.0)) * 2.5; // range 2000-11500
+                let y_div = (10001.0 - (targ_axes_sum/20.0)) * 2.5; // range 1-10000
 
                 // let midpoint = (self.display_offset.x - target_offset_x) * (targ_x_mag / 20.0);
                 // self.display_offset.x -= midpoint;

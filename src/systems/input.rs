@@ -45,9 +45,9 @@ impl InputSystem {
 
         match level_type {
             LevelType::Platformer => {
-                npc.update_overhead(body_movement, time_delta, x, y);
+                npc.update(body_movement, time_delta, x, y);
             },
-            LevelType::Overhead => {
+            LevelType::Overhead | LevelType::Space => {
                 npc.update_overhead(body_movement, time_delta, x, y);
             },
         };
@@ -101,7 +101,7 @@ impl InputSystem {
             LevelType::Platformer => {
                 character.update(body_movement, time_delta);
             },
-            LevelType::Overhead => {
+            LevelType::Overhead | LevelType::Space => {
                 character.update_overhead(body_movement, time_delta);
             },
         };
@@ -252,8 +252,6 @@ impl InputSystem {
         let mut fire_pressed = false;
         let mut toggle_fullscreen = false;
 
-        let curr_menu_lvl = game_state.menu_stack.len() - 1;
-        let mut curr_menu = &mut game_state.menu_stack[curr_menu_lvl];
 
         // Apply vector length to velocity Y
         let mut exit_pressed = false;
@@ -296,118 +294,124 @@ impl InputSystem {
             input.add_action(WorldAction::ToggleFullscreen);
         }
 
-        //let mut open_menu_name = String::new();
-        if fire_pressed {
-            match &curr_menu.items[curr_menu.selected_index as usize] {
-                MenuItem::ButtonItem { key, .. } => {
-                    println!("Button pressed: {:?}", &key);
-                    if key == "resume" {
-                        input.add_action(WorldAction::CloseAllMenus);
+        if game_state.menu_stack.len() > 0 {
+            let curr_menu_lvl = game_state.menu_stack.len() - 1;
+            let mut curr_menu = &mut game_state.menu_stack[curr_menu_lvl];
+
+            //let mut open_menu_name = String::new();
+            if fire_pressed {
+                match &curr_menu.items[curr_menu.selected_index as usize] {
+                    MenuItem::ButtonItem { key, .. } => {
+                        println!("Button pressed: {:?}", &key);
+                        if key == "resume" {
+                            input.add_action(WorldAction::CloseAllMenus);
+                        }
+                        else if key == "new_game" {
+                            input.add_action(WorldAction::NewGame);
+                        }
+                        else if key == "restart_level" {
+                            input.add_action(WorldAction::RestartLevel);
+                        }
+                        else if key == "exit" {
+                            input.add_action(WorldAction::ExitGame);
+                        }
+                        else if key == "options" || key == "advanced" {
+                            //open_menu_name = key.to_string();
+                            input.add_action(WorldAction::OpenSubMenu(key.to_string()));
+                        }
+                        else if key == "close_menu" {
+                            //open_menu_name = key.to_string();
+                            input.add_action(WorldAction::CloseMenu);
+                        }
+                        else if key == "fullscreen" {
+                            input.add_action(WorldAction::ToggleFullscreen);
+                        }
+                    },
+                    other => {
+                        println!("Other menu item pressed: {:?}", &other);
                     }
-                    else if key == "new_game" {
-                        input.add_action(WorldAction::NewGame);
+                }
+
+                input.fire_pressed = false;
+            }
+
+            if up_pressed {
+
+                if curr_menu.selected_index > 0 {
+                    let mut test_index = curr_menu.selected_index - 1;
+
+                    let mut found_valid_item = false;
+                    while (!found_valid_item && test_index >= 0) {
+                        match &curr_menu.items[test_index as usize] {
+                            MenuItem::Header(_) => {
+        
+                            },
+                            _ => {
+                                found_valid_item = true;
+                                break;
+                            }
+                        }
+                        test_index = test_index - 1;
                     }
-                    else if key == "restart_level" {
-                        input.add_action(WorldAction::RestartLevel);
+
+                    if found_valid_item {
+                        curr_menu.selected_index = test_index;
                     }
-                    else if key == "exit" {
-                        input.add_action(WorldAction::ExitGame);
+                    //curr_menu.selected_index = curr_menu.selected_index - 1;
+                }
+            }
+            else if down_pressed {
+                if curr_menu.selected_index + 1 < curr_menu.items.len() as i32 {
+                    curr_menu.selected_index = curr_menu.selected_index + 1;
+                }
+            }
+
+            match &mut curr_menu.items[curr_menu.selected_index as usize] {
+                MenuItem::ToggleItem { key, value, .. } => {
+                    if right_pressed {
+                        *value = true;
+                        println!("Toggle pressed: {:?} Value: {}", &key, &value);
                     }
-                    else if key == "options" || key == "advanced" {
-                        //open_menu_name = key.to_string();
-                        input.add_action(WorldAction::OpenSubMenu(key.to_string()));
-                    }
-                    else if key == "close_menu" {
-                        //open_menu_name = key.to_string();
-                        input.add_action(WorldAction::CloseMenu);
-                    }
-                    else if key == "fullscreen" {
-                        input.add_action(WorldAction::ToggleFullscreen);
+                    else if left_pressed {
+                        *value = false;
+                        println!("Toggle pressed: {:?} Value: {}", &key, &value);
                     }
                 },
-                other => {
-                    println!("Other menu item pressed: {:?}", &other);
-                }
-            }
+                MenuItem::RangeItem { key, value, min, max, incr, .. } => {
+                    //println!("Range pressed: {:?}", &key);
+                    let mut value_update = false;
+                    if right_pressed {
+                        if value < max {
+                            *value = (*value + *incr).min(*max);
+                            value_update = true;
+                        }
+                        println!("Range pressed: {:?} Value: {}", &key, &value);
+                    }
+                    else if left_pressed {
+                        if value > min {
+                            *value = (*value - *incr).max(*min);
+                            value_update = true;
+                        }
+                        println!("Range pressed: {:?} Value: {}", &key, &value);
+                    }
 
-            input.fire_pressed = false;
-        }
-
-        if up_pressed {
-
-            if curr_menu.selected_index > 0 {
-                let mut test_index = curr_menu.selected_index - 1;
-
-                let mut found_valid_item = false;
-                while (!found_valid_item && test_index >= 0) {
-                    match &curr_menu.items[test_index as usize] {
-                        MenuItem::Header(_) => {
-    
-                        },
-                        _ => {
-                            found_valid_item = true;
-                            break;
+                    if value_update {
+                        if key == "audio_volume" {
+                            game_state.audio.set_sfx_volume(*value);
+                            *value = game_state.audio.base_sfx_volume;
+                        }
+                        else if key == "music_volume" {
+                            game_state.audio.set_music_volume(*value);
+                            *value = game_state.audio.base_music_volume;
                         }
                     }
-                    test_index = test_index - 1;
-                }
-
-                if found_valid_item {
-                    curr_menu.selected_index = test_index;
-                }
-                //curr_menu.selected_index = curr_menu.selected_index - 1;
+                },
+                _ => {}
             }
-        }
-        else if down_pressed {
-            if curr_menu.selected_index + 1 < curr_menu.items.len() as i32 {
-                curr_menu.selected_index = curr_menu.selected_index + 1;
-            }
-        }
 
-        match &mut curr_menu.items[curr_menu.selected_index as usize] {
-            MenuItem::ToggleItem { key, value, .. } => {
-                if right_pressed {
-                    *value = true;
-                    println!("Toggle pressed: {:?} Value: {}", &key, &value);
-                }
-                else if left_pressed {
-                    *value = false;
-                    println!("Toggle pressed: {:?} Value: {}", &key, &value);
-                }
-            },
-            MenuItem::RangeItem { key, value, min, max, incr, .. } => {
-                //println!("Range pressed: {:?}", &key);
-                let mut value_update = false;
-                if right_pressed {
-                    if value < max {
-                        *value = (*value + *incr).min(*max);
-                        value_update = true;
-                    }
-                    println!("Range pressed: {:?} Value: {}", &key, &value);
-                }
-                else if left_pressed {
-                    if value > min {
-                        *value = (*value - *incr).max(*min);
-                        value_update = true;
-                    }
-                    println!("Range pressed: {:?} Value: {}", &key, &value);
-                }
-
-                if value_update {
-                    if key == "audio_volume" {
-                        game_state.audio.set_sfx_volume(*value);
-                        *value = game_state.audio.base_sfx_volume;
-                    }
-                    else if key == "music_volume" {
-                        game_state.audio.set_music_volume(*value);
-                        *value = game_state.audio.base_music_volume;
-                    }
-                }
-            },
-            _ => {}
+            drop(curr_menu);
         }
-
-        drop(curr_menu);
+        
 
 
     }

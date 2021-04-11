@@ -225,7 +225,7 @@ impl GameState {
             delta_seconds: 0.15, level_bounds: LevelBounds::new(-500.0, -500.0, 3000.0, 3000.0),
             level_world_seconds: 0.0, game_run_seconds: 0.0, player_target_loc: (500.0, 500.0),
             player_count: 0, player_1_char_num: -1, level_type: LevelType::default(), points: 0,
-            level_frame_num: 0, ui_game_display_zoom: 1.0,
+            level_frame_num: 0,
         };
 
         // get window
@@ -287,6 +287,7 @@ impl GameState {
             warp_level_name: "".to_string(),
             warp_level_entry_name: "".to_string(),
             paused_anim: 0.0,
+            ui_game_display_zoom: 1.0,
             audio: audio_engine,
             debug_logic_frames: 0,
         };
@@ -582,6 +583,10 @@ impl GameState {
         self.game_frame_count = self.game_frame_count + 1;
     }
 
+    pub fn in_menu_system(&self) -> bool {
+        self.menu_stack.len() > 0 || self.ui_game_display_zoom < 1.0
+    }
+
     pub fn game_key_down(&mut self, ctx: &mut Context, key: &InputKey) {
         match &key {
             InputKey::Exit => {
@@ -641,7 +646,7 @@ impl GameState {
   
         // Only update world state when game is running (not paused)
         let menu_lvls = self.menu_stack.len();
-        if menu_lvls > 0 {
+        if menu_lvls > 0 || self.ui_game_display_zoom < 1.0 {
             //let input_res = self.world.fetch::<InputResource>();
             CoreSystem::run_menu_step(self, ctx, delta_s);
         }
@@ -764,9 +769,26 @@ impl GameState {
 
     pub fn close_all_menus(&mut self) {
         self.menu_stack.clear();
+        //self.ui_game_display_zoom = 1.0;
+    }
+
+    pub fn close_menu(&mut self) {
+
+        if self.menu_stack.len() > 0 {
+            self.menu_stack.pop();
+        }
+
+        if self.menu_stack.len() == 0 {
+            //self.ui_game_display_zoom = 1.0;
+        }
     }
 
     pub fn open_menu(&mut self) {
+
+        // If not open-already
+        if self.menu_stack.len() == 0 {
+            self.ui_game_display_zoom = 1.0;
+        }
 
         // Clear menu stack
         self.menu_stack.clear();

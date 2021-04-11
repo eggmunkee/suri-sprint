@@ -21,6 +21,7 @@ pub enum InputKey {
     P1UseAction,
     Pause,
     SlowMode,
+    CheatGoAnywhere,
     Exit,
     VolumeDown,
     VolumeUp,
@@ -98,6 +99,9 @@ impl InputMap {
         input_map.input_settings.push(InputSetting::code(KeyCode::RBracket, InputKey::VolumeUp));
         input_map.input_settings.push(InputSetting::code(KeyCode::LBracket, InputKey::VolumeDown));
         input_map.input_settings.push(InputSetting::code(KeyCode::F11, InputKey::Fullscreen));
+        input_map.input_settings.push(InputSetting::code(KeyCode::G, InputKey::CheatGoAnywhere));
+
+        
 
         // Gamepad Buttons
         input_map.input_settings.push(InputSetting::button(Button::DPadUp, InputKey::P1Up));
