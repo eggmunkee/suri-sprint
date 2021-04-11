@@ -14,10 +14,13 @@ pub struct SpriteDesc {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    pub sprite: String,
+    pub path: Option<String>,
+    pub sprite: Option<String>,
+    pub scale: (f32, f32),
     pub angle: f32, 
+    pub alpha: f32,
     pub src: (f32, f32, f32, f32), 
-    pub shader: Option<String>,
+    //pub shader: Option<String>,
 }
 
 
@@ -26,6 +29,7 @@ pub struct SpriteDesc {
 pub enum LevelType {
     Platformer,
     Overhead,
+    Space
 }
 
 impl Default for LevelType {
@@ -158,7 +162,7 @@ pub enum LevelItem {
         x: f32, y: f32, z: f32, sprite: String, angle: f32, src: (f32, f32, f32, f32), shader: Option<String>,
     },
     ParallaxSprite {
-        x: f32, y: f32, sprites: Vec::<SpriteDesc>, scroll_factors: Vec::<f32>,
+        x: f32, y: f32, lvl_center: (f32, f32), sprites: Vec::<SpriteDesc>, scroll_factors: Vec::<f32>,
     },
     // Portals and Exits
     Portal {
@@ -197,8 +201,33 @@ pub enum LevelItem {
     EffectArea {
         x: f32, y: f32, w: f32, h: f32, area_type: EffectAreaType
     },
+    ImportSection {
+        name: String, x: f32, y: f32,
+    },
     // Logic Items
     Connection {
         from: String, to: String, conn_type: ConnectionType,
     }
+}
+
+#[derive(Clone,Debug,Deserialize,Serialize)]
+pub struct LevelConfig {
+    pub name: String,
+    pub bounds: LevelBounds,
+    pub soundtrack: String,
+    pub level_type: Option<LevelType>,
+    pub items: Vec::<LevelItem>,
+    #[serde(skip)]
+    pub built_player: bool,
+    #[serde(skip)]
+    pub build_index: i32,
+}
+
+#[derive(Clone,Debug,Deserialize,Serialize)]
+pub struct LevelSectionConfig {
+    pub items: Vec::<LevelItem>,
+    #[serde(skip)]
+    pub built_player: bool,
+    #[serde(skip)]
+    pub build_index: i32,
 }
