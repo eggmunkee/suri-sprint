@@ -18,7 +18,7 @@ impl PausedRenderer {
 
     pub fn render(game_state: &GameState, ctx: &mut Context) {
 
-        let level_name_content = String::from(format!("Paused on Level \"{}\"", &game_state.level.name));
+        let level_name_content = String::from(format!("Paused on Area \"{}\".\n\nThis message is sponsored by Bell Peppers.", &game_state.level.name));
         let border_color = Color::new(0.75, 0.75, 0.75, 0.75);
         let bg_color = Color::new(0.0, 0.0, 0.0, 0.75);
         let text_color = Color::new(1.0, 1.0, 1.0, 1.0);

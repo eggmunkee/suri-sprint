@@ -118,35 +118,35 @@ impl NpcComponent {
                         }
                     }
 
-                    // if y > self.target_position.1 + 50.0 {
-                    //     if dec < 0.85 {
-                    //         self.going_up = true;
-                    //         self.going_down = false;
-                    //     }
-                    //     else if dec > 0.89 {
-                    //         self.going_down = true;
-                    //         self.going_up = false;
-                    //     }
-                    //     else {
-                    //         self.going_up = false;
-                    //         self.going_down = false;
-                    //     }
-                    // }
-                    // else if y < self.target_position.1 - 50.0{
-                    //     if dec < 0.85 {
-                    //         self.going_down = true;
-                    //         self.going_up = false;
-                    //     }
-                    //     else if dec > 0.89 {
-                    //         self.going_up = true;
-                    //         self.going_down = false;
-                    //     }
-                    //     else {
-                    //         self.going_up = false;
-                    //         self.going_down = false;
-                    //     }
-                    // }
-                    // else 
+                    if y > self.target_position.1 + 50.0 {
+                        if dec < 0.85 {
+                            self.going_up = true;
+                            self.going_down = false;
+                        }
+                        else if dec > 0.89 {
+                            self.going_down = true;
+                            self.going_up = false;
+                        }
+                        else {
+                            self.going_up = false;
+                            self.going_down = false;
+                        }
+                    }
+                    else if y < self.target_position.1 - 50.0{
+                        if dec < 0.85 {
+                            self.going_down = true;
+                            self.going_up = false;
+                        }
+                        else if dec > 0.89 {
+                            self.going_up = true;
+                            self.going_down = false;
+                        }
+                        else {
+                            self.going_up = false;
+                            self.going_down = false;
+                        }
+                    }
+                    else 
                     {
                         self.going_up = false;
                         self.going_down = false;

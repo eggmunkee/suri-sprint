@@ -11,6 +11,7 @@ pub struct GameLogEntry {
     pub msg: String,
     pub bg_color: Option<Color>,
     pub entry_time: f32,
+    pub time_left: f32,
 }
 
 #[derive(Default,Debug)]
@@ -33,6 +34,7 @@ impl GameLog {
             msg: message,
             bg_color: background_color,
             entry_time: entry_time,
+            time_left: 5.0,
         });
     }
 }

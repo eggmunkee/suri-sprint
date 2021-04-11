@@ -312,6 +312,9 @@ impl LevelRenderer {
                              );
                     }
                 },
+                LevelItem::ImportSection { x, y, name } => {
+
+                },
                 LevelItem::Connection{.. } => {
                     // let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
                     // stroke_opt.line_width = 4.0;
