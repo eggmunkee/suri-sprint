@@ -20,7 +20,7 @@ pub struct PortalBuilder;
 
 impl PortalBuilder {
     pub fn build(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, z: f32,
-        width: f32, name: String, destination: String, enabled: bool, logic_opt: Option<ItemLogic>) -> Entity {
+        width: f32, color: String, name: String, destination: String, enabled: bool, logic_opt: Option<ItemLogic>) -> Entity {
 
         let mut portal = PortalComponent::new(name.clone(), destination);
         portal.is_enabled = enabled;
@@ -30,7 +30,8 @@ impl PortalBuilder {
         // sprite.scale.y = width / 24.0;
         // sprite.z_order = z;
 
-        let mut anim_name = "entities/portal-front-red".to_string();
+        let mut anim_name = "entities/portal-front-".to_string();
+        anim_name.push_str(&color);
         let mut sprite = AnimSpriteConfig::create_from_config(world, ctx, anim_name);
         sprite.scale.x = width / 18.0;
         sprite.scale.y = width / 18.0;

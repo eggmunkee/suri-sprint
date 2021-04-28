@@ -312,6 +312,23 @@ impl LevelRenderer {
                              );
                     }
                 },
+                LevelItem::Geometry{ data } => {
+                    let mut stroke_opt = ggez::graphics::StrokeOptions::DEFAULT.clone();
+                    stroke_opt.line_width = 4.0;
+                    if let Ok(rect) = ggez::graphics::Mesh::new_rectangle(ctx, 
+                        ggez::graphics::DrawMode::Stroke(stroke_opt),
+                        ggez::graphics::Rect::new(-10.0, -10.0, 20.0, 20.0),
+                        ggez::graphics::Color::new(1.0, 1.0, 1.0, 0.75)
+                    ) {
+                        for patch in &data.patches {
+                            ggez::graphics::draw(ctx, &rect, DrawParam::default()
+                                .dest(na::Point2::new(patch.center.0, patch.center.1))
+                                //.offset(na::Point2::new(patch.size.0, patch.size.1))
+                                
+                            );
+                        }
+                    }
+                },
                 LevelItem::ImportSection { x, y, name } => {
 
                 },

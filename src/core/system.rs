@@ -57,6 +57,37 @@ impl CoreSystem {
         drop(input);
     }
 
+    pub fn run_terminal_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
+        Self::run_frame_time_update(game_state, ctx, time_delta, false);
+
+
+        // InputSystem::handle_terminal_input(game_state, time_delta);
+
+        // let mut input = game_state.world.fetch_mut::<InputResource>();
+        // let wactions = input.actions.drain(0..).collect::<Vec<_>>();
+        // input.clear_actions();
+        // drop(input);
+
+        // for world_action in &wactions {
+        //     match world_action {
+        //         WorldAction::ToggleConsole => {
+        //             //println!("Open Menu");
+        //             game_state.set_terminal_open(false);
+        //             println!("[term step] Terminal Open set to {}", &game_state.terminal_open);
+        //         },
+        //         _ => {}
+        //     }
+        // }
+        // if input.exit_flag {
+        //     ggez::event::quit(ctx);
+        // }
+
+
+        //Self::clear_inputs(game_state);
+
+
+    }
+
     // Process Menu update - check for unpause trigger
     pub fn run_menu_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
         Self::run_frame_time_update(game_state, ctx, time_delta, false);
@@ -65,7 +96,15 @@ impl CoreSystem {
 
         if exiting_menu {
             if game_state.ui_game_display_zoom < 1.0 {
-                game_state.ui_game_display_zoom += 0.5 * time_delta;
+                if game_state.ui_game_display_zoom < 0.3 {
+                    game_state.ui_game_display_zoom += 0.7 * time_delta;
+                }
+                else if game_state.ui_game_display_zoom < 0.6 {
+                    game_state.ui_game_display_zoom += 1.0 * time_delta;
+                }
+                else {
+                    game_state.ui_game_display_zoom += 1.5 * time_delta;
+                }
                 if game_state.ui_game_display_zoom >= 1.0 {
                     game_state.ui_game_display_zoom = 1.0;
                 }
@@ -74,7 +113,10 @@ impl CoreSystem {
         else {
             //println!("Running menu step");
             if game_state.ui_game_display_zoom > 0.0 {
-                game_state.ui_game_display_zoom -= 0.05 * time_delta;
+                game_state.ui_game_display_zoom -= 0.15 * time_delta;
+                if game_state.ui_game_display_zoom < 0.0 {
+                    game_state.ui_game_display_zoom = 0.0;
+                }
             }
         }
 
@@ -83,13 +125,12 @@ impl CoreSystem {
 
         let mut input = game_state.world.fetch_mut::<InputResource>();
 
-        let wactions = input.actions.drain(0..).collect::<Vec<_>>();
+        let mut wactions = input.actions.drain(0..).collect::<Vec<_>>();
 
-        if !exiting_menu {
-            if input.exit_flag {
-                ggez::event::quit(ctx);
-            }
+        if input.exit_flag {
+            ggez::event::quit(ctx);
         }
+
         input.clear_actions();
         drop(input);
 
@@ -120,11 +161,30 @@ impl CoreSystem {
                     },
                     WorldAction::NewGame => {
                         game_state.close_all_menus();
-                        game_state.load_level(ctx, "overview_1".to_string(), "".to_string());
+                        game_state.load_level(ctx, game_state.start_level_name.clone(), "".to_string());
                     },
                     WorldAction::ToggleFullscreen => {
                         game_state.toggle_fullscreen_mode(ctx);
                     },
+                    // WorldAction::ToggleConsole => {
+                    //     game_state.toggle_terminal();
+                    //     println!("[menu step - toggle] Terminal Open set to {}", &game_state.terminal_open);
+                    // },
+                    _ => {}
+                }
+            }
+        }
+        else {
+            for world_action in &wactions {
+                match world_action {
+                    WorldAction::CloseMenu => {
+                        println!("Open Menu");
+                        game_state.open_menu();
+                    },
+                    // WorldAction::ToggleConsole => {
+                    //     game_state.toggle_terminal();
+                    //     println!("[menu step (exiting) - toggle] Terminal Open set to {}", &game_state.terminal_open);
+                    // },
                     _ => {}
                 }
             }
@@ -212,8 +272,10 @@ impl CoreSystem {
 
         let mut start_pause = false;
         let mut open_menu = false;
+        //let mut open_terminal = false;
         let mut slow_mode = false;
         let mut go_anywhere_mode = false;
+        let mut toggle_fullscreen = false;
         {
             let input = game_state.world.fetch_mut::<InputResource>();
             if input.keys_pressed.len() > 0 {
@@ -247,6 +309,12 @@ impl CoreSystem {
                         else if key == &InputKey::CheatGoAnywhere {
                             go_anywhere_mode = true;
                         }
+                        else if key == &InputKey::Fullscreen {
+                            toggle_fullscreen = true;
+                        }
+                        // else if key == &InputKey::ConsoleKey {
+                        //     open_terminal = true;
+                        // }
                     } 
                 }
                 //println!(" - - - - - - - - - - - - - - -");
@@ -287,6 +355,10 @@ impl CoreSystem {
         else if open_menu {
             game_state.open_menu();
         }
+        // else if open_terminal {
+        //     game_state.set_terminal_open(true);
+        //     println!("[run update step] Terminal Open set to {}", &game_state.terminal_open);
+        // }
         else if slow_mode {
             let curr_scale = game_state.play_time_scale;
             if curr_scale >= 1.0 {
@@ -313,11 +385,27 @@ impl CoreSystem {
                 }
             }
         }
+        else if toggle_fullscreen {
+            game_state.toggle_fullscreen_mode(ctx);
+        }
         
         // Update state if any step changed the game running state
         if state_change {
             game_state.set_running_state(ctx, new_state); //running_state = new_state;
         }
+
+        {
+            // TEST GAME GEOMETRY MORPH
+            // if game_state.game_frame_count % 5 == 0 {
+            //     let geometry = &mut game_state.level_geometry.patches;
+
+            //     for patch in geometry {                
+            //         patch.modify_random_many(3);
+            //     }
+    
+            // }
+        }
+
     }
 
     pub fn run_pause_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
@@ -330,32 +418,6 @@ impl CoreSystem {
         //let mut input = game_state.world.fetch_mut::<InputResource>();
 
         InputSystem::handle_paused_input(game_state, time_delta);
-        
-        /*if input.keys_pressed.len() > 0 {
-            println!("Paused Frame Key Presses: - - - - - -");
-            for key in &input.keys_pressed {
-                println!("InputKey Pressed: {:?}", &key);
-                if key == &InputKey::Pause {
-                    match game_state.current_state {
-                        State::Paused => {
-                            println!("Play activated -------------------------");
-                            start_play = true;
-                        },
-                        State::Running => {
-                            
-                        }
-                    }
-                }
-            }
-            println!(" - - - - - - - - - - - - - - -");
-        }
-
-        input.keys_pressed.clear();
-        drop(input);
-
-        if start_play {
-            game_state.play();
-        }*/
     }
 
     // Process Dialog update - check for unpause trigger

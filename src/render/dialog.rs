@@ -32,27 +32,33 @@ impl DialogRenderer {
         let bg_color = ggez::graphics::Color::new(0.3, 0.1, 0.3, 0.5);
         let text_color = ggez::graphics::Color::new(1.0, 1.0, 1.0, 1.0);
 
-        Self::render_dialog(game_state, ctx, msg, cent_x, cent_y, dialog_w, dialog_h, border_color, bg_color, text_color);
+        Self::render_dialog(game_state, ctx, msg, cent_x, cent_y, dialog_w, dialog_h, border_color, bg_color, text_color, None);
     }
 
     pub fn render_at(game_state: &GameState, ctx: &mut Context, msg: String,
         x: f32, y: f32, dw: f32, dh: f32,
-        border_color: Color, bg_color: Color, text_color: Color) {
+        border_color: Color, bg_color: Color, text_color: Color, text_align: Option<ggez::graphics::Align>) {
         let (w, h) = (game_state.window_w, game_state.window_h);
         let cent_x = w as f32 * x;
         let cent_y = h as f32 * y;
         let dialog_w = w as f32 * dw;
         let dialog_h = h as f32 * dh;
 
-        Self::render_dialog(game_state, ctx, msg, cent_x, cent_y, dialog_w, dialog_h, border_color, bg_color, text_color);
+        Self::render_dialog(game_state, ctx, msg, cent_x, cent_y, dialog_w, dialog_h, border_color, bg_color, text_color, text_align);
     }
 
     pub fn render_dialog(game_state: &GameState, ctx: &mut Context, msg: String,
         cent_x: f32, cent_y: f32, dialog_w: f32, dialog_h: f32,
-        border_color: Color, bg_color: Color, text_color: Color) {
+        border_color: Color, bg_color: Color, text_color: Color,
+        text_align: Option<ggez::graphics::Align>) {
+
+        let mut _text_align = ggez::graphics::Align::Center;
+        if !text_align.is_none() {
+            _text_align = text_align.unwrap();
+        }
 
         let mut draw_ok = true;
-        let (w, h) = (game_state.window_w, game_state.window_h);
+        let (win_w, win_h) = (game_state.window_w, game_state.window_h);
         let text_scale = DialogRenderer::get_default_text_scale(game_state);
 
         let mut stroke_options = ggez::graphics::StrokeOptions::DEFAULT;
@@ -96,13 +102,16 @@ impl DialogRenderer {
         if !msg.is_empty() {
             let dialog_content = msg.clone();
             //level_name_content.pusgame_state.level.name.clone();
+            let dialog_txt_w = dialog_w - 10.0f32.max(win_w * 0.0125);
+            let dialog_txt_h = dialog_h - 10.0f32.max(win_h * 0.0125);
             let mut dialog_text = ggez::graphics::Text::new(dialog_content);
+            dialog_text.set_bounds(na::Point2::new(dialog_txt_w, dialog_txt_h), _text_align);
             dialog_text.set_font(game_state.font, Scale { x: text_scale, y: text_scale });
             let text_w = dialog_text.width(ctx);
             let text_h = dialog_text.height(ctx);
             if let Err(_) = graphics::draw(ctx, &dialog_text,
                 DrawParam::new()
-                .dest(na::Point2::new(cent_x-(text_w as f32 / 2.0),cent_y-(text_h as f32 / 2.0)))
+                .dest(na::Point2::new(cent_x-(dialog_txt_w as f32 / 2.0),cent_y-(dialog_txt_h as f32 / 2.0)))
                 .color(text_color)
                 //.scale(na::Vector2::new(2.0,2.0))
             ) {
@@ -164,7 +173,12 @@ impl DialogRenderer {
     }
 
     pub fn render_dialog_bg_textured(game_state: &GameState, ctx: &mut Context,
-        x: f32, y: f32, dw: f32, dh: f32, dialog_texture: String) {
+        x: f32, y: f32, dw: f32, dh: f32, dialog_texture: String, texture_color: Option<Color>) {
+
+        let texture_color = match texture_color {
+            Some(tc) => tc,
+            None => Color::new(1.0, 1.0, 1.0, 1.0),
+        };
 
         let (win_w, win_h) = (game_state.window_w, game_state.window_h);
 
@@ -192,7 +206,7 @@ impl DialogRenderer {
                     //.rotation(angle) //rotation
                     .offset(na::Point2::new(0.5f32,0.5f32))
                     .scale(tex_scale)
-                    .color(Color::new(1.0,1.0,1.0,1.0))) { 
+                    .color(texture_color)) { 
                 
                 println!("Failed to render dialog texture");
             }
@@ -203,10 +217,14 @@ impl DialogRenderer {
 
     pub fn render_dialog_textured(game_state: &GameState, ctx: &mut Context, msg: String,
         x: f32, y: f32, dw: f32, dh: f32,
-        dialog_texture: String, text_color: Color) {
+        dialog_texture: String, text_color: Color, texture_color: Option<Color>) {
 
         let (win_w, win_h) = (game_state.window_w, game_state.window_h);
         let text_scale = DialogRenderer::get_default_text_scale(game_state); //(win_w.min(win_h) / 50.0).max(5.0).min(50.0);
+        let texture_color = match texture_color {
+            Some(tc) => tc,
+            None => Color::new(1.0, 1.0, 1.0, 1.0),
+        };
 
         let cent_x = win_w as f32 * x;
         let cent_y = win_h as f32 * y;
@@ -239,7 +257,7 @@ impl DialogRenderer {
                     //.rotation(angle) //rotation
                     .offset(na::Point2::new(0.5f32,0.5f32))
                     .scale(tex_scale)
-                    .color(Color::new(1.0,1.0,1.0,1.0))) { 
+                    .color(texture_color)) { 
                 
                 println!("Failed to render dialog texture");
             }

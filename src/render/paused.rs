@@ -28,7 +28,7 @@ impl PausedRenderer {
 
         // Render a dialog with custom loc/size and colors for the pause display
         DialogRenderer::render_at(game_state, ctx, level_name_content,
-            0.5, anim_y, 0.75, 0.08, border_color, bg_color, text_color);
+            0.5, anim_y, 0.75, 0.08, border_color, bg_color, text_color, None);
 
     }
 }

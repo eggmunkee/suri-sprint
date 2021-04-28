@@ -203,6 +203,7 @@ impl event::EventHandler for GameState {
         else if keycode == KeyCode::R {
             //self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
             self.restart_level(ctx);
+
         }        
         //
         if keycode == KeyCode::RBracket {
@@ -233,8 +234,10 @@ impl event::EventHandler for GameState {
         }
         else if keycode == KeyCode::E {
             let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
-            game_state_writer.player_1_char_num = (game_state_writer.player_1_char_num % game_state_writer.player_count) + 1;
-            println!("New player number: {} / {}", &game_state_writer.player_1_char_num, &game_state_writer.player_count);
+            if game_state_writer.player_count > 0 {
+                game_state_writer.player_1_char_num = (game_state_writer.player_1_char_num % game_state_writer.player_count) + 1;
+                println!("New player number: {} / {}", &game_state_writer.player_1_char_num, &game_state_writer.player_count);
+            }            
         }
         
 
@@ -282,8 +285,12 @@ impl event::EventHandler for GameState {
 
     }
 
-    fn text_input_event(&mut self, _ctx: &mut Context, _ch: char) {
+    fn text_input_event(&mut self, _ctx: &mut Context, ch: char) {
         //println!("Text input: {}", ch);
+        // if self.terminal_open {
+        //     self.input_map.text_typed(&mut self.world, ch);
+        // }
+        
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {

@@ -1,0 +1,25 @@
+LevelConfig(
+    name: "Happy Birthday",
+    bounds: (
+        min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 1000.0,
+        solid_sides: (false, false, false, false),
+    ),
+    soundtrack: "Suri Title theme.mp3",
+    items: [
+
+        ParticleSys ( x: 50, y: 50, z: 400.0, config: "psys/h", ),
+        ParticleSys ( x: 100, y: 50, z: 400.0, config: "psys/a", ),
+        ParticleSys ( x: 150, y: 50, z: 400.0, config: "psys/p", ),
+        ParticleSys ( x: 200, y: 50, z: 400.0, config: "psys/p", ),
+        ParticleSys ( x: 250, y: 50, z: 400.0, config: "psys/y", ),
+
+        ParticleSys ( x: 25, y: 250, z: 400.0, config: "psys/b", ),
+        ParticleSys ( x: 75, y: 250, z: 400.0, config: "psys/i", ),
+        ParticleSys ( x: 125, y: 250, z: 400.0, config: "psys/r", ),
+        ParticleSys ( x: 175, y: 250, z: 400.0, config: "psys/t", ),
+        ParticleSys ( x: 225, y: 250, z: 400.0, config: "psys/h", ),
+        ParticleSys ( x: 275, y: 250, z: 400.0, config: "psys/d", ),
+        ParticleSys ( x: 325, y: 250, z: 400.0, config: "psys/a", ),
+        ParticleSys ( x: 375, y: 250, z: 400.0, config: "psys/y", ),
+    ]
+)

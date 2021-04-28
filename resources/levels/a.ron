@@ -51,9 +51,11 @@ LevelConfig(
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 
         DynEmptyBox ( x: 500.0, y: 695.0, w: 60.0, h: 40.0, ang: 0.0),
-        EmptyBox ( x: 700.0, y: 675.0, w: 120.0, h: 60.0, ang: 3.1415),
+        DynEmptyBox ( x: 700.0, y: 670.0, w: 120.0, h: 60.0, ang: 3.1415),
 
+        Pickup ( pickup_type: Point, x: 200, y: 590, ),
         StaticLevelProp ( x: 200.0, y: 650.0, w: 32.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
+        Pickup ( pickup_type: Point, x: 264, y: 520, ),
         StaticLevelProp ( x: 264.0, y: 580.0, w: 32.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),
 
         StaticLevelProp ( x: 400.0, y: 425.0, w: 64.0, h: 32.0, ang: 0.0, image: "entities/grass-block-light", img_w: 32.0, img_h: 32.0),

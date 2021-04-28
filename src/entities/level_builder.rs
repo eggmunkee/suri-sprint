@@ -12,6 +12,7 @@ use crate::components::sprite::*;
 use crate::components::logic::*;
 use crate::components::{Position,RenderFlag,RenderLayerType,LevelSource};
 use crate::components::flags::{RenderSpriteFlag,RenderAnimSpriteFlag,RenderParticleSysFlag};
+use crate::components::geometry::{GeometryComponent};
 use crate::entities::platform::{PlatformBuilder};
 use crate::entities::empty_box::{BoxBuilder};
 use crate::entities::button::{ButtonBuilder};
@@ -23,6 +24,7 @@ use crate::entities::bowl::{BowlBuilder};
 use crate::entities::ball::{BallBuilder};
 use crate::entities::mouse::{MouseBuilder};
 use crate::entities::point_pickup::{PickupBuilder};
+use crate::entities::geometry::{LevelGridData,LevelPatch};
 use crate::components::collision::{Collision};
 use crate::resources::{ImageResources};
 use crate::resources::{ConnectionResource};
@@ -42,6 +44,10 @@ struct LevelItemBuildResult {
 }
 
 impl LevelItem {
+    pub fn default_portal_color() -> String {
+        "red".to_string()
+    }
+
     fn build_item(&self, world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld,
         entry_name: &str, lvl_type: LevelType, built_player: bool,
         build_index: i32 ) -> LevelItemBuildResult {
@@ -229,14 +235,14 @@ impl LevelItem {
                     world.create_entity().with(plx_sprite).with(Position { x: x, y: y })
                     .with(RenderFlag::from_layer(RenderLayerType::LevelLayer)).build());
             },
-            LevelItem::Portal { x, y, w, z, name, destination, start_enabled, logic } => {
+            LevelItem::Portal { x, y, w, z, color, name, destination, start_enabled, logic } => {
                 let x = *x + pos_offset.0; let y = *y + pos_offset.1;
                 let mut z_value = SpriteLayer::World.to_z();
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                entity = Some(PortalBuilder::build(world, ctx, physics_world, x, y, z_value, *w, 
-                    (*name).clone(), (*destination).to_string(), *start_enabled, logic.clone()));
+                entity = Some(PortalBuilder::build(world, ctx, physics_world, x, y, z_value, *w, color.clone(),
+                    name.clone(), (*destination).to_string(), *start_enabled, logic.clone()));
             },
             LevelItem::PortalSide { x, y, ang, w, h, z, color, name, destination, start_enabled, logic, normal } => {
                 let x = *x + pos_offset.0; let y = *y + pos_offset.1;
@@ -244,8 +250,8 @@ impl LevelItem {
                 if let Some(z_cfg_val) = z {
                     z_value = *z_cfg_val;
                 }
-                entity = Some(PortalBuilder::build_side(world, ctx, physics_world, x, y, z_value, *ang, *w, *h, (*color).clone(),
-                    (*name).clone(), (*destination).to_string(), *start_enabled, logic.clone(), (normal.0, normal.1)));
+                entity = Some(PortalBuilder::build_side(world, ctx, physics_world, x, y, z_value, *ang, *w, *h, color.clone(),
+                    name.clone(), (*destination).to_string(), *start_enabled, logic.clone(), (normal.0, normal.1)));
             },
             LevelItem::ParticleSys { x, y, z, config, logic } => {
                 let x = *x + pos_offset.0; let y = *y + pos_offset.1;
@@ -328,6 +334,12 @@ impl LevelItem {
             LevelItem::EffectArea { .. } => {
 
             },
+            LevelItem::Geometry { data } => {
+
+                println!("Loading geometry level item... {:?}", data);
+                entity = Some(LevelGridData::build(world, ctx, physics_world, data.clone()));
+
+            },
             LevelItem::Connection { from, to, conn_type } => {
                 let mut connection_res = world.fetch_mut::<ConnectionResource>();
 
@@ -373,6 +385,7 @@ impl LevelConfig {
             bounds: LevelBounds::new(0.0, 0.0, 800.0, 600.0),
             soundtrack: "".to_string(),
             level_type: Some(LevelType::default()),
+            no_game_ui: Some(true),
             items: vec![],
             built_player: false,
             build_index: 0,

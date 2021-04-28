@@ -36,9 +36,10 @@ use crate::core::input::{InputKey,InputMap};
 // Core Game System - runs other systems and physics simulation
 use crate::core::system::{CoreSystem};
 // Global SPECS Resource classes
-use crate::resources::{InputResource,GameStateResource,ConnectionResource,Camera,GameLog};
+use crate::resources::{GameStateResource,ConnectionResource,Camera,GameLog};
 // Level definition support
 use crate::entities::level_builder::{LevelConfig,LevelBounds,LevelType};
+use crate::entities::geometry::{LevelGridData};
 // Render class support
 use crate::render;
 
@@ -95,10 +96,21 @@ impl Menu {
     }
 }
 
+#[derive(Debug,Clone)]
+#[allow(dead_code)]
+pub enum UpdateMode {
+    PlayUpdate,
+    PausedUpdate,
+    MenuUpdate,
+    TerminalUpdate,
+    NoUpdate
+}
+
+
 impl RunningState {
     pub fn level_dialog(msg: String) -> RunningState {
         RunningState::Dialog{ msg, dialog_type: DialogType::LevelEntry, choices: None, selected_choice: -1,
-            custom_bg: None, text_color: None }
+            custom_bg: None, text_color: Some(Color::new(0.9, 0.9, 0.9, 1.0)) }
     }
 
     pub fn game_dialog(msg: String, choices: Option<Vec<DialogChoice>>) -> RunningState {
@@ -162,6 +174,7 @@ pub struct GameState {
     pub running_state: RunningState,
     pub menu_stack: Vec<Menu>,
     pub mode: GameMode,
+    pub start_level_name: String,
     pub current_level_name: String,
     pub current_entry_name: String,
     pub level: LevelConfig,
@@ -197,16 +210,25 @@ pub struct GameState {
     pub paused_anim: f32,
     // game display zoom animation
     pub ui_game_display_zoom: f32,
+    // terminal state
+    pub terminal_open: bool,
     // audio
     pub audio: Audio,
 
     // debug flags
     pub debug_logic_frames: i32,
+
+
+
+
+
+    // test data
+    pub level_geometry: LevelGridData,
 }
 
 impl GameState {
     pub fn new(ctx: &mut Context, title: String, window_mode: WindowMode,
-        music_volume: f32, sfx_volume: f32, gravity: f32) -> GameResult<GameState> {
+        music_volume: f32, sfx_volume: f32, gravity: f32, start_level: String) -> GameResult<GameState> {
 
         println!("* Creating GameState...");
 
@@ -259,7 +281,8 @@ impl GameState {
             running_state: RunningState::Playing, //RunningState::level_dialog("Loading game".to_string()),
             menu_stack: vec![], // Menu::new("Main Menu".to_string()), Menu::new("Audio Menu".to_string()), Menu::new("Sub-Audio Menu".to_string())
             mode: GameMode::Play,
-            current_level_name: "start".to_string(),
+            start_level_name: start_level,
+            current_level_name: "".to_string(),
             current_entry_name: "".to_string(),
             level: LevelConfig::new(),
             window_w: win_w,
@@ -288,11 +311,18 @@ impl GameState {
             warp_level_entry_name: "".to_string(),
             paused_anim: 0.0,
             ui_game_display_zoom: 1.0,
+            terminal_open: true,
+
             audio: audio_engine,
             debug_logic_frames: 0,
+
+            // Test data
+            level_geometry: LevelGridData::new()
         };
 
         s.update_contact_filter();
+
+        s.empty_level(ctx);
 
         Ok(s)
     }
@@ -415,6 +445,7 @@ impl GameState {
                     self.load_level(ctx, level_name, entry_name);
                     self.level_warp_timer = 0.0;
                     self.level_warping = false;
+                    self.ui_game_display_zoom = 0.0;
                 }
             }
             else {
@@ -499,7 +530,7 @@ impl GameState {
         self.level_warp_timer = 0.0;
 
         if !entry_name.is_empty() {
-            self.level_warp_timer = WARP_TIME_LIMIT - 0.05;
+            self.level_warp_timer = WARP_TIME_LIMIT * 0.5;
         }
     }
 
@@ -509,6 +540,30 @@ impl GameState {
         let mut save_path = String::from("levels/");
         save_path.push_str(&save_name);
         crate::conf::save_ron_config(save_path, &self.level);
+    }
+
+    pub fn actual_load_empty_level(&mut self, ctx: &mut Context) {
+        // load level from file
+        self.level = LevelConfig {
+            name: "Empty".to_string(),
+            level_type: Some(LevelType::Platformer),
+            bounds: LevelBounds {
+                min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 800.0,
+                solid_sides: [false, false, false, false],
+            },            
+            items: vec![],
+            no_game_ui: Some(true),
+            soundtrack: "".to_string(),            
+            build_index: 0, built_player: false,
+        };
+        //self.level = LevelConfig::load_level(&level_name);
+
+        // set game state level bounds
+        self.set_level_bounds();
+        // get game state level type
+        self.set_level_type();
+
+        self.reset_level_time();
     }
 
     pub fn actual_load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {
@@ -531,6 +586,29 @@ impl GameState {
         &self.level.build_level_content(&mut world, ctx, &mut physics_world, entry_name);
 
         self.reset_level_time();
+    }
+
+    pub fn empty_level(&mut self, ctx: &mut Context) {
+        self.current_level_name = String::new();
+        self.current_entry_name = String::new();
+
+        self.clear_world();
+        self.clear_physics();
+        {
+            let mut game_state = self.world.fetch_mut::<GameStateResource>();
+            game_state.player_count = 0;
+            game_state.player_1_char_num = 1;
+        }
+
+        self.actual_load_empty_level(ctx);
+
+        let mut log = self.world.fetch_mut::<GameLog>();
+        log.add_entry(true, "Empty Level".to_string(), None,
+            self.world.fetch_mut::<GameStateResource>().game_run_seconds);
+
+        self.current_state = State::Running;
+
+        Camera::set_snap_view(self, true);
     }
 
     pub fn load_level(&mut self, ctx: &mut Context, level_name: String, entry_name: String) {
@@ -640,10 +718,64 @@ impl GameState {
         }
     }
 
+
+    // fn get_update_mode(&self) -> UpdateMode {
+    //     let term_open = false;
+    //     let menus_open = self.menu_stack.len() > 0 || self.ui_game_display_zoom < 1.0;
+    //     let is_game_running = match &self.current_state { State::Running => true, _ => false };
+        
+    //     match term_open {
+    //         true => UpdateMode::TerminalUpdate,
+    //         _ => match menus_open {
+    //             true => UpdateMode::MenuUpdate,
+    //             _ => match is_game_running {
+    //                 true => UpdateMode::PlayUpdate,
+    //                 false => UpdateMode::PausedUpdate
+    //             }
+    //         }
+    //     }
+    // }
+
     pub fn handle_update_event(&mut self, ctx: &mut Context) -> GameResult {
         let time_scale = 1.0;
         let delta_s = time_scale * (ggez::timer::duration_to_f64(ggez::timer::delta(ctx)) as f32);
-  
+        let game_run_secs = self.world.fetch_mut::<GameStateResource>().game_run_seconds;
+        
+        // MASTER UPDATE SWITCH 
+        // UPDATES ONE OF:
+        //  MENU system
+        //  PLAY system
+        //  PAUSED system
+        //  TERMINAL system
+        //let update_mode = self.get_update_mode();
+        //println!("Update mode: {:?}", &update_mode);
+       
+        // match update_mode {
+        //     UpdateMode::MenuUpdate => {
+        //         CoreSystem::run_menu_step(self, ctx, delta_s);
+        //     },
+        //     UpdateMode::PlayUpdate => {
+        //         //self.run_update_step(ctx, delta_s);
+        //         CoreSystem::run_update_step(self, ctx, delta_s);
+
+        //         // Auto-open menu after 5 seconds of loading splashscreen
+        //         if self.current_level_name == "" && game_run_secs > 5.0 && game_run_secs < 5.5 {
+        //             if self.menu_stack.len() == 0 {
+        //                 self.open_menu();
+
+        //                 self.world.fetch_mut::<GameStateResource>().game_run_seconds = 10.0;
+        //             }                        
+        //         }
+        //     },
+        //     UpdateMode::PausedUpdate => {
+        //         CoreSystem::run_pause_step(self, ctx, delta_s);
+        //     },
+        //     UpdateMode::TerminalUpdate => {
+        //         //CoreSystem::run_terminal_step(self, ctx, delta_s);
+        //     },
+        //     _ => {}
+        // }
+        
         // Only update world state when game is running (not paused)
         let menu_lvls = self.menu_stack.len();
         if menu_lvls > 0 || self.ui_game_display_zoom < 1.0 {
@@ -656,6 +788,15 @@ impl GameState {
     
                     //self.run_update_step(ctx, delta_s);
                     CoreSystem::run_update_step(self, ctx, delta_s);
+
+                    // Auto-open menu after 5 seconds of loading splashscreen
+                    if self.current_level_name == "" && game_run_secs > 5.0 && game_run_secs < 5.5 {
+                        if self.menu_stack.len() == 0 {
+                            self.open_menu();
+
+                            self.world.fetch_mut::<GameStateResource>().game_run_seconds = 10.0;
+                        }                        
+                    }
     
                 },
                 State::Paused => {
@@ -671,7 +812,7 @@ impl GameState {
     
                 }
             }
-        }
+        } 
 
         
 
@@ -787,7 +928,7 @@ impl GameState {
 
         // If not open-already
         if self.menu_stack.len() == 0 {
-            self.ui_game_display_zoom = 1.0;
+            //self.ui_game_display_zoom = 1.0;
         }
 
         // Clear menu stack
@@ -795,7 +936,7 @@ impl GameState {
     
         let mut new_menu = Menu::new("Suri Sprint".to_string());
 
-        if self.current_level_name != "loading" {
+        if self.current_level_name != "loading" && !self.current_level_name.is_empty() {
             new_menu.items.push(MenuItem::ButtonItem { name: "Resume Game".to_string(), key: "resume".to_string() });
             new_menu.items.push(MenuItem::ButtonItem { name: "Restart Level".to_string(), key: "restart_level".to_string() });
         }
@@ -884,12 +1025,37 @@ impl GameState {
     }
 
     pub fn restart_level(&mut self, ctx: &mut Context) {
+        self.add_log("Restarting Level".to_string());
         self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
     }
 
     pub fn set_timescale(&mut self, new_time_multiplier: f32) {
         self.play_time_scale = new_time_multiplier;
     }
+
+    pub fn add_log(&self, msg: String) {
+        self.world.fetch_mut::<GameLog>().add_entry(true, msg, None, self.world.fetch::<GameStateResource>().game_run_seconds);
+    }
+
+    
+    // pub fn toggle_terminal(&mut self) {
+    //     self.set_terminal_open(!self.terminal_open);
+    // }
+    // pub fn set_terminal_open(&mut self, open: bool) {
+    //     println!("Set terminal open to {}", &open);
+    //     if open != self.terminal_open {
+    //         // opening terminal
+    //         if open {
+
+    //         }
+    //         // closing it
+    //         else {
+
+    //         }
+    //         self.terminal_open = open;
+    //         println!("  Set to {} = {}", &open, &self.terminal_open);
+    //     }
+    // }
 
 }
 

@@ -15,7 +15,7 @@ LevelConfig(
 
         ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
         
-        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 40.0, angle: 0.0, src: (-4,-3,8,6), shader: Some("overlay") ),
+        Sprite ( x: 500.0, y: 375.0, sprite: "entities/tile-bg", z: 10.0, angle: 0.0, src: (-4,-3,8,6), shader: Some("overlay") ),
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 
@@ -36,6 +36,45 @@ LevelConfig(
         //ExitCustom ( x: 900.0, y: 100.0, w: 25.0, h: 25.0, name: "", destination: "b", image: "entities/portal", img_w: 48.0, img_h: 48.0),
 
         Ghost ( x: 200.0, y: 100.0 ),
+
+        Geometry (
+            data: LevelGridData (
+                patches: [
+                    LevelPatch(
+                        center: (500.0,375.0), size: (400.0,400.0), 
+                        cell_nums: (4,4),
+                        cell_data: 
+                           [0, 1, 1, 1, 0,
+                            1, 1, 1, 1, 1,
+                            1, 1, 0, 1, 1,
+                            1, 1, 0, 1, 1,
+                            0, 1, 1, 1, 0 ],
+                        z_order: 520.0,
+                        color: (0.0, 0.5, 1.0, 0.5),
+                    ),
+                    LevelPatch(
+                        center: (500.0,375.0), size: (1000.0,750.0), 
+                        cell_nums: (12,10),
+                        cell_data: 
+                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+                            1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0,
+                            1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+                            1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                            1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1,
+                            1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0,
+                            1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0,
+                            1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0,
+                            1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0,
+                            1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1,
+                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, ],
+                        z_order: 20.0,
+                        image_path: "/images/dirt-grid-2.png",
+                        color: (1.0, 1.0, 1.0, 1.0),
+                    ),
+                ]
+            ),
+
+        ),
 
     ],
 )

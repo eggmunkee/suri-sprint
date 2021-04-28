@@ -15,6 +15,7 @@ use crate::components::npc::{NpcComponent};
 use crate::components::sprite::{SpriteComponent,MultiSpriteComponent,ParallaxSpriteComponent};
 use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::components::particle_sys::{ParticleSysComponent};
+use crate::components::geometry::{GeometryComponent};
 
 pub trait RenderItemTarget {
     fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
@@ -40,6 +41,7 @@ pub enum RenderFlagType {
     ParallaxSprite,
     Character,
     ParticleSys,
+    Geometry,
     Unimplemented
 }
 
@@ -127,6 +129,9 @@ impl RenderCallInfo {
                 //ParticleSysComponent::render_item(game_state, ctx, &self.entity, &self.pos, self.item_index);
                 self.call_render_item::<ParticleSysComponent>(game_state, ctx);
             },
+            RenderFlagType::Geometry => {
+                self.call_render_item::<GeometryComponent>(game_state, ctx);
+            }
             
             _ => {}
         }

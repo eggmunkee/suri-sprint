@@ -189,36 +189,40 @@ impl InputSystem {
 
     }
 
-    // handle input updates from an entity
+    // handle input updates for the dialog input system - returning the result state
+    pub fn handle_terminal_input(game_state: &mut GameState, time_delta: f32) {
+        let mut input = game_state.world.fetch_mut::<InputResource>();
+        // Watch for certain key presses
+        let mut tilde_pressed = false;
+        for key in &input.keys_pressed {
+            match key {
+                InputKey::ConsoleKey => {
+                    tilde_pressed = true;
+                },
+                _ => {}
+            } 
+        }
+        input.keys_pressed.clear();
+        drop(input);
+
+        if tilde_pressed {
+            game_state.terminal_open = false;
+        }
+
+    }
+
+    // handle input updates for the dialog input system - returning the result state
     pub fn handle_dialog_input(input: &mut InputResource, game_state: &GameState, time_delta: f32) -> RunningState {
-
-        // let mut up_pressed = false;
-        // let mut left_pressed = false;
-        // let mut right_pressed = false;
-        // let mut down_pressed = false;
-
-        // // apply input status to player
-        // if input.dirs_pressed[0] {
-        //     left_pressed = true;
-        // }
-        // else if input.dirs_pressed[1] {
-        //     right_pressed = true;
-        // }
-        // // Apply vector length to velocity Y
-        // if input.dirs_pressed[2] || input.jump_pressed {
-        //     up_pressed = true;
-        // }
-        // else if input.dirs_pressed[3] {
-        //     down_pressed = true;
-        // }
-
-        // Apply vector length to velocity Y
+        // Watch for certain key presses
         let mut exit_pressed = false;
-                
+        let mut tilde_pressed = false;
         for key in &input.keys_pressed {
             match key {
                 InputKey::Exit => {
                     exit_pressed = true;
+                },
+                InputKey::ConsoleKey => {
+                    tilde_pressed = true;
                 },
                 _ => {}
             } 

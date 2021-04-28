@@ -231,7 +231,7 @@ impl wrapped2d::dynamics::world::callbacks::ContactFilter<GameStatePhysicsData> 
         let filt_b = fixture_b.filter_data();
         let fixt_b_cat = filt_b.category_bits;
         let fixt_b_mask = filt_b.mask_bits;
-        let cat_mask_match = (fixt_a_cat & fixt_b_mask) | (fixt_b_cat & fixt_b_mask);
+        let cat_mask_match = (fixt_a_cat & fixt_b_mask) | (fixt_a_cat & fixt_b_mask);
 
         if a_phys_type == PhysicsBodyType::Dynamic || a_phys_type == PhysicsBodyType::Kinematic ||
             b_phys_type == PhysicsBodyType::Dynamic || b_phys_type == PhysicsBodyType::Kinematic {

@@ -482,6 +482,11 @@ impl PhysicsSystem {
                                 match other_entity_type {
                                     EntityType::PickupItem(_) => {
                                         let mut points_speed_lvl = 0;
+
+                                        if let Some(player) = char_disp_comp_res.get_mut(entity_1) {
+                                            points_speed_lvl = player.speed_level;
+                                        }
+
                                         // Get point item collision component
                                         if let Some(pickup) = pickup_res.get_mut(entity_2) {
                                             if !pickup.picked_up {
@@ -489,17 +494,30 @@ impl PhysicsSystem {
                                                 let mut game_state_res = world.fetch_mut::<GameStateResource>();
                                                 game_state_res.points = game_state_res.points + 1;
                                                 if game_state_res.points >= 100 {
+                                                    if points_speed_lvl == 0 {
+                                                        game_state_res.points -= 75;
+                                                        let mut log = world.fetch_mut::<GameLog>();
+                                                        log.add_entry(true, "Used 75 Pts".to_string(), None, game_state_res.game_run_seconds);
+                                                    }
+                                                    else if points_speed_lvl == 1 {
+                                                        game_state_res.points -= 50;
+                                                        let mut log = world.fetch_mut::<GameLog>();
+                                                        log.add_entry(true, "Used 50 Pts".to_string(), None, game_state_res.game_run_seconds);
+                                                    }
                                                     points_speed_lvl = 3;
                                                 }
                                                 else if game_state_res.points >= 25 {
+                                                    if points_speed_lvl == 0 {
+                                                        game_state_res.points -= 20;
+                                                        let mut log = world.fetch_mut::<GameLog>();
+                                                        log.add_entry(true, "Used 20 Pts".to_string(), None, game_state_res.game_run_seconds);
+                                                    }
                                                     points_speed_lvl = 2;
                                                 }
                                                 else if game_state_res.points >= 1 {
                                                     points_speed_lvl = 1;
                                                 }
                                                 {
-                                                    // let mut log = world.fetch_mut::<GameLog>();
-                                                    // log.add_entry(true, "Suri got a point.".to_string(), None, game_state_res.game_run_seconds);
                                                 }
                                             }
                                         }
@@ -645,7 +663,7 @@ impl PhysicsSystem {
 
                         match collision.entity_type {
                             EntityType::PickupItem(PickupItemType::Point) => {
-                                if rng.gen::<f32>() >= 0.6 {
+                                if rng.gen::<f32>() >= 0.8 {
                                     spawn_ghost = true;
                                     spawn_smoke = true;
                                 }

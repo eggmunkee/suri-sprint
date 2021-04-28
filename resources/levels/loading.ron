@@ -9,7 +9,7 @@ LevelConfig(
     items: [
         PlayerNpc ( x: 0.0, y: 0.0 ),
         
-        ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
+        //ImportSection ( x: 0, y: 0, name: "sections/dirt-bg" ),
 
         Sprite ( x: 0.0, y: 0.0, sprite: "entities/tile-bg", z: 40.0, angle: 0.0, src: (-4.5,-4.5,4.5,4.5), ),
 

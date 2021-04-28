@@ -13,5 +13,6 @@ pub mod bowl;
 pub mod ball;
 pub mod point_pickup;
 pub mod effect_area;
+pub mod geometry;
 pub mod level;
 pub mod level_builder;

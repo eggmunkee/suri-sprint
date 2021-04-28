@@ -14,6 +14,11 @@ LevelConfig(
 
         //Portal ( x: 600.0, y: 700.0, w: 50.0, h: 50.0, name: "portal_b", destination: ""),
 
+        Pickup ( pickup_type: Point, x: 700, y: 400, ),
+        Pickup ( pickup_type: Point, x: 750, y: 400, ),
+        Pickup ( pickup_type: Point, x: 800, y: 450, ),
+        Pickup ( pickup_type: Point, x: 850, y: 500, ),
+
         Platform ( x: 700.0, y: 600.0, w: 80.0, h: 20.0, ang: 0.0),
         Platform ( x: 200.0, y: 400.0, w: 40.0, h: 20.0, ang: 0.0),
         Platform ( x: 450.0, y: 200.0, w: 50.0, h: 20.0, ang: 0.0),

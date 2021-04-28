@@ -2,10 +2,12 @@
 use ggez::{Context};
 use specs::{World,WorldExt,Builder};
 use serde::{Deserialize,Serialize};
+use rand::prelude::*;
 
 use crate::components::logic::*;
 use crate::entities::player::{CharacterBuilder,PlayerCharacter};
 use crate::entities::effect_area::{EffectAreaType};
+use crate::entities::geometry::{LevelGridData};
 use crate::core::physics::{PhysicsWorld,CollisionCategory,PickupItemType,EntityType};
 
 
@@ -86,7 +88,7 @@ impl Default for LevelBounds {
     fn default() -> Self {
         LevelBounds {
             min_x: 0.0, min_y: 0.0, max_x: 1000.0, max_y: 800.0,
-            solid_sides: [false, true, true, true],
+            solid_sides: [true, true, true, true],
         }
     }
 }
@@ -166,11 +168,17 @@ pub enum LevelItem {
     },
     // Portals and Exits
     Portal {
-        x: f32, y: f32, w: f32, z: Option<f32>, name: String, destination: String, start_enabled: bool,
+        x: f32, y: f32, w: f32, z: Option<f32>,
+        #[serde(default="LevelItem::default_portal_color")]
+        color: String, 
+        name: String, destination: String, start_enabled: bool,
         logic: Option<ItemLogic>,
     },
     PortalSide {
-        x: f32, y: f32, ang: f32, w: f32, h: f32, z: Option<f32>, color: String, name: String, destination: String, start_enabled: bool,
+        x: f32, y: f32, ang: f32, w: f32, h: f32, z: Option<f32>, 
+        #[serde(default="LevelItem::default_portal_color")]
+        color: String, 
+        name: String, destination: String, start_enabled: bool,
         normal: (f32, f32), logic: Option<ItemLogic>,
     },
     ParticleSys {
@@ -201,6 +209,9 @@ pub enum LevelItem {
     EffectArea {
         x: f32, y: f32, w: f32, h: f32, area_type: EffectAreaType
     },
+    Geometry {
+        data: LevelGridData,
+    },
     ImportSection {
         name: String, x: f32, y: f32,
     },
@@ -217,6 +228,7 @@ pub struct LevelConfig {
     pub soundtrack: String,
     pub level_type: Option<LevelType>,
     pub items: Vec::<LevelItem>,
+    pub no_game_ui: Option<bool>,
     #[serde(skip)]
     pub built_player: bool,
     #[serde(skip)]

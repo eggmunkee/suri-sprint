@@ -19,6 +19,7 @@ pub mod anim_sprite;
 pub mod particle_sys;
 pub mod pickup;
 pub mod sensor_area;
+pub mod geometry;
 // DEFINE COMMON COMPONENTS
 
 use crate::resources::{GameStateResource};
@@ -134,4 +135,5 @@ pub fn register_components(world: &mut World) {
     self::particle_sys::register_components(world);
     self::pickup::register_components(world);
     self::sensor_area::register_components(world);
+    self::geometry::register_components(world);
 }

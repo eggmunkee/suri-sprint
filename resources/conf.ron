@@ -21,8 +21,8 @@ ConfigData(
         max_height: 0.0,
         resizable: true,
     ),
-    start_level: "loading", //overview_1
-    music_volume: 0.05,
-    audio_volume: 0.05,
+    start_level: "test", //overview_1
+    music_volume: 0.00,
+    audio_volume: 0.00,
     gravity: 30,
 )

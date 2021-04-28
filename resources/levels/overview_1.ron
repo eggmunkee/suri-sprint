@@ -6,6 +6,7 @@ LevelConfig(
         solid_sides: (true, true, true, true),
     ),
     soundtrack: "pirates/track-09.mp3",
+    no_game_ui: Some(true),
     items: [
         Player ( x: 80.0, y: 100.0 ),
 
@@ -39,10 +40,17 @@ LevelConfig(
 
         DynStaticLevelProp( x: 300, y: 400.0, w: 64, h: 64.0, ang: 0, image: "entities/box", img_w: 48.0, img_h: 48.0,
                 z: Some(700.0) ),
-
-        StaticLevelProp( x: 100, y: 500.0, w: 64, h: 64.0, ang: 0, image: "entities/wooden_chair", img_w: 48.0, img_h: 48.0,
-                z: Some(700.0) ),
-
+    //
+        Sprite( x: 100, y: 500.0, angle: 0, sprite: "entities/wooden_chair", z: 700.0, src: (0, 0, 1, 1) ),
+        StaticLevelProp( x: 58, y: 458.0, w: 10, h: 10.0, ang: 0, image: "entities/box", img_w: 48.0, img_h: 48.0,
+                z: Some(699.0) ),
+        StaticLevelProp( x: 142, y: 458.0, w: 10, h: 10.0, ang: 0, image: "entities/box", img_w: 48.0, img_h: 48.0,
+                z: Some(699.0) ),
+        StaticLevelProp( x: 142, y: 542.0, w: 10, h: 10.0, ang: 0, image: "entities/box", img_w: 48.0, img_h: 48.0,
+                z: Some(699.0) ),
+        StaticLevelProp( x: 58, y: 542.0, w: 10, h: 10.0, ang: 0, image: "entities/box", img_w: 48.0, img_h: 48.0,
+                z: Some(699.0) ),
+    //
         Ghost (x: 500, y: 500, ),
 
         Portal (x: 700, y: 200, w: 30, name: "a", destination: "b", start_enabled: true,),

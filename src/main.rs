@@ -55,16 +55,16 @@ pub fn main() -> GameResult {
     let (ctx, event_loop) = &mut cb.build()?;
 
     // create app's state
-    let state = &mut GameState::new(ctx, win_title, win_mode, config.music_volume, config.audio_volume, config.gravity)?;
+    let game_state = &mut GameState::new(ctx, win_title, win_mode, config.music_volume, config.audio_volume, config.gravity, config.start_level)?;
 
     // Load start level
-    state.load_level(ctx, config.start_level, "".to_string());
+    //state.load_level(ctx, config.start_level, "".to_string());
 
     //filesystem::print_all(ctx);
 
     // run event loop
     println!("Running event loop...");
-    let run_result = event::run(ctx, event_loop, state);
+    let run_result = event::run(ctx, event_loop, game_state);
 
     println!("Quitting...");
 

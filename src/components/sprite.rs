@@ -349,13 +349,13 @@ impl super::RenderItemTarget for ParallaxSpriteComponent {
                     if let Some(offset_val) = parallax_sprite.offsets.get(item_index) {
                         offset.0 = offset_val.0;
                         offset.1 = offset_val.1;
-                        println!("  Render Parallax Item - scroll mult: {:?}", &offset);
+                        //println!("  Render Parallax Item - scroll mult: {:?}", &offset);
                     }
                 }
                 if item_index >= 0 && item_index < parallax_sprite.scroll_mults.len() {
                     if let Some(multiplier) = parallax_sprite.scroll_mults.get(item_index) {
                         mult = *multiplier;
-                        println!("  Render Parallax Item - scroll mult: {}", &mult);
+                        //println!("  Render Parallax Item - scroll mult: {}", &mult);
                     }
                 }
                 mult = mult.min(1.0).max(0.0);
@@ -370,12 +370,12 @@ impl super::RenderItemTarget for ParallaxSpriteComponent {
                 let mut curr_x_off = display_offset.x;// + (scrw * 0.5);
                 let mut curr_y_off = display_offset.y;// - (scrh * 0.5);
                 
-                println!("Render Parallax Item: {} Offset: ({}, {})", &item_index, &curr_x_off, &curr_y_off);
+                //println!("Render Parallax Item: {} Offset: ({}, {})", &item_index, &curr_x_off, &curr_y_off);
 
                 curr_x_off = curr_x_off * mult - parallax_sprite.lvl_center.0 * anti_mult;
                 curr_y_off = curr_y_off * mult - parallax_sprite.lvl_center.1 * anti_mult;
-                println!("Render Parallax Item - Updated Offset: ({}, {})", &curr_x_off, &curr_y_off);
-                println!("Render Parallax Item - Position: ({}, {})", &pos.x, &pos.y);
+                //println!("Render Parallax Item - Updated Offset: ({}, {})", &curr_x_off, &curr_y_off);
+                //println!("Render Parallax Item - Position: ({}, {})", &pos.x, &pos.y);
 
                 let mut parallax_pos = pos.clone();
                 parallax_pos.x -= curr_x_off;
@@ -383,7 +383,7 @@ impl super::RenderItemTarget for ParallaxSpriteComponent {
                 parallax_pos.x += offset.0;
                 parallax_pos.y += offset.1;
 
-                println!("Render Parallax Item - Position: ({}, {})", &parallax_pos.x, &parallax_pos.y);
+                //println!("Render Parallax Item - Position: ({}, {})", &parallax_pos.x, &parallax_pos.y);
 
                 if item_index >= 0 && item_index < parallax_sprite.sprites.len() {
                     use crate::components::{RenderTrait};

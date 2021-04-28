@@ -259,6 +259,22 @@ impl AnimSpriteComponent {
         res
     }
 
+    pub fn calc_frame_src(x: i32, y: i32, rows: i32, cols: i32) -> (f32, f32, f32, f32) {
+
+        let mut res = (0.0, 0.0, 1.0, 1.0);
+        
+        // set origin as col / row
+        res.0 = x as f32 / cols as f32;
+        res.1 = y as f32 / rows as f32;
+        // set width and height as cell size in relation to 1
+        res.2 = 1.0 / cols as f32;
+        res.3 = 1.0 / rows as f32;
+
+        //println!("AnimSprite Frame [{}:{}] Src: {:?}", &self.frame, &self.frame_index, &res);
+
+        res
+    }
+
     pub fn get_frame_src(&self) -> (f32, f32, f32, f32) {
         let mut res = (0.0, 0.0, 1.0, 1.0);
         if let Some(grid_layout) = &self.grid_layout {

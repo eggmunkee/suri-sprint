@@ -2,6 +2,7 @@
 use ggez::{Context, GameResult, GameError};
 
 use ggez::graphics;
+use ggez::graphics::{DrawMode,Align};
 use ggez::nalgebra as na;
 use ggez::graphics::{Color,StrokeOptions,Rect,FillOptions,DrawParam,Scale,set_window_title};
 
@@ -20,10 +21,12 @@ use crate::components::{Position,Velocity,RenderTrait,RenderFlag,RenderLayerType
 use crate::components::sprite::{SpriteComponent,SpriteLayer,MultiSpriteComponent,ParallaxSpriteComponent};
 use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::components::particle_sys::{ParticleSysComponent};
+use crate::components::geometry::{GeometryComponent};
 use crate::components::player::{CharacterDisplayComponent};
 use crate::components::flags::{RenderCallInfo,RenderFlagType};
 use crate::core::game_state::{GameState,State,GameMode,RunningState,MenuItem};
 use crate::entities::level_builder::{LevelItem};
+use crate::entities::geometry::{PatchCellShape};
 use self::dialog::{DialogRenderer};
 use self::level::{LevelRenderer};
 use self::paused::{PausedRenderer};
@@ -73,12 +76,16 @@ impl Renderer {
         images.load_image("/images/green-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         //images.load_image("/images/grey-dialog-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         //images.load_image("/images/green-eye-blob.png".to_string(), ctx).expect("MISSING REQUIREMENT");
-        images.load_image("/images/dirty-box-1.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        //images.load_image("/images/dirty-box-1.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        images.load_image("/images/menu-title-bg.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        
         images.load_image("/images/dark_messy_tile.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         images.load_image("/images/cloud-dialog.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         images.load_image("/images/cloud-dialog-shadow.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         images.load_image("/images/cloud-dialog-bordered.png".to_string(), ctx).expect("MISSING REQUIREMENT");
         images.load_image("/images/cloud-dialog-selected.png".to_string(), ctx).expect("MISSING REQUIREMENT");
+        
+        images.load_image("/images/dirt-grid-1.png".to_string(), ctx).expect("MISSING REQUIREMENT");
 
         drop(images);
 
@@ -129,21 +136,18 @@ impl Renderer {
 
         let mut canvas = graphics::Canvas::with_window_size(ctx).unwrap();
         graphics::set_canvas(ctx, Some(&canvas));
-        graphics::clear(ctx, [0.2, 0.2, 0.25, 1.0].into());
+        graphics::clear(ctx, [0.0, 0.0, 0.0, 0.0].into());
 
         if game_state.game_frame_count % 60 == 1 {
             println!(" Z Sort display list ------------------");
         }
         
-
-
         let render_count = render_objects.len();
 
         if game_state.game_frame_count % 60 == 1 {
             println!("   Display list ({}) ------------------", &render_count);
             println!("   Pre-render List step ------------------");
         }
-
 
         self.render_level(game_state, ctx, world, &render_objects);
 
@@ -236,10 +240,14 @@ impl Renderer {
             State::Running => {
                 match &game_state.running_state {
                     // DISPLAY DIALOG TEXT
-                    RunningState::Dialog{msg, ..} => {
+                    RunningState::Dialog{msg, text_color, ..} => {
                         if game_state.game_frame_count % 60 == 1 {
                             println!("  Dialog Render step ---------------");
                         }
+                        let text_color = match text_color {
+                            Some(tc) => *tc,
+                            None => Color::new(0.2, 0.2, 0.4, 1.0)
+                        };
 
                         let bg_image = game_state.running_state.get_bg_image();
                         //DialogRenderer::render(&game_state, ctx, msg.clone());
@@ -253,7 +261,7 @@ impl Renderer {
 
                         DialogRenderer::render_dialog_textured(&game_state, ctx, msg.clone(),
                             0.5, 0.25, 0.6, 0.4,
-                            bg_image, Color::new(0.2, 0.2, 0.4, 1.0)); //(&game_state, ctx, msg.clone());
+                            bg_image, text_color, None); //(&game_state, ctx, msg.clone());
                     },
                     _ => {}
                 }
@@ -329,7 +337,12 @@ impl Renderer {
         }
 
         // GAME IN game Menu LAYER (points)
-        self.render_dialog(ctx, game_state);
+        match &game_state.level.no_game_ui {
+            Some(false) | None => {
+                self.render_hud(ctx, game_state);
+            },
+            _ => {}
+        }
 
         // unset render canvas
         graphics::set_canvas(ctx, None);
@@ -356,22 +369,42 @@ impl Renderer {
                 alpha = scl;
             }
             let x_scale = scl;
+            scl = -scl;
+
+            let mut image = canvas.into_inner();
+            image.set_filter(ggez::graphics::FilterMode::Nearest);
+
+            let scr_half_w = scrw as f32 * 0.5;
+            let scr_half_h = scrh as f32 * 0.5;
+            let img_half_w = scl.abs() * 0.5 * scrw;
+            let img_half_h = scl * 0.5 * scrh;
+
+
+            let src_x = 0.0;
+            let src_y = 0.0;
 
             // render canvas to window
-            let res = graphics::draw(ctx, &canvas, DrawParam::default()
+            let res = graphics::draw(ctx, &image, DrawParam::default()
+                .src(Rect::new(
+                    0.0 + ((1.0 - scl.abs()) * 0.5), 
+                    0.0 + ((1.0 - scl.abs()) * 0.5), 
+                    1.0 - ((1.0 - scl.abs()) * 1.0), 1.0 - ((1.0 - scl.abs()) * 1.0) 
+                ))
                 .dest(na::Point2::new(
-                    scrw as f32 * 0.5, // - ((1.0 - scl) * 0.25 * scrw),
-                    scrh as f32 * 0.5 - (scl * 1.0 * scrh) //scrh as f32 * 0.5
-                    //(game_state.game_frame_count % 6) as f32 - 3.0, (game_state.game_frame_count % 4) as f32 - 2.0)
-                    )
+                    // Get 1/2 screen width, then adjust (-.5,-.5) to align with the top-left pixel corner
+                    // otherwise it renders offsets with the actual pixels and blurs the display
+                    //  additionally a small gray gap of 1 pixel would be on the top and left edges
+                    scr_half_w - img_half_w - 0.5, // X
+                    scr_half_h - img_half_h - 0.5 // Y
+                  )
                 )
                 .scale( na::Vector2::new(
-                    x_scale, scl
+                    1.0, -1.0
                     //1.0 + ((game_state.game_frame_count % 3) as f32 * 0.01),
                     //1.0 + ((game_state.game_frame_count % 5) as f32 * 0.01)
                     )
                 )
-                .offset( na::Point2::new(0.5, 0.5) )
+                .offset( na::Point2::new(0.0, 0.0) ) // Position by midpoint of image texture space
                 //.rotation( ((game_state.game_frame_count as f32 * 0.5) as i32 % 36) as f32 * 2.0 * 3.14159 / 76.0)
                 .color( Color::new(1.0, 1.0, 1.0, alpha))
             );
@@ -382,6 +415,9 @@ impl Renderer {
 
         // MENU LAYER
         self.render_menus(ctx, game_state);
+
+        // TERMINAL LAYER
+        self.render_terminal(ctx, game_state);
 
         // MOUSE / CURSOR LAYER
         self.render_cursor(ctx, game_state);
@@ -496,6 +532,7 @@ impl Renderer {
         let anim_sprite_disp = game_state.world.read_storage::<AnimSpriteComponent>();
         let plx_sprite_disp = game_state.world.read_storage::<ParallaxSpriteComponent>();
         let particle_sys_disp = game_state.world.read_storage::<ParticleSysComponent>();
+        let geometry_disp = game_state.world.read_storage::<GeometryComponent>();
         let char_disp = game_state.world.read_storage::<CharacterDisplayComponent>();
 
         for (render_flag, character, pos, ent) in (&render_res, &char_disp, &pos, &entities).join() {
@@ -616,6 +653,39 @@ impl Renderer {
             );
         }
 
+        for (_, geometry_comp, pos, ent) in (&render_res, &geometry_disp, &pos, &entities).join() {
+            // let z_order = particle_sys.z_order;
+
+            // let call_info = RenderCallInfo {
+            //     entity: ent.clone(),
+            //     pos: na::Point2::new(pos.x, pos.y),
+            //     z_order: z_order,
+            //     item_index: 0,
+            //     render_type: RenderFlagType::Geometry
+            // };
+
+            // render_objects.push(
+            //     //(ent.id(),na::Point2::new(pos.x, pos.y), z_order, 0)
+            //     call_info
+            // );
+
+            let mut index : usize = 0;
+            for patch in &geometry_comp.geometry.patches {
+                //let z_order = 100.0 + index as f32; //sprite.z_order;
+
+                let call_info = RenderCallInfo {
+                    entity: ent.clone(),
+                    pos: na::Point2::new(pos.x, pos.y),
+                    z_order: patch.z_order,
+                    item_index: index,
+                    render_type: RenderFlagType::Geometry
+                };
+
+                render_objects.push(call_info);
+                index += 1;
+            }
+        }
+
         // ORDER RENDER OBJECTS -----------------------------------------------------------------
         // TODO: implement Z-ordering here
         // remove first render object - the player
@@ -658,40 +728,223 @@ impl Renderer {
         self.pre_render_list(game_state, ctx, world);
 
         // RENDER OBJECT LIST -----------------------------------------------------------------
-        if let State::Running | State::Paused = &game_state.current_state {
-            if game_state.game_frame_count % 60 == 1 {
-                println!("   Running/Paused - Render objects loop ---------------");
-            }            
-            // for (ent, pt, _, item_index) in render_objects.iter() {
-            //     // Get entity by id
-            //     let entity = game_state.world.entities().entity(ent.clone());
-            //     // If entity is still alive, render it
-            //     if entity.gen().is_alive() {
-            //         // Call generic renderer, which calls on render component to draw
-            //         Self::call_renderer(ctx, world, entity, pt, *item_index);
-            //     }
-            // }
+        //if let State::Running | State::Paused = &game_state.current_state {
 
-            for call_info in render_objects.iter() {
-                // Get entity by id
-                let entity = call_info.entity; //game_state.world.entities().entity(ent.clone());
-                // If entity is still alive, render it
-                if entity.gen().is_alive() {
-                    // Call generic renderer, which calls on render component to draw
-                    //Self::call_renderer(ctx, world, entity, call_info.pos, call_info.item_index);
-                    call_info.render_item(game_state, ctx);
+        if game_state.game_frame_count % 60 == 1 {
+            println!("   Running/Paused - Render objects loop ---------------");
+        }            
+        // for (ent, pt, _, item_index) in render_objects.iter() {
+        //     // Get entity by id
+        //     let entity = game_state.world.entities().entity(ent.clone());
+        //     // If entity is still alive, render it
+        //     if entity.gen().is_alive() {
+        //         // Call generic renderer, which calls on render component to draw
+        //         Self::call_renderer(ctx, world, entity, pt, *item_index);
+        //     }
+        // }
+
+        for call_info in render_objects.iter() {
+            // Get entity by id
+            let entity = call_info.entity; //game_state.world.entities().entity(ent.clone());
+            // If entity is still alive, render it
+            if entity.gen().is_alive() {
+                // Call generic renderer, which calls on render component to draw
+                //Self::call_renderer(ctx, world, entity, call_info.pos, call_info.item_index);
+                call_info.render_item(game_state, ctx);
+            }
+        }
+
+        let gs_res = game_state.world.fetch::<GameStateResource>();
+
+        // Render Target Location of game state
+        let ptl_x = gs_res.player_target_loc.0;
+        let ptl_y = gs_res.player_target_loc.1;
+
+        DialogRenderer::render_cursor(ctx, ptl_x, ptl_y, Color::new(0.0, 1.0, 0.0, 1.0));
+
+        {
+            let mut image_res = game_state.world.fetch_mut::<ImageResources>();
+
+            if let Ok(image_ref) = image_res.image_ref("/images/dirt-grid-1.png".to_string()) {
+
+                /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=- */
+                // Render Level Geometry test data
+                let geometry = &game_state.level_geometry.patches;
+                let mut set = 0;
+
+                for patch in geometry {
+                    let (x_size, y_size) = patch.get_cell_sizes();
+                    let (x_cells, y_cells) = patch.cell_nums;
+                    let start_x = patch.center.0 - x_size * (x_cells as f32 / 2.0);
+                    let start_y = patch.center.1 - y_size * (y_cells as f32 / 2.0);
+                    let mut x = start_x;
+                    let mut y = start_y;
+
+                    let img_w = image_ref.width() as f32 / 4.0;
+                    let img_h = image_ref.height() as f32 / 4.0;
+                    let scale = (x_size / img_w, y_size / img_h);
+
+                    let shapes = patch.triangulate();
+
+                    for (i, j, shape) in shapes {
+                        let pos_x = start_x + (i as f32 * x_size);
+                        let pos_y = start_y + (j as f32 * y_size);
+
+                        //println!("Cell Result ({}, {}, {:?})", &i, &j, &shape);
+
+                        let mut draw_shape = true;
+                        let points = if shape == PatchCellShape::Square {
+                            vec![
+                                na::Point2::new(0.0, 0.0),
+                                na::Point2::new(x_size, 0.0),
+                                na::Point2::new(x_size,  y_size),
+                                na::Point2::new(0.0, y_size)
+                            ]
+                        }
+                        else if shape == PatchCellShape::TriangleLeftTop {
+                            vec![
+                                na::Point2::new(0.0, 0.0),
+                                na::Point2::new(x_size, 0.0),
+                                na::Point2::new(0.0, y_size)
+                            ]
+                        } 
+                        else if shape == PatchCellShape::TriangleRightTop {
+                            vec![
+                                na::Point2::new(0.0, 0.0),
+                                na::Point2::new(x_size, 0.0),
+                                na::Point2::new(x_size, y_size)
+                            ]
+                        }
+                        else if shape == PatchCellShape::TriangleLeftBottom {
+                            vec![
+                                na::Point2::new(0.0, 0.0),
+                                na::Point2::new(x_size, y_size),
+                                na::Point2::new(0.0, y_size)
+                            ]
+                        }
+                        else if shape == PatchCellShape::TriangleRightBottom {
+                            vec![
+                                na::Point2::new(0.0, y_size),
+                                na::Point2::new(x_size, 0.0),
+                                na::Point2::new(x_size, y_size)
+                            ]
+                        }
+                        else if shape == PatchCellShape::DotLeftTop {
+                            vec![
+                                na::Point2::new(x_size*0.15, y_size*0.15),
+                                na::Point2::new(x_size*0.85, y_size*0.15),
+                                na::Point2::new(x_size*0.85, y_size*0.85),
+                                na::Point2::new(x_size*0.15, y_size*0.85)
+                            ]
+                        } 
+                        else if shape == PatchCellShape::DotRightTop {
+                            vec![
+                                na::Point2::new(x_size*0.7, 0.0),
+                                na::Point2::new(x_size*1.0, 0.0),
+                                na::Point2::new(x_size*1.0,  y_size*0.3),
+                                na::Point2::new(x_size*0.7, y_size*0.3)
+                            ]
+                        }
+                        else if shape == PatchCellShape::DotLeftBottom {
+                            vec![
+                                na::Point2::new(0.0, y_size*0.7),
+                                na::Point2::new(x_size*0.3, y_size*0.7),
+                                na::Point2::new(x_size*0.3,  y_size*1.0),
+                                na::Point2::new(0.0, y_size*1.0)
+                            ]
+                        }
+                        else if shape == PatchCellShape::DotRightBottom {
+                            vec![
+                                na::Point2::new(x_size*0.7, y_size*0.7),
+                                na::Point2::new(x_size*1.0, y_size*0.7),
+                                na::Point2::new(x_size*1.0,  y_size*1.0),
+                                na::Point2::new(x_size*0.7, y_size*1.0)
+                            ]
+                        }
+                        else {
+                            draw_shape = false;
+                            vec![]
+                        };
+
+                        if draw_shape {
+                            // if let Ok(poly) = ggez::graphics::Mesh::new_polygon(ctx, 
+                            //     DrawMode::Fill(FillOptions::default()), 
+                            //     &points, 
+                            //     match set {
+                            //         0 => Color::new(1.0,0.8,0.9,0.75),
+                            //         1 => Color::new(0.2,0.5,1.0,0.5),
+                            //         _ => Color::new(0.3,0.95,0.4,0.75)
+                            //     }
+                            // ) {
+                            //     graphics::draw(ctx, &poly, DrawParam::new()
+                            //         .dest(na::Point2::new(pos_x, pos_y))
+                            //     );
+                            // }
+                            let anim_cols = 4;
+                            let anim_rows = 4;
+                            let src = match shape {
+                                PatchCellShape::Square => AnimSpriteComponent::calc_frame_src(0, 0, anim_cols, anim_rows),
+                                PatchCellShape::TriangleLeftTop => AnimSpriteComponent::calc_frame_src(1, 0, anim_cols, anim_rows),
+                                PatchCellShape::TriangleRightTop => AnimSpriteComponent::calc_frame_src(2, 0, anim_cols, anim_rows),
+                                PatchCellShape::TriangleLeftBottom => AnimSpriteComponent::calc_frame_src(3, 0, anim_cols, anim_rows),
+                                PatchCellShape::TriangleRightBottom => AnimSpriteComponent::calc_frame_src(0, 1, anim_cols, anim_rows),
+                                PatchCellShape::DotLeftTop | PatchCellShape::DotRightTop
+                                    | PatchCellShape::DotLeftBottom | PatchCellShape::DotRightBottom
+                                    => AnimSpriteComponent::calc_frame_src(1, 1, anim_cols, anim_rows),
+                                _ => AnimSpriteComponent::calc_frame_src(3, 3, anim_cols, anim_rows),
+                            };
+                            
+
+                            graphics::draw(ctx, image_ref, DrawParam::new()
+                                    .dest(na::Point2::new(pos_x, pos_y))
+                                    .scale(na::Vector2::new(scale.0, scale.1))
+                                    .src(Rect::new(src.0, src.1, src.2, src.3))
+                                    .color(
+                                        match set {
+                                            0 => Color::new(1.0,1.0,1.0,0.95),
+                                            1 => Color::new(1.0,1.0,1.0,0.9),
+                                            _ => Color::new(1.0,1.0,1.0,0.85)
+                                        }
+                                    )
+                                );
+                        }
+                        
+                    }
+
+                    // loop through y points 0..n
+                    for j in 0..y_cells+1 {
+
+                        // loop through x point 0..n
+                        for i in 0..x_cells+1 {
+                            let val = patch.get_value(i, j);
+                            let pos_x = start_x + (i as f32 * x_size);
+                            let pos_y = start_y + (j as f32 * y_size);
+                            let color = if val > 0 {
+                                Color::new(0.8, 0.2, 0.2, 0.8)
+                            }
+                            else {
+                                Color::new(0.3, 0.3, 0.7, 0.3)
+                            };
+
+                            //DialogRenderer::render_cursor(ctx, pos_x, pos_y, color);
+
+                        }
+
+                    }
+
+                    set += 1;
+
                 }
+                /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=- */
+
+
             }
 
-            let gs_res = game_state.world.fetch::<GameStateResource>();
-
-            // Render Target Location of game state
-            let ptl_x = gs_res.player_target_loc.0;
-            let ptl_y = gs_res.player_target_loc.1;
-
-            DialogRenderer::render_cursor(ctx, ptl_x, ptl_y, Color::new(0.0, 1.0, 0.0, 1.0));
+            
 
         }
+
+        //}
 
         if game_state.mode == GameMode::Edit {
             if game_state.game_frame_count % 60 == 1 {
@@ -757,7 +1010,7 @@ impl Renderer {
         graphics::apply_transformations(ctx);
     }
 
-    fn render_dialog(&self, ctx: &mut Context, game_state: &GameState) {
+    fn render_hud(&self, ctx: &mut Context, game_state: &GameState) {
         if game_state.game_frame_count % 60 == 1 {
             println!("  Render Points UI ------------");
         }
@@ -768,8 +1021,10 @@ impl Renderer {
         //     Color::new(0.0, 0.0, 0.0, 1.0), Color::new(0.5, 0.5, 0.5, 0.8), Color::new(1.0, 1.0, 1.0, 1.0) );
 
         DialogRenderer::render_dialog_textured(game_state, ctx, format!("{} Pts", &points),
-            0.075, 0.05, 0.15, 0.1, "/images/cloud-dialog-bordered.png".to_string(), Color::new(0.2, 0.2, 0.4, 1.0));
+            0.075, 0.05, 0.15, 0.1, "/images/cloud-dialog-bordered.png".to_string(),
+            Color::new(0.2, 0.2, 0.4, 1.0), None);
 
+        
 
         // DialogRenderer::render_at(game_state, ctx, "Ghost: Hello, Suri.... \nalk f jfkj akjf kdkj".to_string(), 
         //     0.6, 0.2, 0.3, 0.1,
@@ -812,14 +1067,15 @@ impl Renderer {
 
         for entry in game_log.entries.iter() {
             let log_pos_x = 0.15;
-            let log_pos_y = ((item_idx as f32) / max_entr as f32 * 0.7) + 0.15;
+            let log_pos_y = ((item_idx as f32) / max_entr as f32 * 0.8) + 0.15;
             let mut alpha = 1.0;
-            if entry.time_left < 1.0 {
-                alpha = entry.time_left;
+            if entry.time_left < 2.5 {
+                alpha = entry.time_left / 2.5;
             }
 
             DialogRenderer::render_dialog_textured(game_state, ctx, entry.msg.clone(),
-                log_pos_x, log_pos_y, 0.2, 0.08, "/images/purple-dialog-wide-bg.png".to_string(), Color::new(0.8, 0.2, 0.2, alpha));
+                log_pos_x, log_pos_y, 0.22, 0.0785, "/images/purple-dialog-wide-bg.png".to_string(),
+                Color::new(1.0, 0.8, 0.8, alpha), Some(Color::new(1.0, 1.0, 1.0, alpha * 0.5)));
             item_idx += 1;
         }
 
@@ -848,14 +1104,14 @@ impl Renderer {
                 _ => 0.5
             }.min( (item_count as f32 * 0.05).max(item_count as f32 * 40.0) );
             let bg_alpha = match menu_layer {
-                0 => 0.7,
+                0 => 0.7 * game_state.ui_game_display_zoom,
                 _ => 1.0,
             };
-            let bg_color = match menu_layer {
-                0 => Color::new(0.0, 0.7, 0.7, bg_alpha),
-                1 => Color::new(0.7, 0.0, 0.7, bg_alpha),
-                _ => Color::new(0.7, 0.5, 0.5, bg_alpha),
-            };
+            // let bg_color = match menu_layer {
+            //     0 => Color::new(0.0, 0.7, 0.7, bg_alpha),
+            //     1 => Color::new(0.7, 0.0, 0.7, bg_alpha),
+            //     _ => Color::new(0.7, 0.5, 0.5, bg_alpha),
+            // };
 
             // DialogRenderer::render_at(game_state, ctx, String::new(), 
             // 0.5, 0.5, w, h,
@@ -873,16 +1129,17 @@ impl Renderer {
             };
 
             let bg_alpha = match menu_layer {
-                0 => 0.2,
-                1 => 0.2,
-                _ => 0.2
+                0 => 1.0 * game_state.ui_game_display_zoom,
+                1 => 0.9,
+                _ => 0.8
             };
 
+            let bg_color = Color::new(1.0, 1.0, 1.0, bg_alpha);
+
             DialogRenderer::render_dialog_textured(game_state, ctx, String::new(),
-                0.5, 0.5, w, h, dialog_bg_texture, Color::new(1.0, 1.0, 1.0, bg_alpha));
+                0.5, 0.5, w, h, dialog_bg_texture, Color::new(1.0, 1.0, 1.0, bg_alpha), Some(bg_color));
             //ggez::graphics::push_transform()
 
-            let bg_color = Color::new(0.5, 0.5, 0.5, 0.25);
 
             let item_height_ratio = 0.9;
             let header_item_margin_ratio = 0.95;
@@ -921,7 +1178,7 @@ impl Renderer {
                         false => "/images/blue-dialog-bg.png".to_string()
                     },
                     true => match menu_layer {
-                        _ => "/images/dirty-box-1.png".to_string()
+                        _ => "/images/menu-title-bg.png".to_string()
                     }
                 };
 
@@ -933,7 +1190,7 @@ impl Renderer {
                     //     Color::new(1.0, 0.0, 1.0, 1.0), bg_color, color);
                     DialogRenderer::render_dialog_bg_textured(game_state, ctx, 
                         0.5, start_y + ((item_idx as f32 + 0.5) * h_per_item), w * item_height_ratio, h_per_item * item_margin_ratio,
-                        bg_image);
+                        bg_image, None);
 
                     // if selected {
                     //     DialogRenderer::render_dialog_bg_textured(game_state, ctx, 
@@ -979,7 +1236,7 @@ impl Renderer {
                 else {
                     DialogRenderer::render_dialog_textured(game_state, ctx, item_text,
                         0.5, start_y + ((item_idx as f32 + 0.5) * h_per_item), w * item_height_ratio, h_per_item * header_item_margin_ratio,
-                        bg_image, Color::new(1.0, 1.0, 1.0, 1.0));
+                        bg_image, Color::new(1.0, 1.0, 1.0, 1.0), None);
                 }
 
                 /*match &item {
@@ -998,6 +1255,23 @@ impl Renderer {
             }
 
             menu_layer = menu_layer + 1;
+        }
+
+        
+    }
+
+    fn render_terminal(&self, ctx: &mut Context, game_state: &GameState) {
+        if game_state.terminal_open {
+            // Get blink on/off value
+            let cursor_blink = game_state.world.fetch::<GameStateResource>().game_run_seconds % 1.0 > 0.6;
+            // Get string value of cursor
+            let cursor_val = match cursor_blink { true => "█", false => "_" };
+            let cmd_text = "set_points 125"; //game_state.world.fetch::<InputResource>().cmd_text.clone();
+            DialogRenderer::render_at(game_state, ctx, format!(">{}{}", &cmd_text, &cursor_val),
+                0.5, 0.94, 0.98, 0.09, 
+                Color::new(0.3, 0.3, 0.3, 1.0),
+                Color::new(0.1, 0.1, 0.1, 0.7),
+                Color::new(0.4, 0.8, 0.4, 0.5), Some(ggez::graphics::Align::Left));
         }
     }
 
