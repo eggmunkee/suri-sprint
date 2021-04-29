@@ -57,8 +57,8 @@ LevelConfig(
         Platform ( x: 3100.0, y: -750.0, w: 120.0, h: 20.0, ang: 1.57), // left wall to top platform
 
         // 2nd to top portal
-        Portal ( x: 3050.0, y: -700.0, w: 30.0, name: "p1_out", destination: "p1_in", start_enabled: true ),
-        Portal ( x: 3400.0, y: -300.0, w: 30.0, name: "p1_in", destination: "p1_out", start_enabled: true ),
+        Portal ( x: 3050.0, y: -700.0, w: 30.0, color: "green", name: "p1_out", destination: "p1_in", start_enabled: true ),
+        Portal ( x: 3400.0, y: -300.0, w: 30.0, color: "green", name: "p1_in", destination: "p1_out", start_enabled: true ),
         Sprite ( x: 3225.0, y: -500.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 0.87, src: (0,0,3.8,1), ),
     
         Platform ( x: 2900.0, y: -450.0, w: 400.0, h: 20.0, ang: 0), // 2nd platform with vertical plank
@@ -67,8 +67,8 @@ LevelConfig(
         Platform ( x: 2300.0, y: -550.0, w: 120.0, h: 20.0, ang: 1.57), // left wall to top platform
         
         // 3nd to 2nd portal
-        Portal ( x: 3200.0, y: -200.0, w: 30.0, name: "p2_in", destination: "p2_out", start_enabled: true ),
-        Portal ( x: 2525.0, y: -500.0, w: 30.0, name: "p2_out", destination: "p2_in", start_enabled: true ),
+        Portal ( x: 3200.0, y: -200.0, w: 30.0, color: "yellow", name: "p2_in", destination: "p2_out", start_enabled: true ),
+        Portal ( x: 2525.0, y: -500.0, w: 30.0, color: "yellow", name: "p2_out", destination: "p2_in", start_enabled: true ),
         Sprite ( x: 2875.0, y: -350.0, sprite: "entities/yellow-dashes", z: 20.0, angle: 0.42, src: (0,0,5.3,1), ),
         
         Platform ( x: 2525.0, y: -130.0, w: 400.0, h: 20.0, ang: 0),  // 3rd top platform
@@ -78,9 +78,9 @@ LevelConfig(
         Platform ( x: -100.0, y: -500.0, w: 150.0, h: 10.0, ang: -0.1),
 
 
-        Portal ( x: 1500.0, y: -500.0, w: 30.0, name: "a", destination: "", start_enabled: true ),
+        Portal ( x: 1500.0, y: -500.0, w: 30.0, color: "purple", name: "a", destination: "", start_enabled: true ),
 
-        Portal ( x: 2400.0, y: 1800.0, w: 30.0, name: "b", destination: "a", start_enabled: true),
+        Portal ( x: 2400.0, y: 1800.0, w: 30.0, color: "purple", name: "b", destination: "a", start_enabled: true),
 
         Platform ( x: 700.0, y: 2700.0, w: 400.0, h: 20.0, ang: -0.2),
         Platform ( x: -50.0, y: 2700.0, w: 400.0, h: 20.0, ang: 0.2),
