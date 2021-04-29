@@ -56,7 +56,7 @@ impl MeowComponent {
             let body = physics_world.body(body_handle);
             let mut first_fixture : Option<b2::FixtureHandle> = None;
 
-            for (fixture, meta) in body.fixtures() {
+            for (fixture, _meta) in body.fixtures() {
                 //println!("Meow collision has body handle with a fixture");
                 first_fixture = Some(fixture);
                 break;

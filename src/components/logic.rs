@@ -1,15 +1,15 @@
 
-use ggez::nalgebra as na;
+//use ggez::nalgebra as na;
 use specs::{Component, DenseVecStorage, World, WorldExt};
 use specs_derive::*;
-use wrapped2d::b2;
-use rand::prelude::*;
-use serde::{Deserialize,de::DeserializeOwned,Serialize};
+//use wrapped2d::b2;
+//use rand::prelude::*;
+use serde::{Deserialize,Serialize};
 
-use crate::components::sprite::{SpriteComponent};
-use crate::components::collision::{Collision};
-use crate::core::physics;
-use crate::core::physics::{PhysicsWorld};
+//use crate::components::sprite::{SpriteComponent};
+//use crate::components::collision::{Collision};
+//use crate::core::physics;
+//use crate::core::physics::{PhysicsWorld};
 use crate::entities::level_builder::{ItemLogic};
 
 #[derive(Debug,Clone,Deserialize,Serialize)]
@@ -47,15 +47,15 @@ pub struct LogicConnection {
     pub conn_type: ConnectionType,
 }
 
-impl LogicConnection {
-    pub fn new(frm: String, t: String, cntype: ConnectionType) -> Self {
-        LogicConnection {
-            from: frm,
-            to: t,
-            conn_type: cntype,
-        }
-    }
-}
+// impl LogicConnection {
+//     pub fn new(frm: String, t: String, cntype: ConnectionType) -> Self {
+//         LogicConnection {
+//             from: frm,
+//             to: t,
+//             conn_type: cntype,
+//         }
+//     }
+// }
 
 
 #[derive(Debug,Component)]
@@ -83,7 +83,7 @@ pub struct LogicComponent {
 impl LogicComponent {
     pub fn new(id: String, is_enabled: bool, logic_op_opt: Option<LogicOpType>) -> LogicComponent {
 
-        let mut logic = LogicComponent {
+        let logic = LogicComponent {
             id: id,
             initial_value: is_enabled,
             logic_op: match logic_op_opt {
@@ -106,7 +106,7 @@ impl LogicComponent {
 
     pub fn new_logic(id: String, is_enabled: bool, logic_opt: Option<ItemLogic>) -> LogicComponent {
 
-        let mut logic = LogicComponent {
+        let logic = LogicComponent {
             id: id,
             initial_value: is_enabled,
             logic_op: match &logic_opt {
@@ -178,7 +178,7 @@ impl LogicComponent {
         self.value
     }
 
-    pub fn update(&mut self, time_delta: f32) {
+    pub fn update(&mut self, _time_delta: f32) {
         if self.last_value != self.value {
             self.change_count += 1;
             if self.change_count > 2 {

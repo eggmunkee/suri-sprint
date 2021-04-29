@@ -1,18 +1,11 @@
-// use std::fmt;
-// use std::fmt::{Display};
-use std::collections::{HashMap};
-use std::collections::hash_map::{Entry};
-use ggez::graphics;
-use ggez::graphics::{Image,Font};
-use ggez::{Context,GameResult,GameError};
-use ggez::conf::{WindowMode};
-use specs::{World};
-//use ggez::nalgebra as na;
-// -------------------------
 
-//use crate::core::physics::{PhysicsWorld,create_physics_world};
-use crate::core::input::{InputKey};
-use crate::entities::level_builder::{LevelBounds,LevelType};
+use std::collections::{HashMap};
+use ggez::graphics;
+use ggez::graphics::{Image};
+use ggez::{Context};
+use specs::{World};
+
+// -------------------------
 
 mod game_state;
 mod camera;
@@ -30,40 +23,8 @@ pub use crate::resources::connection::*;
 pub use crate::resources::shaders::*;
 pub use crate::resources::log::*;
 
-/*
-#[derive(Default,Debug)]
-pub struct GameStateResource {
-    pub window_w: f32,
-    pub window_h: f32,
-    pub window_mode: WindowMode,
-    pub display_offset: (f32, f32),
-    pub delta_seconds: f32,
-    pub level_world_seconds: f32,
-    pub game_run_seconds: f32,
-    pub level_bounds: LevelBounds,
-    pub level_type: LevelType,
-
-    // global player stats
-    pub player_count: i32,
-    pub player_1_char_num: i32,
-
-    // ai info
-    pub player_target_loc: (f32, f32),
-
-    // game status info
-    pub points: i32,
-}*/
-
-
-
 
 pub fn add_resources(world: &mut World, ctx: &mut Context) {
-
-    //let (win_w, win_h) = ggez::graphics::drawable_size(ctx);
-    // let curr_win_mode = ggez::graphics::get_mode(ctx);
-    // world.insert(GameStateResource {
-    //     window_w: win_w, window_h: win_h,
-    // });
 
     world.insert(GameLog {
         entries: vec![],

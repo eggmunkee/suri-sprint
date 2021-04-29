@@ -8,7 +8,7 @@ use crate::components::{Position,RenderFlag,RenderLayerType};
 //use crate::components::ball::*;
 use crate::components::collision::{Collision};
 use crate::components::npc::{NpcComponent};
-use crate::resources::{ImageResources};
+//use crate::resources::{ImageResources};
 use crate::core::physics::{PhysicsWorld,CollisionCategory,EntityType};
 
 
@@ -16,7 +16,7 @@ pub struct GhostBuilder;
 
 impl GhostBuilder {
 
-    pub fn build_collider(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, vx: f32, vy: f32, m: f32, fric: f32, dim_1: f32, dim_2: f32) -> Entity {
+    pub fn build_collider(world: &mut World, ctx: &mut Context, physics_world: &mut PhysicsWorld, x: f32, y: f32, vx: f32, vy: f32, _m: f32, _fric: f32, dim_1: f32, dim_2: f32) -> Entity {
 
         //Self::init_images(world, ctx);
 

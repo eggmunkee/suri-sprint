@@ -1,17 +1,17 @@
 
 use ggez::{Context};
 use ggez::nalgebra as na;
-use specs::{ Component, DenseVecStorage, VecStorage, NullStorage, World, WorldExt, Entity };
+use specs::{ Component, DenseVecStorage, NullStorage, World, WorldExt, Entity };
 
 use specs_derive::*;
 
 
-use crate::resources::{GameStateResource};
+//use crate::resources::{GameStateResource};
 use crate::core::game_state::{GameState};
-use crate::core::physics::{PhysicsWorld};
-use crate::components::collision::{Collision};
+//use crate::core::physics::{PhysicsWorld};
+//use crate::components::collision::{Collision};
 use crate::components::player::{CharacterDisplayComponent};
-use crate::components::npc::{NpcComponent};
+//use crate::components::npc::{NpcComponent};
 use crate::components::sprite::{SpriteComponent,MultiSpriteComponent,ParallaxSpriteComponent};
 use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::components::particle_sys::{ParticleSysComponent};
@@ -24,6 +24,7 @@ pub trait RenderItemTarget {
 
 // Defines the types to call on to render
 #[derive(Debug,Clone,PartialEq)]
+#[allow(dead_code)]
 pub enum RenderLayerType {
     WindowBackground,
     LevelLayer,
@@ -73,6 +74,7 @@ impl RenderFlag {
         }
     }
 
+    #[allow(dead_code)]
     pub fn from_layers(layer_types: &Vec::<RenderLayerType>) -> Self {
         let mut layers_copy = Vec::<RenderLayerType>::new();
         for layer_type in layer_types.iter() {
@@ -142,52 +144,52 @@ impl RenderCallInfo {
 #[derive(Default,Component)]
 #[storage(NullStorage)]
 pub struct RenderSpriteFlag;
-impl RenderSpriteFlag {
-    pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
-        pos: &na::Point2<f32>, item_index: usize) {
-        SpriteComponent::render_item(game_state, ctx, entity, pos, item_index);
-    }
-}
+// impl RenderSpriteFlag {
+//     pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+//         pos: &na::Point2<f32>, item_index: usize) {
+//         SpriteComponent::render_item(game_state, ctx, entity, pos, item_index);
+//     }
+// }
 
 #[derive(Default,Component)]
 #[storage(NullStorage)]
 pub struct RenderMultiSpriteFlag;
-impl RenderMultiSpriteFlag {
-    pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
-        pos: &na::Point2<f32>, item_index: usize) {
-        MultiSpriteComponent::render_item(game_state, ctx, entity, pos, item_index);
-    }
-}
+// impl RenderMultiSpriteFlag {
+//     pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+//         pos: &na::Point2<f32>, item_index: usize) {
+//         MultiSpriteComponent::render_item(game_state, ctx, entity, pos, item_index);
+//     }
+// }
 
 #[derive(Default,Component)]
 #[storage(NullStorage)]
 pub struct RenderAnimSpriteFlag;
-impl RenderAnimSpriteFlag {
-    pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
-        pos: &na::Point2<f32>, item_index: usize) {
-        AnimSpriteComponent::render_item(game_state, ctx, entity, pos, item_index);
-    }
-}
+// impl RenderAnimSpriteFlag {
+//     pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+//         pos: &na::Point2<f32>, item_index: usize) {
+//         AnimSpriteComponent::render_item(game_state, ctx, entity, pos, item_index);
+//     }
+// }
 
 #[derive(Default,Component)]
 #[storage(NullStorage)]
 pub struct RenderCharacterFlag;
-impl RenderCharacterFlag {
-    pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
-        pos: &na::Point2<f32>, item_index: usize) {
-        CharacterDisplayComponent::render_item(game_state, ctx, entity, pos, item_index);
-    }
-}
+// impl RenderCharacterFlag {
+//     pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+//         pos: &na::Point2<f32>, item_index: usize) {
+//         CharacterDisplayComponent::render_item(game_state, ctx, entity, pos, item_index);
+//     }
+// }
 
 #[derive(Default,Component)]
 #[storage(NullStorage)]
 pub struct RenderParticleSysFlag;
-impl RenderParticleSysFlag {
-    pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
-        pos: &na::Point2<f32>, item_index: usize) {
-        ParticleSysComponent::render_item(game_state, ctx, entity, pos, item_index);
-    }
-}
+// impl RenderParticleSysFlag {
+//     pub fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
+//         pos: &na::Point2<f32>, item_index: usize) {
+//         ParticleSysComponent::render_item(game_state, ctx, entity, pos, item_index);
+//     }
+// }
 
 
 // Register all possible components for world

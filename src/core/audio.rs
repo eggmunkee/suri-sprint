@@ -77,14 +77,10 @@ impl Audio {
 
     pub fn incr_music_volume(&mut self) {
         let new_level = Self::limit_volume(self.base_music_volume + 0.05);
-            //(((self.base_music_volume - 0.05) * 20.0).round()
-            /// 20.0).min(2.0);
         self.set_music_volume(new_level);
     }
     pub fn decr_music_volume(&mut self) {
         let new_level = Self::limit_volume(self.base_music_volume - 0.05);
-        // let new_level = (((self.base_music_volume - 0.05) * 20.0).round()
-        //     / 20.0).max(0.0);
         self.set_music_volume(new_level);
     }
 
@@ -126,7 +122,7 @@ impl Audio {
                 source.set_volume(vol * 0.05);
                 println!("Is music playing? {}", &source.playing());
                 source.set_repeat(true);
-                source.play();
+                let _err = source.play().is_err();
     
                 self.music_source = Some(source);
                 self.song_path = song_path;
@@ -143,13 +139,14 @@ impl Audio {
                     source.resume();
                 }
                 else if !source.playing() {
-                    source.play();
+                    let _err = source.play().is_err();
                 }
             }
         }
     }
 
-    pub fn stop_music(&mut self, ctx: &mut Context) {
+    #[allow(dead_code)]
+    pub fn stop_music(&mut self, _ctx: &mut Context) {
         if let Some(ref mut source) = &mut self.music_source {
             source.stop();
         }
@@ -174,7 +171,7 @@ impl Audio {
     pub fn play_meow(&mut self) {
         if let Some(ref mut meow) = &mut self.meow_source {
             if !meow.playing() {
-                meow.play();
+                let _err = meow.play().is_err();
             }
             
         }

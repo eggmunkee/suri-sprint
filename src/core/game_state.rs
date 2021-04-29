@@ -7,20 +7,9 @@ use ggez::nalgebra as na;
 use ggez::{Context, GameResult};
 use ggez::conf::{WindowMode};
 // SPECS game world - world and system running support
-use specs::{World, WorldExt, RunNow};
+use specs::{World, WorldExt};
 // Physics class support
 use wrapped2d::b2;
-
-//use std::collections::hash_map::*;
-//use ggez::event::{self, KeyCode, KeyMods, MouseButton};
-//use ggez::event::{GamepadId, Button, Axis};
-//use winit::dpi::{LogicalPosition};
-//use ggez::graphics;
-//use ggez::graphics::{Rect};
-//use specs::Join;
-//use rand::prelude::*;
-//use std::collections::{HashMap};
-//use wrapped2d::user_data::*;
 
 // =====================================
 // GAME STATE internal support
@@ -45,6 +34,7 @@ use crate::render;
 
 
 #[derive(Clone,Debug,PartialEq)]
+#[allow(dead_code)]
 pub enum DialogType {
     LevelEntry, // message only - level entry style
     DialogInfo, // message only - dialog / thought bubble style
@@ -113,6 +103,7 @@ impl RunningState {
             custom_bg: None, text_color: Some(Color::new(0.9, 0.9, 0.9, 1.0)) }
     }
 
+    #[allow(dead_code)]
     pub fn game_dialog(msg: String, choices: Option<Vec<DialogChoice>>) -> RunningState {
         let dialog_type = match &choices {
             Some(_) => DialogType::DialogChoices,
@@ -334,12 +325,7 @@ impl GameState {
 
     }
 
-    pub fn set_gravity(&mut self, gravity: f32) {
-        self.gravity_scale = gravity;
-        physics::update_world_gravity(&mut self.phys_world, (gravity, gravity));
-    }
-
-    pub fn set_gravity_ext(&mut self, gravity: (f32, f32)) {
+    pub fn set_gravity(&mut self, gravity: (f32, f32)) {
         //self.gravity_scale = gravity;
         physics::update_world_gravity(&mut self.phys_world, gravity);
     }
@@ -513,10 +499,10 @@ impl GameState {
         
         match &lvl_type {
             LevelType::Platformer => {
-                self.set_gravity_ext((self.gravity_x, self.gravity_scale));
+                self.set_gravity((self.gravity_x, self.gravity_scale));
             },
             LevelType::Overhead | LevelType::Space => {
-                self.set_gravity_ext((0.0, 0.0));
+                self.set_gravity((0.0, 0.0));
             }
         };
     }
@@ -542,7 +528,7 @@ impl GameState {
         crate::conf::save_ron_config(save_path, &self.level);
     }
 
-    pub fn actual_load_empty_level(&mut self, ctx: &mut Context) {
+    pub fn actual_load_empty_level(&mut self, _ctx: &mut Context) {
         // load level from file
         self.level = LevelConfig {
             name: "Empty".to_string(),
@@ -665,7 +651,7 @@ impl GameState {
         self.menu_stack.len() > 0 || self.ui_game_display_zoom < 1.0
     }
 
-    pub fn game_key_down(&mut self, ctx: &mut Context, key: &InputKey) {
+    pub fn game_key_down(&mut self, _ctx: &mut Context, _key: &InputKey) {
         
     }
 
@@ -937,21 +923,14 @@ impl GameState {
     pub fn toggle_fullscreen_mode(&mut self, ctx: &mut Context) {
         let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
 
-        let mut new_fs_type : ggez::conf::FullscreenType = ggez::conf::FullscreenType::Windowed;
-        match game_state_writer.window_mode.fullscreen_type {
-            ggez::conf::FullscreenType::Windowed => {
-                new_fs_type = ggez::conf::FullscreenType::Desktop;
-            },
-            ggez::conf::FullscreenType::Desktop => {
-                new_fs_type = ggez::conf::FullscreenType::True;
-            },
-            ggez::conf::FullscreenType::True => {
-                new_fs_type = ggez::conf::FullscreenType::Windowed;
-            }
-        }
+        let new_fs_type = match game_state_writer.window_mode.fullscreen_type {
+            ggez::conf::FullscreenType::Windowed => ggez::conf::FullscreenType::Desktop,
+            ggez::conf::FullscreenType::Desktop => ggez::conf::FullscreenType::True,
+            ggez::conf::FullscreenType::True => ggez::conf::FullscreenType::Windowed,
+        };
         game_state_writer.window_mode.fullscreen_type = new_fs_type;
 
-        ggez::graphics::set_fullscreen(ctx, new_fs_type);
+        let _ = ggez::graphics::set_fullscreen(ctx, new_fs_type).is_err();
 
         let window = ggez::graphics::window(ctx);
         window.show();

@@ -1,20 +1,20 @@
 
 // Package includes
 use ggez;
-use ggez::graphics;
+//use ggez::graphics;
 use ggez::{Context, GameResult};
-use ggez::conf::{WindowMode};
+//use ggez::conf::{WindowMode};
 use ggez::graphics::{Rect};
 use ggez::event::{self, KeyCode, KeyMods, MouseButton};
 use ggez::event::{GamepadId, Button, Axis};
 use rand::prelude::*;
 
 // Crate includes
-use crate::core::game_state::{GameState,GameMode,RunningState,Menu,MenuItem,DialogChoice};
-use crate::core::input::{InputMap,InputKey};
+use crate::core::game_state::{GameState,RunningState,DialogChoice};
+//use crate::core::input::{InputMap,InputKey};
 use crate::resources::{GameStateResource};
-use crate::components::sprite::{SpriteLayer,SpriteComponent};
-use crate::entities::platform::{PlatformBuilder};
+use crate::components::sprite::{SpriteLayer};
+//use crate::entities::platform::{PlatformBuilder};
 
 
 // Implementation of GGEZ EventHandler - handle or route to methods on Game State
