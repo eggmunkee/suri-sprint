@@ -192,7 +192,7 @@ impl InputSystem {
     // handle input updates for the dialog input system - returning the result state
     pub fn handle_terminal_input(game_state: &mut GameState, time_delta: f32) {
         let mut input = game_state.world.fetch_mut::<InputResource>();
-        // Watch for certain key presses
+        // Check for terminal related key presses
         let mut tilde_pressed = false;
         for key in &input.keys_pressed {
             match key {
@@ -203,34 +203,51 @@ impl InputSystem {
             } 
         }
         input.keys_pressed.clear();
-        drop(input);
 
         if tilde_pressed {
-            game_state.terminal_open = false;
+            input.add_action(WorldAction::ToggleTerminal);
         }
+
+        drop(input);
 
     }
 
     // handle input updates for the dialog input system - returning the result state
     pub fn handle_dialog_input(input: &mut InputResource, game_state: &GameState, time_delta: f32) -> RunningState {
         // Watch for certain key presses
-        let mut exit_pressed = false;
-        let mut tilde_pressed = false;
-        for key in &input.keys_pressed {
+        // let mut exit_pressed = false;
+        // let mut tilde_pressed = false;
+        let keys_pressed = &input.keys_pressed.drain(0..).collect::<Vec<_>>();
+        for key in keys_pressed {
             match key {
                 InputKey::Exit => {
-                    exit_pressed = true;
+                    input.add_action(WorldAction::OpenMenu);
                 },
                 InputKey::ConsoleKey => {
-                    tilde_pressed = true;
+                    input.add_action(WorldAction::ToggleTerminal);
+                },
+                InputKey::P1Up => {
+
+                },
+                InputKey::P1Down => {
+
+                },
+                InputKey::P1Left => {
+
+                },
+                InputKey::P1Right => {
+
                 },
                 _ => {}
             } 
         }
 
-        if exit_pressed {
-            input.add_action(WorldAction::OpenMenu);
-        }
+        // if exit_pressed {
+        //     input.add_action(WorldAction::OpenMenu);
+        // }
+        // if tilde_pressed {
+        //     input.add_action(WorldAction::ToggleTerminal);
+        // }
         
         if input.fire_pressed {
             // Clear fire pressed flag when dialog is closed
@@ -254,13 +271,11 @@ impl InputSystem {
         let mut right_pressed = false;
         let mut down_pressed = false;
         let mut fire_pressed = false;
-        let mut toggle_fullscreen = false;
 
-
-        // Apply vector length to velocity Y
-        let mut exit_pressed = false;
-        
-        for key in &input.keys_pressed {
+        // Get list of keys pressed that need processing
+        let keys_pressed = &input.keys_pressed.drain(0..).collect::<Vec<_>>();
+        //let mut actions = &mut input.actions;
+        for key in keys_pressed {
             match key {
                 InputKey::P1Up => {
                     up_pressed = true;
@@ -275,32 +290,35 @@ impl InputSystem {
                     left_pressed = true;
                 },
                 InputKey::Exit => {
-                    exit_pressed = true;
+                    input.add_action(WorldAction::CloseMenu);
                 },
                 InputKey::P1PrimaryAction | InputKey::Pause => {
                     fire_pressed = true;
                 },
                 InputKey::Fullscreen => {
-                    toggle_fullscreen = true;
+                    input.add_action(WorldAction::ToggleFullscreen);
+                },
+                InputKey::ConsoleKey => {
+                    input.add_action(WorldAction::ToggleTerminal);
                 },
                 _ => {}
             } 
         }
 
-        if exit_pressed {
-            // if game_state.menu_stack.len() > 0 {
-            //     game_state.menu_stack.pop();
-            // }
-            //input.add_action(WorldAction::CloseMenu);
-            input.add_action(WorldAction::CloseMenu);
-        }
-        if toggle_fullscreen {
-            input.add_action(WorldAction::ToggleFullscreen);
-        }
+        // if exit_pressed {
+        //     input.add_action(WorldAction::CloseMenu);
+        // }
+        // if toggle_fullscreen {
+        //     input.add_action(WorldAction::ToggleFullscreen);
+        // }
+        // if tilde_pressed {
+        //     //input.add_action(WorldAction::ToggleTerminal);
+        // }
 
         if game_state.menu_stack.len() > 0 {
             let curr_menu_lvl = game_state.menu_stack.len() - 1;
             let mut curr_menu = &mut game_state.menu_stack[curr_menu_lvl];
+            let items_len = curr_menu.items.len() as i32;
 
             //let mut open_menu_name = String::new();
             if fire_pressed {
@@ -345,7 +363,7 @@ impl InputSystem {
                     let mut test_index = curr_menu.selected_index - 1;
 
                     let mut found_valid_item = false;
-                    while (!found_valid_item && test_index >= 0) {
+                    while !found_valid_item && test_index >= 0 && test_index < items_len {
                         match &curr_menu.items[test_index as usize] {
                             MenuItem::Header(_) => {
         
@@ -365,8 +383,26 @@ impl InputSystem {
                 }
             }
             else if down_pressed {
-                if curr_menu.selected_index + 1 < curr_menu.items.len() as i32 {
-                    curr_menu.selected_index = curr_menu.selected_index + 1;
+                if curr_menu.selected_index + 1 < items_len {
+
+                    let mut test_index = curr_menu.selected_index + 1;
+
+                    let mut found_valid_item = false;
+                    while !found_valid_item && test_index >= 0 && test_index < items_len {
+                        match &curr_menu.items[test_index as usize] {
+                            MenuItem::Header(_) => {        
+                            },
+                            _ => {
+                                found_valid_item = true;
+                                break;
+                            }
+                        }
+                        test_index = test_index + 1;
+                    }
+
+                    if found_valid_item {
+                        curr_menu.selected_index = test_index;
+                    }
                 }
             }
 
