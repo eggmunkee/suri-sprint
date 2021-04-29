@@ -200,11 +200,11 @@ impl event::EventHandler for GameState {
             // ggez::graphics::set_fullscreen(ctx, new_fs_type);
         }
         // reload current level
-        else if keycode == KeyCode::R {
-            //self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
-            self.restart_level(ctx);
+        // else if keycode == KeyCode::R {
+        //     //self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
+        //     self.restart_level(ctx);
 
-        }        
+        // }        
         //
         if keycode == KeyCode::RBracket {
             // let new_level = (self.audio.base_music_volume + 0.05).min(2.0);
@@ -287,9 +287,9 @@ impl event::EventHandler for GameState {
 
     fn text_input_event(&mut self, _ctx: &mut Context, ch: char) {
         //println!("Text input: {}", ch);
-        // if self.terminal_open {
-        //     self.input_map.text_typed(&mut self.world, ch);
-        // }
+        if self.terminal_open {
+            self.input_map.text_typed(&mut self.world, ch);
+        }
         
     }
 

@@ -30,6 +30,7 @@ pub enum InputKey {
     EditMode,
     Fullscreen,
     ConsoleKey,
+    RestartLevel,
     None
 }
 
@@ -102,6 +103,7 @@ impl InputMap {
         input_map.input_settings.push(InputSetting::code(KeyCode::F11, InputKey::Fullscreen));
         input_map.input_settings.push(InputSetting::code(KeyCode::G, InputKey::CheatGoAnywhere));
         input_map.input_settings.push(InputSetting::code(KeyCode::Grave, InputKey::ConsoleKey));
+        input_map.input_settings.push(InputSetting::code(KeyCode::R, InputKey::RestartLevel));
         
 
         // Gamepad Buttons
@@ -315,13 +317,13 @@ impl InputMap {
     //     //world.fetch_mut::<InputResource>().cmd_text.clear();
     // }
 
-    // pub fn text_typed(&self, world: &mut World, c: char) {
+    pub fn text_typed(&self, world: &mut World, c: char) {
         
-    //     // let mut input = world.fetch_mut::<InputResource>();
-    //     // if input.cmd_text.len() < 380 {
-    //     //     input.cmd_text.push(c);
-    //     // }
-    // }
+        let mut input = world.fetch_mut::<InputResource>();
+        if input.cmd_text.len() < 380 {
+            input.cmd_text.push(c);
+        }
+    }
 
     pub fn key_up(&self, world: &mut World,
         ctx: &mut Context,

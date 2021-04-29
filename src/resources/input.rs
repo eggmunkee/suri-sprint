@@ -12,7 +12,7 @@ pub enum WorldAction {
     RestartLevel,
     NewGame,
     ToggleFullscreen,
-    //ToggleConsole,
+    ToggleTerminal,
     None
 }
 impl Default for WorldAction {
@@ -31,7 +31,7 @@ pub struct InputResource {
     pub actions: Vec::<WorldAction>,
     pub keys_pressed: Vec::<InputKey>,
     pub exit_flag: bool,
-    //pub cmd_text: String,
+    pub cmd_text: String,
 }
 
 impl InputResource {

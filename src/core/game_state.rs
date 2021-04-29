@@ -96,9 +96,9 @@ impl Menu {
     }
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,PartialEq)]
 #[allow(dead_code)]
-pub enum UpdateMode {
+pub enum GameStateUpdateMode {
     PlayUpdate,
     PausedUpdate,
     MenuUpdate,
@@ -666,36 +666,7 @@ impl GameState {
     }
 
     pub fn game_key_down(&mut self, ctx: &mut Context, key: &InputKey) {
-        match &key {
-            InputKey::Exit => {
-                // if self.menu_stack.len() > 0 {
-                //     self.menu_stack.pop();
-                // }
-                // else {
-                //     ggez::event::quit(ctx);
-                // }       
-                
-                if self.mode == GameMode::Play && self.menu_stack.len() > 0 {
-
-                }
-            },
-            InputKey::Pause => {
-                // match self.current_state {
-                //     State::Paused => {
-                //         self.play();
-                //     },
-                //     State::Running => {
-                //         match self.running_state {
-                //             RunningState::Playing => {
-                //                 self.pause();
-                //             },
-                //             _ => {} // don't pause on dialogs
-                //         }
-                //     }
-                // }
-            },
-            _ => {}
-        }
+        
     }
 
     pub fn game_key_up(&mut self, _ctx: &mut Context, key: &InputKey) {
@@ -719,22 +690,19 @@ impl GameState {
     }
 
 
-    // fn get_update_mode(&self) -> UpdateMode {
-    //     let term_open = false;
-    //     let menus_open = self.menu_stack.len() > 0 || self.ui_game_display_zoom < 1.0;
-    //     let is_game_running = match &self.current_state { State::Running => true, _ => false };
+    fn get_update_mode(&self) -> GameStateUpdateMode {
+        let term_open = self.terminal_open;
+        let menus_open = self.menu_stack.len() > 0 || self.ui_game_display_zoom < 1.0;
+        let is_game_running = match &self.current_state { State::Running => true, State::Paused => false };
         
-    //     match term_open {
-    //         true => UpdateMode::TerminalUpdate,
-    //         _ => match menus_open {
-    //             true => UpdateMode::MenuUpdate,
-    //             _ => match is_game_running {
-    //                 true => UpdateMode::PlayUpdate,
-    //                 false => UpdateMode::PausedUpdate
-    //             }
-    //         }
-    //     }
-    // }
+        // Select mode by priority - terminal, then menus, then gameplay vs paused
+        match (term_open, menus_open, is_game_running) {
+            (true, _, _) => GameStateUpdateMode::TerminalUpdate,
+            (_, true, _) => GameStateUpdateMode::MenuUpdate,
+            (_, _, true) => GameStateUpdateMode::PlayUpdate,
+            (_, _, false) => GameStateUpdateMode::PausedUpdate,
+        }
+    }
 
     pub fn handle_update_event(&mut self, ctx: &mut Context) -> GameResult {
         let time_scale = 1.0;
@@ -743,78 +711,43 @@ impl GameState {
         
         // MASTER UPDATE SWITCH 
         // UPDATES ONE OF:
-        //  MENU system
         //  PLAY system
         //  PAUSED system
+        //  MENU system
         //  TERMINAL system
-        //let update_mode = self.get_update_mode();
-        //println!("Update mode: {:?}", &update_mode);
-       
-        // match update_mode {
-        //     UpdateMode::MenuUpdate => {
-        //         CoreSystem::run_menu_step(self, ctx, delta_s);
-        //     },
-        //     UpdateMode::PlayUpdate => {
-        //         //self.run_update_step(ctx, delta_s);
-        //         CoreSystem::run_update_step(self, ctx, delta_s);
 
-        //         // Auto-open menu after 5 seconds of loading splashscreen
-        //         if self.current_level_name == "" && game_run_secs > 5.0 && game_run_secs < 5.5 {
-        //             if self.menu_stack.len() == 0 {
-        //                 self.open_menu();
+        let update_mode = self.get_update_mode();
 
-        //                 self.world.fetch_mut::<GameStateResource>().game_run_seconds = 10.0;
-        //             }                        
-        //         }
-        //     },
-        //     UpdateMode::PausedUpdate => {
-        //         CoreSystem::run_pause_step(self, ctx, delta_s);
-        //     },
-        //     UpdateMode::TerminalUpdate => {
-        //         //CoreSystem::run_terminal_step(self, ctx, delta_s);
-        //     },
-        //     _ => {}
-        // }
-        
         // Only update world state when game is running (not paused)
-        let menu_lvls = self.menu_stack.len();
-        if menu_lvls > 0 || self.ui_game_display_zoom < 1.0 {
-            //let input_res = self.world.fetch::<InputResource>();
-            CoreSystem::run_menu_step(self, ctx, delta_s);
-        }
-        else {
-            match &self.current_state {
-                State::Running => {
-    
-                    //self.run_update_step(ctx, delta_s);
-                    CoreSystem::run_update_step(self, ctx, delta_s);
+        //let menu_lvls = self.menu_stack.len();
+        match update_mode {
 
-                    // Auto-open menu after 5 seconds of loading splashscreen
-                    if self.current_level_name == "" && game_run_secs > 5.0 && game_run_secs < 5.5 {
-                        if self.menu_stack.len() == 0 {
-                            self.open_menu();
-
-                            self.world.fetch_mut::<GameStateResource>().game_run_seconds = 10.0;
-                        }                        
-                    }
-    
-                },
-                State::Paused => {
-    
-                    // // Run one update step per second while paused
-                    // if self.paused_anim > 0.25 {
-                    //     //self.run_update_step(ctx, delta_s);
-                    //     CoreSystem::run_update_step(self, ctx, delta_s);
-                    //     self.paused_anim = 0.0;
-                    // }
-    
-                    CoreSystem::run_pause_step(self, ctx, delta_s);
-    
-                }
-            }
-        } 
-
+            GameStateUpdateMode::PlayUpdate => {
         
+                //self.run_update_step(ctx, delta_s);
+                CoreSystem::run_update_step(self, ctx, delta_s);
+
+                // Auto-open menu after 5 seconds of loading splashscreen
+                if self.current_level_name == "" && game_run_secs > 5.0 && game_run_secs < 5.5 {
+                    if self.menu_stack.len() == 0 {
+                        self.open_menu();
+
+                        self.world.fetch_mut::<GameStateResource>().game_run_seconds = 10.0;
+                    }                        
+                }
+
+            },
+            GameStateUpdateMode::PausedUpdate => {
+                CoreSystem::run_pause_step(self, ctx, delta_s);
+            },
+            GameStateUpdateMode::MenuUpdate => {
+                CoreSystem::run_menu_step(self, ctx, delta_s);
+            },
+            GameStateUpdateMode::TerminalUpdate => {
+                CoreSystem::run_terminal_step(self, ctx, delta_s);
+            },
+            GameStateUpdateMode::NoUpdate => {}
+        }
 
         // always ok result
         Ok(())
@@ -1026,7 +959,13 @@ impl GameState {
 
     pub fn restart_level(&mut self, ctx: &mut Context) {
         self.add_log("Restarting Level".to_string());
-        self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
+        if self.current_level_name.is_empty() {
+            self.empty_level(ctx);
+        }
+        else {
+            self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
+        }
+        
     }
 
     pub fn set_timescale(&mut self, new_time_multiplier: f32) {

@@ -1266,7 +1266,7 @@ impl Renderer {
             let cursor_blink = game_state.world.fetch::<GameStateResource>().game_run_seconds % 1.0 > 0.6;
             // Get string value of cursor
             let cursor_val = match cursor_blink { true => "█", false => "_" };
-            let cmd_text = "set_points 125"; //game_state.world.fetch::<InputResource>().cmd_text.clone();
+            let cmd_text = game_state.world.fetch::<InputResource>().cmd_text.clone();
             DialogRenderer::render_at(game_state, ctx, format!(">{}{}", &cmd_text, &cursor_val),
                 0.5, 0.94, 0.98, 0.09, 
                 Color::new(0.3, 0.3, 0.3, 1.0),

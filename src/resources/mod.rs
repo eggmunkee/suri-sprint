@@ -82,7 +82,7 @@ pub fn add_resources(world: &mut World, ctx: &mut Context) {
         actions: vec![],
         keys_pressed: vec![],
         exit_flag: false,
-        //cmd_text: String::new(),
+        cmd_text: String::new(),
     });
 
 

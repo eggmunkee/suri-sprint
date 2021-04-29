@@ -60,27 +60,27 @@ impl CoreSystem {
     pub fn run_terminal_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
         Self::run_frame_time_update(game_state, ctx, time_delta, false);
 
+        //println!("TERMINAL STEP");
+        InputSystem::handle_terminal_input(game_state, time_delta);
 
-        // InputSystem::handle_terminal_input(game_state, time_delta);
+        {
+            let mut input = game_state.world.fetch_mut::<InputResource>();
+            let wactions = input.actions.drain(0..).collect::<Vec<_>>();
 
-        // let mut input = game_state.world.fetch_mut::<InputResource>();
-        // let wactions = input.actions.drain(0..).collect::<Vec<_>>();
-        // input.clear_actions();
-        // drop(input);
+            for world_action in &wactions {
+                match world_action {
+                    WorldAction::ToggleTerminal => {
+                        //println!("Open Menu");
+                        game_state.terminal_open = false;
+                        println!("[term step] Terminal Open set to {}", &game_state.terminal_open);
+                    },
+                    _ => {}
+                }
+            }
 
-        // for world_action in &wactions {
-        //     match world_action {
-        //         WorldAction::ToggleConsole => {
-        //             //println!("Open Menu");
-        //             game_state.set_terminal_open(false);
-        //             println!("[term step] Terminal Open set to {}", &game_state.terminal_open);
-        //         },
-        //         _ => {}
-        //     }
-        // }
-        // if input.exit_flag {
-        //     ggez::event::quit(ctx);
-        // }
+            input.clear_actions();
+            drop(input);
+        }
 
 
         //Self::clear_inputs(game_state);
@@ -92,8 +92,9 @@ impl CoreSystem {
     pub fn run_menu_step(game_state: &mut GameState, ctx: &mut Context, time_delta: f32) {
         Self::run_frame_time_update(game_state, ctx, time_delta, false);
 
+        // Animate exiting the menu - by zooming the game view back to 100% (1.0)
+        //  Render mod references ui_game_display_zoom
         let exiting_menu = game_state.menu_stack.len() == 0;
-
         if exiting_menu {
             if game_state.ui_game_display_zoom < 1.0 {
                 if game_state.ui_game_display_zoom < 0.3 {
@@ -110,6 +111,8 @@ impl CoreSystem {
                 }
             }
         }
+        // Animate the fading away of the game view to 0% scale and alpha
+        //  decrement ui_game_display_zoom down to zero
         else {
             //println!("Running menu step");
             if game_state.ui_game_display_zoom > 0.0 {
@@ -166,10 +169,10 @@ impl CoreSystem {
                     WorldAction::ToggleFullscreen => {
                         game_state.toggle_fullscreen_mode(ctx);
                     },
-                    // WorldAction::ToggleConsole => {
-                    //     game_state.toggle_terminal();
-                    //     println!("[menu step - toggle] Terminal Open set to {}", &game_state.terminal_open);
-                    // },
+                    WorldAction::ToggleTerminal => {
+                        game_state.terminal_open = true; //toggle_terminal();
+                        println!("[menu step - toggle] Terminal Open set to {}", &game_state.terminal_open);
+                    },
                     _ => {}
                 }
             }
@@ -190,7 +193,7 @@ impl CoreSystem {
             }
         }
 
-        Self::clear_inputs(game_state);
+        //Self::clear_inputs(game_state);
     }
 
     // Run non-paused update of world - Edit mode, Play mode (Playing/Dialog)
@@ -272,50 +275,48 @@ impl CoreSystem {
 
         let mut start_pause = false;
         let mut open_menu = false;
-        //let mut open_terminal = false;
+        let mut open_terminal = false;
         let mut slow_mode = false;
         let mut go_anywhere_mode = false;
         let mut toggle_fullscreen = false;
         {
-            let input = game_state.world.fetch_mut::<InputResource>();
-            if input.keys_pressed.len() > 0 {
-                //println!("Frame Key Presses: - - - - - -");
-                for key in &input.keys_pressed {
-                    //println!("InputKey Pressed: {:?}", &key);
-                    if menu_lvls == 0 {
-                        if key == &InputKey::Pause {
-                            // match game_state.current_state {
-                            //     State::Paused => {
-                            //         // println!("Pause activated -------------------------");
-                            //         // start_play = true;
-                            //     },
-                            //     State::Running => {
-                            if game_state.running_state == RunningState::Playing {
-                                //RunningState::Playing => {
-                                //println!("Pause activated -------------------------");
-                                start_pause = true;
-                                //},
-                                //_ => {} // don't pause on dialogs
-                            }
-                            //     }
-                            // }
-                        }
-                        else if key == &InputKey::Exit {
-                            open_menu = true;
-                        }
-                        else if key == &InputKey::SlowMode {
-                            slow_mode = true;
-                        }
-                        else if key == &InputKey::CheatGoAnywhere {
-                            go_anywhere_mode = true;
-                        }
-                        else if key == &InputKey::Fullscreen {
-                            toggle_fullscreen = true;
-                        }
-                        // else if key == &InputKey::ConsoleKey {
-                        //     open_terminal = true;
-                        // }
-                    } 
+            let mut input = game_state.world.fetch_mut::<InputResource>();
+            // empty keys_pressed data into a Vec for iteration
+            let keys_pressed = input.keys_pressed.drain(0..).collect::<Vec<_>>();
+            //println!("Frame Key Presses: - - - - - -");
+            for key in &keys_pressed {
+                //println!("InputKey Pressed: {:?}", &key);
+                if key == &InputKey::Pause {
+                    // match game_state.current_state {
+                    //     State::Paused => {
+                    //         // println!("Pause activated -------------------------");
+                    //         // start_play = true;
+                    //     },
+                    //     State::Running => {
+                    if game_state.running_state == RunningState::Playing {
+                        //RunningState::Playing => {
+                        //println!("Pause activated -------------------------");
+                        start_pause = true;
+                        //},
+                        //_ => {} // don't pause on dialogs
+                    }
+                    //     }
+                    // }
+                }
+                else if key == &InputKey::Exit {
+                    open_menu = true;
+                }
+                else if key == &InputKey::SlowMode {
+                    slow_mode = true;
+                }
+                else if key == &InputKey::CheatGoAnywhere {
+                    go_anywhere_mode = true;
+                }
+                else if key == &InputKey::Fullscreen {
+                    toggle_fullscreen = true;
+                }
+                else if key == &InputKey::ConsoleKey {
+                    open_terminal = true;
                 }
                 //println!(" - - - - - - - - - - - - - - -");
             }
@@ -324,30 +325,11 @@ impl CoreSystem {
                 ggez::event::quit(ctx);
             }
 
-            drop(input);
+            //drop(input);
         }
 
-        Self::clear_inputs(game_state);
+        //Self::clear_inputs(game_state);
 
-        {
-            //let curr_game_time = game_state.world.fetch::<GameStateResource>().game_run_seconds;
-            //let curr_game_time = 
-            let mut log = game_state.world.fetch_mut::<GameLog>();
-
-            let mut delete_to_index = -1;
-            for entry in log.entries.iter_mut() {
-                entry.time_left -= time_delta;
-                if entry.time_left <= 0.0 {
-                    delete_to_index += 1; // -1 to 0 for 1st, 0 to 1 for 2nd
-                }
-            }
-            // remove first entry for [delete_to_index] times
-            while delete_to_index >= 0 && log.entries.len() > 0 {
-                log.entries.remove(0);
-                delete_to_index -= 1;
-            }
-            
-        }
 
         if start_pause {
             game_state.pause();
@@ -355,10 +337,10 @@ impl CoreSystem {
         else if open_menu {
             game_state.open_menu();
         }
-        // else if open_terminal {
-        //     game_state.set_terminal_open(true);
-        //     println!("[run update step] Terminal Open set to {}", &game_state.terminal_open);
-        // }
+        else if open_terminal {
+            game_state.terminal_open = true;
+            println!("[run update step] Terminal Open set to {}", &game_state.terminal_open);
+        }
         else if slow_mode {
             let curr_scale = game_state.play_time_scale;
             if curr_scale >= 1.0 {
@@ -405,6 +387,28 @@ impl CoreSystem {
     
             // }
         }
+
+        // GAME LOG PROCESSING
+        {
+            //let curr_game_time = game_state.world.fetch::<GameStateResource>().game_run_seconds;
+            //let curr_game_time = 
+            let mut log = game_state.world.fetch_mut::<GameLog>();
+
+            let mut delete_to_index = -1;
+            for entry in log.entries.iter_mut() {
+                entry.time_left -= time_delta;
+                if entry.time_left <= 0.0 {
+                    delete_to_index += 1; // -1 to 0 for 1st, 0 to 1 for 2nd
+                }
+            }
+            // remove first entry for [delete_to_index] times
+            while delete_to_index >= 0 && log.entries.len() > 0 {
+                log.entries.remove(0);
+                delete_to_index -= 1;
+            }
+            
+        }
+
 
     }
 
