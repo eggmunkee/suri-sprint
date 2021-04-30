@@ -24,6 +24,8 @@ use crate::core::physics::{PhysicsWorld,ContactFilterConfig};
 use crate::core::input::{InputKey,InputMap};
 // Core Game System - runs other systems and physics simulation
 use crate::core::system::{CoreSystem};
+// Core Dialog/Menu types
+use crate::core::menu_dialog::{DialogType,DialogChoice,Menu,MenuItem};
 // Global SPECS Resource classes
 use crate::resources::{GameStateResource,ConnectionResource,Camera,GameLog};
 // Level definition support
@@ -33,21 +35,6 @@ use crate::entities::geometry::{LevelGridData};
 use crate::render;
 
 
-#[derive(Clone,Debug,PartialEq)]
-#[allow(dead_code)]
-pub enum DialogType {
-    LevelEntry, // message only - level entry style
-    DialogInfo, // message only - dialog / thought bubble style
-    DialogChoices, // message + choice of responses - dialog
-    WorldDialog, // custom styled dialog representing a world object
-    WorldChoices, // custom styled dialog representing a world object + choice of responses - dialog
-}
-
-#[derive(Clone,Debug,PartialEq)]
-pub struct DialogChoice {
-    pub message: String,
-    pub key: String,
-}
 
 #[derive(Clone,Debug,PartialEq)]
 pub enum RunningState {
@@ -63,28 +50,6 @@ pub enum RunningState {
     },  
 }
 
-#[derive(Clone,Debug,PartialEq)]
-pub enum MenuItem {
-    Header(String),
-    ToggleItem{ name: String, key: String, value: bool },
-    RangeItem{ name: String, key: String, min: f32, max: f32, incr: f32, value: f32 },
-    ButtonItem{ name: String, key: String},
-}
-
-#[derive(Clone,Debug,PartialEq)]
-pub struct Menu {
-    pub items : Vec<MenuItem>,
-    pub selected_index : i32,
-}
-
-impl Menu {
-    pub fn new(header_name: String) -> Self {
-        Menu {
-            items: vec![MenuItem::Header(header_name)],
-            selected_index: -1,
-        }
-    }
-}
 
 #[derive(Debug,Clone,PartialEq)]
 #[allow(dead_code)]
@@ -283,7 +248,7 @@ impl GameState {
             world: ecs_world,
             font: font,
             phys_world: physics_world,
-            input_map: InputMap::new(),
+            input_map: InputMap::load_or_init_inputmap(),
             gravity_scale: gravity,
             gravity_x: 0.0,
             ghost_player_contact: ghost_player_contact,
@@ -302,7 +267,7 @@ impl GameState {
             warp_level_entry_name: "".to_string(),
             paused_anim: 0.0,
             ui_game_display_zoom: 1.0,
-            terminal_open: true,
+            terminal_open: false,
 
             audio: audio_engine,
             debug_logic_frames: 0,

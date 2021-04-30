@@ -1,11 +1,12 @@
 use ggez::nalgebra as na;
-use ggez::{Context};
+//use ggez::{Context};
 use specs::prelude::*;
-use wrapped2d::b2;
+//use wrapped2d::b2;
 use rand::prelude::*;
 
 use crate::core::{GameState,RunningState};
-use crate::core::game_state::{MenuItem,State};
+use crate::core::menu_dialog::{MenuItem};
+use crate::core::game_state::{State};
 use crate::core::input::{InputKey};
 use crate::resources::{InputResource,WorldAction,GameStateResource,Camera};
 use crate::components::*;
@@ -14,7 +15,7 @@ use crate::components::player::*;
 use crate::components::npc::{NpcComponent};
 use crate::components::button::{ButtonComponent};
 use crate::entities::level_builder::{LevelType};
-use crate::core::physics::{CollisionCategory,PhysicsWorld};
+//use crate::core::physics::{CollisionCategory,PhysicsWorld};
 
 // handle input state to control Players
 // every frame, operate on velocity of player components
@@ -33,8 +34,8 @@ impl InputSystem {
         }
     }
 
-    fn handle_npc_input<'a>(&mut self, v: &mut (&mut Collision, &mut NpcComponent, Entity), input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32, level_type: &LevelType) {
+    fn handle_npc_input<'a>(&mut self, v: &mut (&mut Collision, &mut NpcComponent, Entity), _input: &InputResource,
+        _ent: &Entities, _lazy: &Read<'a, LazyUpdate>, time_delta: f32, level_type: &LevelType) {
         let (coll, npc, _e) = v;
 
         let x = coll.pos.x;
@@ -56,12 +57,12 @@ impl InputSystem {
 
     // handle input updates from an entity
     fn handle_player_input<'a>(&mut self, v: &mut (&mut Collision, &mut CharacterDisplayComponent, Entity), input: &InputResource,
-        ent: &Entities, lazy: &Read<'a, LazyUpdate>, time_delta: f32, level_type: &LevelType) {
+        _ent: &Entities, _lazy: &Read<'a, LazyUpdate>, time_delta: f32, level_type: &LevelType) {
         let (coll, character, _e) = v;
 
         let body_movement = coll.get_movement();
-        let char_x = coll.pos.x;
-        let char_y = coll.pos.y;
+        // let char_x = coll.pos.x;
+        // let char_y = coll.pos.y;
 
         let mut up_pressed = false;
         let mut left_pressed = false;
@@ -151,7 +152,7 @@ impl InputSystem {
     }
 
     // handle input updates from an entity
-    pub fn handle_paused_input(game_state: &mut GameState, time_delta: f32) {
+    pub fn handle_paused_input(game_state: &mut GameState, _time_delta: f32) {
 
         // Check Input Resources for Pause Key Presses
         let mut start_play = false;
@@ -190,7 +191,7 @@ impl InputSystem {
     }
 
     // handle input updates for the dialog input system - returning the result state
-    pub fn handle_terminal_input(game_state: &mut GameState, time_delta: f32) {
+    pub fn handle_terminal_input(game_state: &mut GameState, _time_delta: f32) {
         let mut input = game_state.world.fetch_mut::<InputResource>();
         // Check for terminal related key presses
         let mut tilde_pressed = false;
@@ -213,7 +214,7 @@ impl InputSystem {
     }
 
     // handle input updates for the dialog input system - returning the result state
-    pub fn handle_dialog_input(input: &mut InputResource, game_state: &GameState, time_delta: f32) -> RunningState {
+    pub fn handle_dialog_input(input: &mut InputResource, game_state: &GameState, _time_delta: f32) -> RunningState {
         // Watch for certain key presses
         // let mut exit_pressed = false;
         // let mut tilde_pressed = false;
@@ -262,7 +263,7 @@ impl InputSystem {
     }
 
     // handle input updates from an entity
-    pub fn handle_menu_input(game_state: &mut GameState, time_delta: f32) {
+    pub fn handle_menu_input(game_state: &mut GameState, _time_delta: f32) {
 
         let mut input = game_state.world.fetch_mut::<InputResource>();
 
@@ -469,8 +470,8 @@ impl<'a> System<'a> for InputSystem {
                         Entities<'a>,
                         Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (mut coll, mut char_display, mut npc, mut buttons,
-        mut game_state, mut input, mut camera, mut ent, lazy): Self::SystemData) {
+    fn run(&mut self, (mut coll, mut char_display, mut npc, mut _buttons,
+        mut game_state, input, camera, ent, lazy): Self::SystemData) {
 
         let time_delta = game_state.delta_seconds;
         let level_type = game_state.level_type.clone();
@@ -581,17 +582,13 @@ impl<'a> System<'a> for InputSystem {
         drop(list);
 
 
-        let mut player_1_char_num = -1;
-        {
-            player_1_char_num = game_state.player_1_char_num;
-            
-        }
+        let player_1_char_num = game_state.player_1_char_num;
 
         // get vec of character components
         let mut list = (&mut coll, &mut char_display, &ent).join().collect::<Vec<_>>();
 
-        let mut char_x : f32 = 0.0;
-        let mut char_y : f32 = 0.0;
+        // let mut char_x : f32 = 0.0;
+        // let mut char_y : f32 = 0.0;
 
         let mut found_player_target = false;
 
@@ -608,8 +605,8 @@ impl<'a> System<'a> for InputSystem {
                     //let (vel, coll, _display, _e) = inn_v;  
                     found_player_target = true;    
     
-                    char_x = (*inn_v.0).pos.x;
-                    char_y = (*inn_v.0).pos.y;
+                    let char_x = (*inn_v.0).pos.x;
+                    let char_y = (*inn_v.0).pos.y;
     
                     game_state.player_target_loc.0 = char_x;
                     game_state.player_target_loc.1 = char_y;

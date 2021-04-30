@@ -6,7 +6,8 @@ use specs::{Entity,WorldExt};
 use crate::core::world::{SuriWorld};
 use crate::components::{Position};
 use crate::entities::level_builder::{LevelBounds,LevelType};
-use crate::core::game_state::{GameState,State,GameMode,RunningState,MenuItem};
+use crate::core::menu_dialog::{MenuItem};
+use crate::core::game_state::{GameState,State,GameMode,RunningState};
 
 #[derive(Default,Debug)]
 pub struct Camera {

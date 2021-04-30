@@ -1,17 +1,21 @@
 
-
+use std::convert::{From};
 use ggez::{Context};
 use ggez::event::{KeyCode,KeyMods,Axis,Button,GamepadId};
 use specs::{World, WorldExt};
+use serde::{Serialize,Deserialize,de::DeserializeOwned};
 
+
+use crate::core::compat::{VKeyCode,VButton};
+use crate::conf::{get_ron_config, save_ron_config};
 use crate::resources::{InputResource,WorldAction};
 use crate::entities::meow::{MeowBuilder};
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Serialize,Deserialize)]
 pub enum MouseInput {
     Left, Middle, Right
 }
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug,Clone,PartialEq,Serialize,Deserialize)]
 pub enum InputKey {
     P1Left,
     P1Right,
@@ -40,21 +44,33 @@ impl Default for InputKey {
     }
 }
 
+// impl Serialize for KeyCode;
+// impl Deserialize for KeyCode;
+
+#[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct InputSetting {
     pub game_key: InputKey,
-    pub code: Option<KeyCode>,
-    pub button: Option<Button>,
-    pub default_code: Option<KeyCode>,
-    pub default_button: Option<Button>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub code: Option<VKeyCode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub button: Option<VButton>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub default_code: Option<VKeyCode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub default_button: Option<VButton>,
 }
 
 impl InputSetting {
     pub fn code(keycode: KeyCode, game_key: InputKey) -> InputSetting {
         InputSetting {
             game_key: game_key,
-            code: Some(keycode),
+            code: Some(VKeyCode::from(keycode)),
             button: None,
-            default_code: Some(keycode),
+            default_code: Some(VKeyCode::from(keycode)),
             default_button: None,
         }
     }
@@ -63,59 +79,99 @@ impl InputSetting {
         InputSetting {
             game_key: game_key,            
             code: None,
-            button: Some(button),
+            button: Some(VButton::from(button)),
             default_code: None,
-            default_button: Some(button),
+            default_button: Some(VButton::from(button)),
         }
     }
 }
 
+#[macro_export]
+macro_rules! key_setting {
+    ( $cls:ident, $raw:ident, $map:ident ) => {
+        $cls.input_settings.push(InputSetting::code(KeyCode::$raw, InputKey::$map))
+    };
+}
+
+#[macro_export]
+macro_rules! button_setting {
+    ( $cls:ident, $raw:ident, $map:ident ) => {
+        $cls.input_settings.push(InputSetting::button(Button::$raw, InputKey::$map))
+    };
+}
+
+#[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct InputMap {
     pub input_settings: Vec<InputSetting>,
 }
 
 impl InputMap {
+    pub fn load_or_init_inputmap() -> Self {
+        let im_result = get_ron_config::<InputMap>("controls".to_string());
+        if im_result.is_some() {
+            println!("Input map loaded...");
+            im_result.unwrap()
+        }   
+        else {
+            println!("Input map defaulting...");
+            let default = Self::new();
+
+            save_ron_config::<InputMap>("controls".to_string(), &default);
+
+            default
+        }     
+    }
+
     pub fn new() -> Self {
         let mut input_map = Self { input_settings: vec![] };
     
         // Keyboard Codes
-        input_map.input_settings.push(InputSetting::code(KeyCode::W, InputKey::P1Up));
-        input_map.input_settings.push(InputSetting::code(KeyCode::LShift, InputKey::P1Up));
-        input_map.input_settings.push(InputSetting::code(KeyCode::LControl, InputKey::P1Up));
-        input_map.input_settings.push(InputSetting::code(KeyCode::A, InputKey::P1Left));
-        input_map.input_settings.push(InputSetting::code(KeyCode::D, InputKey::P1Right));
-        input_map.input_settings.push(InputSetting::code(KeyCode::S, InputKey::P1Down));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Up, InputKey::P1Up));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Down, InputKey::P1Down));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Right, InputKey::P1Right));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Left, InputKey::P1Left));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Space, InputKey::P1PrimaryAction));
-        input_map.input_settings.push(InputSetting::code(KeyCode::E, InputKey::P1UseAction));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Escape, InputKey::Exit));
-        input_map.input_settings.push(InputSetting::code(KeyCode::P, InputKey::Pause));
-        input_map.input_settings.push(InputSetting::code(KeyCode::O, InputKey::SlowMode));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Return, InputKey::Pause));
-        input_map.input_settings.push(InputSetting::code(KeyCode::F1, InputKey::EditMode));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Subtract, InputKey::ZoomOut));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Add, InputKey::ZoomIn));
-        input_map.input_settings.push(InputSetting::code(KeyCode::RBracket, InputKey::VolumeUp));
-        input_map.input_settings.push(InputSetting::code(KeyCode::LBracket, InputKey::VolumeDown));
-        input_map.input_settings.push(InputSetting::code(KeyCode::F11, InputKey::Fullscreen));
-        input_map.input_settings.push(InputSetting::code(KeyCode::G, InputKey::CheatGoAnywhere));
-        input_map.input_settings.push(InputSetting::code(KeyCode::Grave, InputKey::ConsoleKey));
-        input_map.input_settings.push(InputSetting::code(KeyCode::R, InputKey::RestartLevel));
+        key_setting!(input_map, W, P1Up);
+        key_setting!(input_map, LControl, P1Up);
+        key_setting!(input_map, A, P1Left);
+        key_setting!(input_map, D, P1Right);
+        key_setting!(input_map, S, P1Down);
+        key_setting!(input_map, Up, P1Up);
+        key_setting!(input_map, Down, P1Down);
+        key_setting!(input_map, Right, P1Right);
+        key_setting!(input_map, Left, P1Left);
+        key_setting!(input_map, Space, P1PrimaryAction);
+        key_setting!(input_map, E, P1UseAction);
+        key_setting!(input_map, Escape, Exit);
+        key_setting!(input_map, P, Pause);
+        key_setting!(input_map, O, SlowMode);
+        key_setting!(input_map, Return, Pause);
+        key_setting!(input_map, F1, EditMode);
+        key_setting!(input_map, Subtract, ZoomOut);
+        key_setting!(input_map, Add, ZoomIn);
+        key_setting!(input_map, RBracket, VolumeUp);
+        key_setting!(input_map, LBracket, VolumeDown);
+        key_setting!(input_map, F11, Fullscreen);
+        key_setting!(input_map, G, CheatGoAnywhere);
+        key_setting!(input_map, Grave, ConsoleKey);
+        key_setting!(input_map, R, RestartLevel);
         
 
         // Gamepad Buttons
-        input_map.input_settings.push(InputSetting::button(Button::DPadUp, InputKey::P1Up));
-        input_map.input_settings.push(InputSetting::button(Button::South, InputKey::P1Up));
-        input_map.input_settings.push(InputSetting::button(Button::DPadLeft, InputKey::P1Left));
-        input_map.input_settings.push(InputSetting::button(Button::DPadRight, InputKey::P1Right));
-        input_map.input_settings.push(InputSetting::button(Button::DPadDown, InputKey::P1Down));
-        input_map.input_settings.push(InputSetting::button(Button::Start, InputKey::Pause));
-        input_map.input_settings.push(InputSetting::button(Button::Select, InputKey::Exit));
-        input_map.input_settings.push(InputSetting::button(Button::West, InputKey::P1PrimaryAction));
-        input_map.input_settings.push(InputSetting::button(Button::North, InputKey::P1UseAction));
+        button_setting!(input_map, DPadUp, P1Up);
+        button_setting!(input_map, South, P1Up);
+        button_setting!(input_map, DPadLeft, P1Left);
+        button_setting!(input_map, DPadRight, P1Right);
+        button_setting!(input_map, DPadDown, P1Down);
+        button_setting!(input_map, Start, Pause);
+        button_setting!(input_map, Select, Exit);
+        button_setting!(input_map, West, P1PrimaryAction);
+        button_setting!(input_map, North, P1UseAction);
+
+        // input_map.input_settings.push(InputSetting::button(Button::DPadUp, InputKey::P1Up));
+        // input_map.input_settings.push(InputSetting::button(Button::South, InputKey::P1Up));
+        // input_map.input_settings.push(InputSetting::button(Button::DPadLeft, InputKey::P1Left));
+        // input_map.input_settings.push(InputSetting::button(Button::DPadRight, InputKey::P1Right));
+        // input_map.input_settings.push(InputSetting::button(Button::DPadDown, InputKey::P1Down));
+        // input_map.input_settings.push(InputSetting::button(Button::Start, InputKey::Pause));
+        // input_map.input_settings.push(InputSetting::button(Button::Select, InputKey::Exit));
+        // input_map.input_settings.push(InputSetting::button(Button::West, InputKey::P1PrimaryAction));
+        // input_map.input_settings.push(InputSetting::button(Button::North, InputKey::P1UseAction));
 
         input_map
     }
@@ -138,10 +194,10 @@ impl InputMap {
     }
     pub fn map_keycode(&self, keycode: &KeyCode) -> Option<InputKey> {
         //Some(InputKey::P1Left)
-
+        let vkeycode = VKeyCode::from(keycode);
         for setting in self.input_settings.iter() {
             if let Some(ref code) = setting.code {
-                if code == keycode {
+                if code == &vkeycode {
                     return Some(setting.game_key.clone());
                 }
             }
@@ -182,10 +238,10 @@ impl InputMap {
     }
     pub fn map_gamepadcode(&self, button: &Button) -> Option<InputKey> {
         //Some(InputKey::P1Left)
-
+        let vbutton = VButton::from(button);
         for setting in self.input_settings.iter() {
             if let Some(ref btn) = setting.button {
-                if btn == button {
+                if btn == &vbutton {
                     return Some(setting.game_key.clone());
                 }
             }

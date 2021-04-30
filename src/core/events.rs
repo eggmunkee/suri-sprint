@@ -10,7 +10,8 @@ use ggez::event::{GamepadId, Button, Axis};
 use rand::prelude::*;
 
 // Crate includes
-use crate::core::game_state::{GameState,RunningState,DialogChoice};
+use crate::core::menu_dialog::{DialogChoice};
+use crate::core::game_state::{GameState,RunningState};
 //use crate::core::input::{InputMap,InputKey};
 use crate::resources::{GameStateResource};
 use crate::components::sprite::{SpriteLayer};

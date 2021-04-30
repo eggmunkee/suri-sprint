@@ -1,0 +1,169 @@
+(
+    input_settings: [
+        (
+            game_key: P1Up,
+            code: Some(W),
+            default_code: Some(W),
+        ),
+        (
+            game_key: P1Up,
+            code: Some(LControl),
+            default_code: Some(LControl),
+        ),
+        (
+            game_key: P1Left,
+            code: Some(A),
+            default_code: Some(A),
+        ),
+        (
+            game_key: P1Right,
+            code: Some(D),
+            default_code: Some(D),
+        ),
+        (
+            game_key: P1Down,
+            code: Some(S),
+            default_code: Some(S),
+        ),
+        (
+            game_key: P1Up,
+            code: Some(Up),
+            default_code: Some(Up),
+        ),
+        (
+            game_key: P1Down,
+            code: Some(Down),
+            default_code: Some(Down),
+        ),
+        (
+            game_key: P1Right,
+            code: Some(Right),
+            default_code: Some(Right),
+        ),
+        (
+            game_key: P1Left,
+            code: Some(Left),
+            default_code: Some(Left),
+        ),
+        (
+            game_key: P1PrimaryAction,
+            code: Some(Space),
+            default_code: Some(Space),
+        ),
+        (
+            game_key: P1UseAction,
+            code: Some(E),
+            default_code: Some(E),
+        ),
+        (
+            game_key: Exit,
+            code: Some(Escape),
+            default_code: Some(Escape),
+        ),
+        (
+            game_key: Pause,
+            code: Some(P),
+            default_code: Some(P),
+        ),
+        (
+            game_key: SlowMode,
+            code: Some(O),
+            default_code: Some(O),
+        ),
+        (
+            game_key: Pause,
+            code: Some(Return),
+            default_code: Some(Return),
+        ),
+        (
+            game_key: EditMode,
+            code: Some(F1),
+            default_code: Some(F1),
+        ),
+        (
+            game_key: ZoomOut,
+            code: Some(Subtract),
+            default_code: Some(Subtract),
+        ),
+        (
+            game_key: ZoomIn,
+            code: Some(Add),
+            default_code: Some(Add),
+        ),
+        (
+            game_key: VolumeUp,
+            code: Some(RBracket),
+            default_code: Some(RBracket),
+        ),
+        (
+            game_key: VolumeDown,
+            code: Some(LBracket),
+            default_code: Some(LBracket),
+        ),
+        (
+            game_key: Fullscreen,
+            code: Some(F11),
+            default_code: Some(F11),
+        ),
+        (
+            game_key: CheatGoAnywhere,
+            code: Some(G),
+            default_code: Some(G),
+        ),
+        (
+            game_key: ConsoleKey,
+            code: Some(Grave),
+            default_code: Some(Grave),
+        ),
+        (
+            game_key: RestartLevel,
+            code: Some(R),
+            default_code: Some(R),
+        ),
+        (
+            game_key: P1Up,
+            button: Some(DPadUp),
+            default_button: Some(DPadUp),
+        ),
+        (
+            game_key: P1Up,
+            button: Some(South),
+            default_button: Some(South),
+        ),
+        (
+            game_key: P1Left,
+            button: Some(DPadLeft),
+            default_button: Some(DPadLeft),
+        ),
+        (
+            game_key: P1Right,
+            button: Some(DPadRight),
+            default_button: Some(DPadRight),
+        ),
+        (
+            game_key: P1Down,
+            button: Some(DPadDown),
+            default_button: Some(DPadDown),
+        ),
+        (
+            game_key: Pause,
+            button: Some(Start),
+            default_button: Some(Start),
+        ),
+        (
+            game_key: Exit,
+            button: Some(Select),
+            default_button: Some(Select),
+        ),
+        (
+            game_key: P1PrimaryAction,
+            button: Some(West),
+            default_button: Some(West),
+        ),
+        (
+            game_key: P1UseAction,
+            button: Some(North),
+            default_button: Some(North),
+        ),
+    ],
+)
