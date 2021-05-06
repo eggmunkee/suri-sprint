@@ -758,10 +758,9 @@ impl Renderer {
         let gs_res = game_state.world.fetch::<GameStateResource>();
 
         // Render Target Location of game state
-        let ptl_x = gs_res.player_target_loc.0;
-        let ptl_y = gs_res.player_target_loc.1;
-
-        DialogRenderer::render_cursor(ctx, ptl_x, ptl_y, Color::new(0.0, 1.0, 0.0, 1.0));
+        let _ptl_x = gs_res.player_target_loc.0;
+        let _ptl_y = gs_res.player_target_loc.1;
+        //DialogRenderer::render_cursor(ctx, ptl_x, ptl_y, Color::new(0.0, 1.0, 0.0, 1.0));
 
         {
             let mut image_res = game_state.world.fetch_mut::<ImageResources>();

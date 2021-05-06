@@ -86,29 +86,29 @@ impl event::EventHandler for GameState {
         repeat: bool,
     ) {
 
-        if repeat {
-            if keycode == KeyCode::Subtract {
-                if self.display_scale > 0.25 {
-                    self.display_scale -= 0.05;
-                }            
-            }
-            else if keycode == KeyCode::Equals {
-                if self.display_scale < 4.75 {
-                    self.display_scale += 0.05;
-                }            
-            }
-            //
-            else if keycode == KeyCode::RBracket {
-                //let new_level = (self.audio.base_music_volume + 0.05).round().min(2.0);
-                self.audio.incr_music_volume(); //  set_music_volume(new_level);
-            }
-            else if keycode == KeyCode::LBracket {
-                //let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
-                self.audio.decr_music_volume(); //  set_music_volume(new_level);
-                //self.audio.set_music_volume(new_level);
-            }            
+        // if repeat {
+        //     if keycode == KeyCode::Subtract {
+        //         if self.display_scale > 0.25 {
+        //             self.display_scale -= 0.05;
+        //         }            
+        //     }
+        //     else if keycode == KeyCode::Equals {
+        //         if self.display_scale < 4.75 {
+        //             self.display_scale += 0.05;
+        //         }            
+        //     }
+        //     //
+        //     else if keycode == KeyCode::RBracket {
+        //         //let new_level = (self.audio.base_music_volume + 0.05).round().min(2.0);
+        //         self.audio.incr_music_volume(); //  set_music_volume(new_level);
+        //     }
+        //     else if keycode == KeyCode::LBracket {
+        //         //let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
+        //         self.audio.decr_music_volume(); //  set_music_volume(new_level);
+        //         //self.audio.set_music_volume(new_level);
+        //     }            
     
-        }
+        // }
 
 
 
@@ -125,44 +125,30 @@ impl event::EventHandler for GameState {
         keymod: KeyMods,
     ) {
 
-        // if keycode == KeyCode::P {
-        //     match self.current_state {
-        //         State::Paused => {
-        //             self.play();
-        //         },
-        //         State::Running => {
-        //             match self.running_state {
-        //                 RunningState::Playing => {
-        //                     self.pause();
-        //                 },
-        //                 _ => {} // don't pause on dialogs
-        //             }
-        //         }
+        // if keycode == KeyCode::J {
+        //     // Get world action if any
+        //     //println!("Processing AddCircle action");
+        //     let mut rng = rand::thread_rng();
+
+        //     let test : u16 = rng.gen::<u16>();
+        //     if test % 5 == 0 {
+        //         let w = 50.0 + 0.001 * test as f32;
+        //         let h = 10.0 + 0.00025 * test as f32;
+        //         crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+        //             w, h, 0.0, SpriteLayer::Entities.to_z());
+        //     }
+        //     else if test % 4 == 0 {
+        //         let w = 10.0 + 0.001 * test as f32;
+        //         crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
+        //             w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
+        //     }
+        //     else {
+        //         crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
+        //             30.0, 0.15, 25.0, 25.0);
         //     }
         // }
-        if keycode == KeyCode::J {
-            // Get world action if any
-            //println!("Processing AddCircle action");
-            let mut rng = rand::thread_rng();
-
-            let test : u16 = rng.gen::<u16>();
-            if test % 5 == 0 {
-                let w = 50.0 + 0.001 * test as f32;
-                let h = 10.0 + 0.00025 * test as f32;
-                crate::entities::platform::PlatformBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
-                    w, h, 0.0, SpriteLayer::Entities.to_z());
-            }
-            else if test % 4 == 0 {
-                let w = 10.0 + 0.001 * test as f32;
-                crate::entities::empty_box::BoxBuilder::build_dynamic(&mut self.world, ctx, &mut self.phys_world, 200.0, 100.0,
-                    w, w, rng.gen::<f32>() * 2.0 * 3.14159, SpriteLayer::Entities.to_z());
-            }
-            else {
-                crate::entities::ghost::GhostBuilder::build_collider(&mut self.world, ctx, &mut self.phys_world, 100.0, 400.0, 0.0, 0.0,
-                    30.0, 0.15, 25.0, 25.0);
-            }
-        }
-        else if keycode == KeyCode::Subtract {
+        //else 
+        if keycode == KeyCode::Subtract {
             if self.display_scale > 0.0125 {
                 self.display_scale -= 0.05;
             }            
@@ -172,68 +158,35 @@ impl event::EventHandler for GameState {
                 self.display_scale += 0.05;
             }            
         }
-        // toggle edit mode - showing original level layout
-        // else if keycode == KeyCode::F1 {
-        //     if self.mode == GameMode::Play {
-        //         self.mode = GameMode::Edit;
-        //     }
-        //     else {
-        //         self.mode = GameMode::Play;
-        //     }
+
+        // if keycode == KeyCode::RBracket {
+        //     // let new_level = (self.audio.base_music_volume + 0.05).min(2.0);
+        //     // self.audio.set_music_volume(new_level);
+        //     self.audio.incr_music_volume();
         // }
-        else if keycode == KeyCode::F11 {
-            // let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
-
-            // let mut new_fs_type : ggez::conf::FullscreenType = ggez::conf::FullscreenType::Windowed;
-            // match game_state_writer.window_mode.fullscreen_type {
-            //     ggez::conf::FullscreenType::Windowed => {
-            //         new_fs_type = ggez::conf::FullscreenType::Desktop;
-            //     },
-            //     ggez::conf::FullscreenType::Desktop => {
-            //         new_fs_type = ggez::conf::FullscreenType::True;
-            //     },
-            //     ggez::conf::FullscreenType::True => {
-            //         new_fs_type = ggez::conf::FullscreenType::Windowed;
-            //     }
-            // }
-            // game_state_writer.window_mode.fullscreen_type = new_fs_type;
-
-            // ggez::graphics::set_fullscreen(ctx, new_fs_type);
-        }
-        // reload current level
-        // else if keycode == KeyCode::R {
-        //     //self.load_level(ctx, self.current_level_name.clone(), self.current_entry_name.clone());
-        //     self.restart_level(ctx);
-
-        // }        
-        //
-        if keycode == KeyCode::RBracket {
-            // let new_level = (self.audio.base_music_volume + 0.05).min(2.0);
-            // self.audio.set_music_volume(new_level);
-            self.audio.incr_music_volume();
-        }
-        else if keycode == KeyCode::LBracket {
-            // let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
-            // self.audio.set_music_volume(new_level);
-            self.audio.decr_music_volume();
-        }
-        else if keycode == KeyCode::K {
+        // else if keycode == KeyCode::LBracket {
+        //     // let new_level = (self.audio.base_music_volume - 0.05).max(0.0);
+        //     // self.audio.set_music_volume(new_level);
+        //     self.audio.decr_music_volume();
+        // }
+        // else if keycode == KeyCode::K {
                 
-            self.set_running_state(ctx, RunningState::world_dialog("K dialog".to_string(),
-                Some(vec![
-                    DialogChoice { key: "a".to_string(), message: "Choice A".to_string() },
-                    DialogChoice { key: "b".to_string(), message: "Choice B".to_string() },
-                    DialogChoice { key: "c".to_string(), message: "Choice C".to_string() },
-                ]), "/images/dirty-box-1.png".to_string()));
-        }
-        else if keycode == KeyCode::M {
-            self.open_menu();
-        }
-        else if keycode == KeyCode::L {
-            println!("DEBUG LOGIC 3x -------------------------------------------------");
-            self.debug_logic_frames = 3;
-        }
-        else if keycode == KeyCode::E {
+        //     self.set_running_state(ctx, RunningState::world_dialog("K dialog".to_string(),
+        //         Some(vec![
+        //             DialogChoice { key: "a".to_string(), message: "Choice A".to_string() },
+        //             DialogChoice { key: "b".to_string(), message: "Choice B".to_string() },
+        //             DialogChoice { key: "c".to_string(), message: "Choice C".to_string() },
+        //         ]), "/images/dirty-box-1.png".to_string()));
+        // }
+        // else if keycode == KeyCode::M {
+        //     //self.open_menu();
+        // }
+        // else if keycode == KeyCode::L {
+        //     println!("DEBUG LOGIC 3x -------------------------------------------------");
+        //     self.debug_logic_frames = 3;
+        // }
+        //else 
+        if keycode == KeyCode::E {
             let mut game_state_writer = self.world.fetch_mut::<GameStateResource>();
             if game_state_writer.player_count > 0 {
                 game_state_writer.player_1_char_num = (game_state_writer.player_1_char_num % game_state_writer.player_count) + 1;
@@ -289,7 +242,11 @@ impl event::EventHandler for GameState {
     fn text_input_event(&mut self, _ctx: &mut Context, ch: char) {
         //println!("Text input: {}", ch);
         if self.terminal_open {
-            self.input_map.text_typed(&mut self.world, ch);
+            // Type into terminal except special chars
+            if ch != '`' && ch != 13 as char {
+                self.input_map.text_typed(&mut self.world, ch);
+            }
+            
         }
         
     }

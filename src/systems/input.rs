@@ -8,8 +8,8 @@ use crate::core::{GameState,RunningState};
 use crate::core::menu_dialog::{MenuItem};
 use crate::core::game_state::{State};
 use crate::core::input::{InputKey};
-use crate::resources::{InputResource,WorldAction,GameStateResource,Camera};
-use crate::components::*;
+use crate::resources::{InputResource,WorldAction,GameStateResource,Camera,GameLog};
+//use crate::components::*;
 use crate::components::collision::{Collision};
 use crate::components::player::*;
 use crate::components::npc::{NpcComponent};
@@ -68,6 +68,14 @@ impl InputSystem {
         let mut left_pressed = false;
         let mut right_pressed = false;
         let mut down_pressed = false;
+        let mut use_pressed = input.keys_pressed.iter().filter(|&k| k == &InputKey::P1UseAction).collect::<Vec<_>>().len() > 0;
+        // if use_pressed {
+        //     //println!("Use pressed");
+        // }
+        // use_pressed = input.keys_pressed.iter().filter(|&k| k == &InputKey::P1UseAction).collect::<Vec<_>>().len() > 0;
+        // if use_pressed {
+        //     println!("Use still pressed after check");
+        // }
 
         // apply input status to player
         if character.is_controlled {
@@ -195,10 +203,14 @@ impl InputSystem {
         let mut input = game_state.world.fetch_mut::<InputResource>();
         // Check for terminal related key presses
         let mut tilde_pressed = false;
+        let mut submit_cmd = false;
         for key in &input.keys_pressed {
             match key {
                 InputKey::ConsoleKey => {
                     tilde_pressed = true;
+                },
+                InputKey::Pause => {
+                    submit_cmd = true;
                 },
                 _ => {}
             } 
@@ -207,6 +219,11 @@ impl InputSystem {
 
         if tilde_pressed {
             input.add_action(WorldAction::ToggleTerminal);
+        }
+        if submit_cmd {
+            let cmd = input.cmd_text.clone();
+            game_state.world.fetch_mut::<GameLog>().add_entry(true, cmd, None, game_state.world.fetch::<GameStateResource>().game_run_seconds);
+            input.cmd_text.clear();
         }
 
         drop(input);
@@ -228,16 +245,16 @@ impl InputSystem {
                     input.add_action(WorldAction::ToggleTerminal);
                 },
                 InputKey::P1Up => {
-
+                    println!("Up Input in dialog");
                 },
                 InputKey::P1Down => {
-
+                    println!("Down Input in dialog");
                 },
                 InputKey::P1Left => {
-
+                    println!("Left Input in dialog");
                 },
                 InputKey::P1Right => {
-
+                    println!("Right Input in dialog");
                 },
                 _ => {}
             } 

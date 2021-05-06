@@ -86,6 +86,7 @@ impl InputSetting {
     }
 }
 
+// MACRO to add a KeyCode based key mapping to a game InputKey to the given InputMap obj
 #[macro_export]
 macro_rules! key_setting {
     ( $cls:ident, $raw:ident, $map:ident ) => {
@@ -369,9 +370,9 @@ impl InputMap {
         }
     }
 
-    // pub fn clear_text(&self, world: &mut World) {
-    //     //world.fetch_mut::<InputResource>().cmd_text.clear();
-    // }
+    pub fn clear_text(&self, world: &mut World) {
+        world.fetch_mut::<InputResource>().cmd_text.clear();
+    }
 
     pub fn text_typed(&self, world: &mut World, c: char) {
         
@@ -379,6 +380,10 @@ impl InputMap {
         if input.cmd_text.len() < 380 {
             input.cmd_text.push(c);
         }
+    }
+
+    pub fn get_cmd_text(&self, world: &World) -> String {
+        world.fetch::<InputResource>().cmd_text.clone()
     }
 
     pub fn key_up(&self, world: &mut World,

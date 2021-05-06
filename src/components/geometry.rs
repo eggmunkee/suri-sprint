@@ -5,12 +5,12 @@ use ggez::graphics;
 use ggez::graphics::{Color,FillOptions,Rect,DrawMode,DrawParam};
 use specs::{Component, DenseVecStorage, World, WorldExt, Entity};
 use specs_derive::*;
-use wrapped2d::b2;
-use rand::prelude::*;
-use serde::{Deserialize,de::DeserializeOwned,Serialize};
+//use wrapped2d::b2;
+//use rand::prelude::*;
+//use serde::{Deserialize,de::DeserializeOwned,Serialize};
 
 use crate::core::game_state::{GameState};
-use crate::entities::geometry::{LevelGridData,LevelPatch,PatchCellShape};
+use crate::entities::geometry::{LevelGridData,PatchCellShape};
 use crate::components::anim_sprite::{AnimSpriteComponent};
 use crate::resources::{ImageResources};
 
@@ -43,7 +43,7 @@ impl GeometryComponent {
 impl super::RenderItemTarget for GeometryComponent {
     fn render_item(game_state: &GameState, ctx: &mut Context, entity: &Entity,
         pos: &na::Point2<f32>, item_index: usize) {
-            print!("GeometryComponent::render_item(),");
+            //print!("GeometryComponent::render_item(),");
             let world = &game_state.world;
             let geometry_res = world.read_storage::<GeometryComponent>();
 
@@ -57,14 +57,13 @@ impl super::RenderItemTarget for GeometryComponent {
 
 
 impl super::RenderTrait for GeometryComponent {
-    fn draw(&self, ctx: &mut Context, world: &World, ent: Option<u32>, pos: na::Point2::<f32>, item_index: usize) {
-        //println!("BallRender...");
+    fn draw(&self, ctx: &mut Context, world: &World, _ent: Option<u32>, _pos: na::Point2::<f32>, item_index: usize) {
         //let mut rng = rand::thread_rng();
         let mut image_res = world.fetch_mut::<ImageResources>();
         let patches_len = self.geometry.patches.len(); //.min(self.image_paths.len()).min(self.colors.len()).min(self.z_orders.len());
-        println!("Rendering Geometry with length: {}", &patches_len);
+        //println!("Rendering Geometry with length: {}", &patches_len);
 
-        if item_index >= 0 && item_index < patches_len {
+        if item_index < patches_len {
 
             if let Some(patch) = //, Some(image_path), Some(color), Some(z_order)) = 
                 self.geometry.patches.get(item_index) //, self.image_paths.get(item_index),
@@ -78,8 +77,6 @@ impl super::RenderTrait for GeometryComponent {
                 let (x_cells, y_cells) = patch.cell_nums;
                 let start_x = patch.center.0 - x_size * (x_cells as f32 / 2.0);
                 let start_y = patch.center.1 - y_size * (y_cells as f32 / 2.0);
-                let mut x = start_x;
-                let mut y = start_y;
 
                 // Create shapes from grid data
                 let shapes = patch.triangulate();
@@ -90,7 +87,7 @@ impl super::RenderTrait for GeometryComponent {
 
                     //println!("Cell Result ({}, {}, {:?})", &i, &j, &shape);
 
-                    let mut draw_shape = true;
+                    //let mut draw_shape = true;
 
                     // Solid color rendering
                     if solid_color {
@@ -163,18 +160,20 @@ impl super::RenderTrait for GeometryComponent {
                             ]
                         }
                         else {
-                            draw_shape = false;
+                            //draw_shape = false;
                             vec![]
                         };
-                        if let Ok(poly) = ggez::graphics::Mesh::new_polygon(ctx, 
-                            DrawMode::Fill(FillOptions::default()), 
-                            &points, 
-                            Color::new(patch.color.0,patch.color.1,patch.color.2,patch.color.3)
-                        ) {
-                            graphics::draw(ctx, &poly, DrawParam::new()
-                                .dest(na::Point2::new(pos_x, pos_y))
-                            );
-                        }
+                        if points.len() > 0 {
+                            if let Ok(poly) = ggez::graphics::Mesh::new_polygon(ctx, 
+                                DrawMode::Fill(FillOptions::default()), 
+                                &points, 
+                                Color::new(patch.color.0,patch.color.1,patch.color.2,patch.color.3)
+                            ) {
+                                let _err = graphics::draw(ctx, &poly, DrawParam::new()
+                                    .dest(na::Point2::new(pos_x, pos_y))
+                                ).is_err();
+                            }
+                        }                        
                     }
                     // Image tileset display
                     else if let Ok(image_ref) = image_res.image_ref(patch.image_path.clone()) {
@@ -182,18 +181,11 @@ impl super::RenderTrait for GeometryComponent {
                         let img_h = image_ref.height() as f32 / 8.0;
                         let scale = (x_size / img_w, y_size / img_h);
     
+                        // Setup rows and columns of the spritesheet for calculating cell/frame boundaries
                         let anim_cols = 4;
                         let anim_rows = 8;
+                        // Calculate / map shape to spritesheet cell as source of that section in texture space (0-1,0-1)
                         let src = match shape {
-                            // PatchCellShape::Square => AnimSpriteComponent::calc_frame_src(0, 0, anim_rows, anim_cols),
-                            // PatchCellShape::TriangleLeftTop => AnimSpriteComponent::calc_frame_src(1, 0, anim_rows, anim_cols),
-                            // PatchCellShape::TriangleRightTop => AnimSpriteComponent::calc_frame_src(2, 0, anim_rows, anim_cols),
-                            // PatchCellShape::TriangleLeftBottom => AnimSpriteComponent::calc_frame_src(3, 0, anim_rows, anim_cols),
-                            // PatchCellShape::TriangleRightBottom => AnimSpriteComponent::calc_frame_src(0, 1, anim_rows, anim_cols),
-                            // PatchCellShape::DotLeftTop | PatchCellShape::DotRightTop
-                            //     | PatchCellShape::DotLeftBottom | PatchCellShape::DotRightBottom
-                            //     => AnimSpriteComponent::calc_frame_src(1, 1, anim_rows, anim_cols),
-                            // _ => AnimSpriteComponent::calc_frame_src(3, 3, anim_rows, anim_cols),
                             PatchCellShape::Square => AnimSpriteComponent::calc_frame_src(0, 0, anim_rows, anim_cols),
                             PatchCellShape::TriangleLeftTop => AnimSpriteComponent::calc_frame_src(0, 1, anim_rows, anim_cols),
                             PatchCellShape::TriangleRightTop => AnimSpriteComponent::calc_frame_src(1, 1, anim_rows, anim_cols),
@@ -205,21 +197,14 @@ impl super::RenderTrait for GeometryComponent {
                             _ => AnimSpriteComponent::calc_frame_src(3, 3, anim_rows, anim_cols),
 
                         };
-                        println!("Shape {:?} frame source: {:?}", &shape, &src);
+                        //println!("Shape {:?} frame source: {:?}", &shape, &src);
 
-                        graphics::draw(ctx, image_ref, DrawParam::new()
+                        let _err = graphics::draw(ctx, image_ref, DrawParam::new()
                                 .dest(na::Point2::new(pos_x, pos_y))
                                 .scale(na::Vector2::new(scale.0, scale.1))
                                 .src(Rect::new(src.0, src.1, src.2, src.3))
                                 .color(Color::new(patch.color.0,patch.color.1,patch.color.2,patch.color.3))
-                                // .color(
-                                //     match set {
-                                //         0 => Color::new(1.0,1.0,1.0,0.95),
-                                //         1 => Color::new(1.0,1.0,1.0,0.9),
-                                //         _ => Color::new(1.0,1.0,1.0,0.85)
-                                //     }
-                                // )
-                            );
+                            ).is_err();
                     }
                     
                 }

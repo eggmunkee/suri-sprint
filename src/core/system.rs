@@ -318,6 +318,9 @@ impl CoreSystem {
                 else if key == &InputKey::ConsoleKey {
                     open_terminal = true;
                 }
+                else if key == &InputKey::P1UseAction {
+                    
+                }
                 //println!(" - - - - - - - - - - - - - - -");
             }
 
@@ -343,14 +346,17 @@ impl CoreSystem {
         }
         else if slow_mode {
             let curr_scale = game_state.play_time_scale;
-            if curr_scale >= 1.0 {
+            if curr_scale >= 1.25 {
+                game_state.set_timescale(1.0);
+            }
+            else if curr_scale >= 1.0 {
                 game_state.set_timescale(0.5);
             }
             else if curr_scale >= 0.5 {
                 game_state.set_timescale(0.25);
             }
             else {
-                game_state.set_timescale(1.0);
+                game_state.set_timescale(1.25);
             }
         }
         else if go_anywhere_mode {
@@ -470,11 +476,19 @@ impl CoreSystem {
             }
         }
 
+        let mut meows = vec![];
+        let mut clicks = vec![];
+
+        let display_offset = {
+            let camera = world.fetch::<Camera>();
+            na::Point2::new(camera.display_offset.0, camera.display_offset.1)
+        };
+
         // Run Input System - Mainly player/npc inputs, process meows, process input clicks
         {
-            let camera = world.fetch::<Camera>();
-            let mut display_offset = na::Point2::new(camera.display_offset.0, camera.display_offset.1);
-            drop(camera);
+            //let camera = world.fetch::<Camera>();
+            //let mut display_offset = na::Point2::new(camera.display_offset.0, camera.display_offset.1);
+            //drop(camera);
 
 
             if game_state.game_frame_count % 60 == 0 {
@@ -487,12 +501,17 @@ impl CoreSystem {
             //input_sys.phys_world = Some(Box::pi(physics_world));
             input_sys.run_now(&world);
 
+            meows = input_sys.meows.drain(0..).collect::<Vec<_>>();
+            clicks = input_sys.click_info.drain(0..).collect::<Vec<_>>();
+        }
+
+        {
             if game_state.game_frame_count % 60 == 0 {
                 println!("   Build new Meows ====================");
             }
             // Process meow creation
             let mut meow_count : i32 = 0;
-            for m in &input_sys.meows {
+            for m in &meows {
                 // Create a meow bubble
                 MeowBuilder::build(world, ctx, &mut game_state.phys_world, m.0.x, m.0.y, m.1.x, m.1.y, 20.0, 20.0);
                 meow_count += 1;
@@ -500,7 +519,9 @@ impl CoreSystem {
             if meow_count > 0 {
                 game_state.audio.play_meow();
             }
+        }
 
+        {
             // CLICK - COLLIDER HANDLING CODE - in testing =========================
             if game_state.game_frame_count % 60 == 0 {
                 println!("Run Click Check Code ==================");
@@ -508,6 +529,7 @@ impl CoreSystem {
             // Get display size for click position calculations
             let dim = ggez::graphics::drawable_size(ctx);
             //let mut display_offset = game_state.current_offset;
+            let mut display_offset = display_offset.clone();
             display_offset.x += dim.0 as f32 / 2.0;
             display_offset.y += dim.1 as f32 / 2.0;
 
@@ -517,7 +539,7 @@ impl CoreSystem {
             let mut click_items : i32 = 0;
 
             // Iterate through any click_info item from input system
-            for click in &input_sys.click_info {
+            for click in &clicks {
                 // get center x/y based on click and display offset
                 // to get from screen coordinates to game object coords
                 let center_x = click.x - display_offset.x;
@@ -574,9 +596,9 @@ impl CoreSystem {
                 }
             }
 
-            input_sys.meows.clear();
-            input_sys.click_info.clear();
-            drop(input_sys);
+            // input_sys.meows.clear();
+            // input_sys.click_info.clear();
+            // drop(input_sys);
         }
 
 
